@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #050B18;
+  --color-navy-light: #0B1120;
+  --color-gold: #D4AF37;
+  --color-gold-light: #F3E5AB;
+  --color-gold-dark: #A67C00;
+  
+  --font-serif: "Playfair Display", "Times New Roman", serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+  
+  --shadow-gold: 0 10px 30px -10px rgba(212, 175, 55, 0.3);
+  --shadow-premium: 0 10px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  @apply transition-all duration-300;
+}
+
+:root {
+  font-family: var(--font-inter);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #fff;
+  background-color: var(--color-navy);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-navy);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    @apply font-bold tracking-tight text-gold;
+  }
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #A67C00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-bg-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #A67C00 100%);
+}
+
+.glass-morphism {
+  @apply bg-navy/80 backdrop-blur-md border border-gold/20;
+}
+
+.card-premium {
+  @apply bg-navy-light border border-gold/10 hover:border-gold/30 rounded-2xl overflow-hidden transition-all shadow-premium hover:shadow-gold;
+}
+
+.monogram-circle {
+  @apply border-2 border-gold rounded-full flex items-center justify-center;
+  aspect-ratio: 1/1;
+}
+
+.cart-drawer-open {
+  overflow: hidden;
+}
