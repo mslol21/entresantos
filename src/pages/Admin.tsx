@@ -135,9 +135,11 @@ export const Admin: React.FC = () => {
       {/* Admin Sidebar */}
       <div className="flex h-screen overflow-hidden">
         <aside className="w-64 bg-navy-light border-r border-gold/10 p-6 hidden md:flex flex-col">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 border border-gold rounded-full flex items-center justify-center text-xs">ES</div>
-            <span className="font-serif font-bold text-sm tracking-widest uppercase">Admin Panel</span>
+          <div className="flex items-center justify-between gap-3 mb-10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 border border-gold rounded-full flex items-center justify-center text-xs">ES</div>
+              <span className="font-serif font-bold text-sm tracking-widest uppercase">Admin</span>
+            </div>
           </div>
 
           <nav className="space-y-2 flex-grow">
@@ -163,6 +165,27 @@ export const Admin: React.FC = () => {
           </Link>
         </aside>
 
+        {/* Mobile Header Navigation */}
+        <div className="md:hidden fixed top-0 left-0 right-0 bg-navy-light border-b border-gold/10 z-40 p-4 flex items-center justify-between">
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setActiveTab('products')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Produtos
+            </button>
+            <button 
+              onClick={() => setActiveTab('settings')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Ajustes
+            </button>
+          </div>
+          <Link to="/" className="text-red-500 p-2">
+            <ArrowLeft size={20} />
+          </Link>
+        </div>
+
         {/* Main Content */}
         <main className="flex-grow overflow-y-auto p-6 md:p-10">
           <div className="max-w-5xl mx-auto">
@@ -182,8 +205,8 @@ export const Admin: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Product List */}
-                <div className="bg-navy-light rounded-3xl border border-gold/10 overflow-hidden shadow-2xl">
+                {/* Product List - Desktop Table */}
+                <div className="hidden md:block bg-navy-light rounded-3xl border border-gold/10 overflow-hidden shadow-2xl">
                   <table className="w-full text-left">
                     <thead className="bg-gold/5 text-gold/40 text-[10px] uppercase font-bold tracking-widest">
                       <tr>
@@ -228,10 +251,34 @@ export const Admin: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Product List - Mobile Cards */}
+                <div className="md:hidden space-y-4 pb-10 pt-16">
+                  {products.map((p) => (
+                    <div key={p.id} className="bg-navy-light rounded-2xl border border-gold/10 p-4 flex gap-4 items-center">
+                      <img src={p.image} className="w-16 h-16 rounded-xl object-cover border border-gold/10" />
+                      <div className="flex-grow">
+                        <div className="font-bold text-gold text-sm">{p.name}</div>
+                        <div className="text-xs text-gold/40 mb-1">R$ {p.price.toFixed(2)}</div>
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${p.isActive !== false ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                          {p.isActive !== false ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button onClick={() => startEdit(p)} className="p-3 bg-gold/10 rounded-xl text-gold">
+                          <Edit2 size={18} />
+                        </button>
+                        <button onClick={() => deleteProduct(p.id)} className="p-3 bg-red-500/10 rounded-xl text-red-500">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="space-y-8">
-                <div>
+                <div className="pt-16 md:pt-0">
                   <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Configurações da Loja</h1>
                   <p className="text-gold/40 text-sm">Personalize os dados e links do seu Ateliê.</p>
                 </div>
@@ -363,8 +410,9 @@ export const Admin: React.FC = () => {
                         onChange={(e) => setFormProduct({...formProduct, image: e.target.value})}
                         className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
                       />
-                      <label className="bg-gold/10 hover:bg-gold/20 border border-gold/20 rounded-xl p-3 cursor-pointer text-gold transition-all flex items-center justify-center min-w-[120px]">
+                      <div className="relative">
                         <input 
+                          id="file-upload"
                           type="file" 
                           className="hidden" 
                           accept="image/*,video/*"
@@ -381,8 +429,15 @@ export const Admin: React.FC = () => {
                             }
                           }}
                         />
-                        <span className="text-xs font-bold uppercase">Anexar</span>
-                      </label>
+                        <button 
+                          type="button"
+                          onClick={() => document.getElementById('file-upload')?.click()}
+                          className="h-full bg-gold/10 hover:bg-gold/20 border border-gold/20 rounded-xl px-6 py-3 text-gold transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                          <Plus size={16} />
+                          <span className="text-xs font-black uppercase tracking-widest">Anexar</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
