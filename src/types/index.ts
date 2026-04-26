@@ -25,6 +25,7 @@ export type Product = {
   hasNameOption?: boolean;
   variations?: Variation[];
   customizationLists?: CustomizationList[];
+  selectedVariation?: Variation;
 }
 
 export type CartItem = Product & {

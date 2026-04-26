@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Settings2, Check, X, ShoppingBag } from 'lucide-react';
-import type { Product } from '../types';
+import type { Product, Variation } from '../types';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
