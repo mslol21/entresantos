@@ -5,6 +5,12 @@ export type Variation = {
   image: string;
 }
 
+export type CustomizationList = {
+  id: string;
+  title: string;
+  options: string; // Comma separated
+}
+
 export type Product = {
   id: string;
   name: string;
@@ -18,6 +24,7 @@ export type Product = {
   availableColors?: string;
   hasNameOption?: boolean;
   variations?: Variation[];
+  customizationLists?: CustomizationList[];
 }
 
 export type CartItem = Product & {

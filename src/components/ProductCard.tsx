@@ -13,12 +13,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
 
-  const [customOptions, setCustomOptions] = useState({
-    cor: '',
-    nome: '',
-    entremeio: '',
-    crucifixo: ''
-  });
+  const [customOptions, setCustomOptions] = useState<Record<string, string>>({});
 
   const isMonteSeuTerco = product.isCustomizable;
   const hasNameOption = product.hasNameOption;
@@ -48,11 +43,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
 
     if (customOptions.nome && hasNameOption) details.push(`Nome: ${customOptions.nome}`);
-    if (isMonteSeuTerco) {
-      if (customOptions.entremeio) details.push(`Entremeio: ${customOptions.entremeio}`);
-      if (customOptions.crucifixo) details.push(`Crucifixo: ${customOptions.crucifixo}`);
-    }
     
+    // Add all dynamic customization lists
+    if (product.customizationLists) {
+      product.customizationLists.forEach(list => {
+        if (customOptions[list.id]) {
+          details.push(`${list.title}: ${customOptions[list.id]}`);
+        }
+      });
+    }
+
     if (details.length > 0) {
       customName = `${product.name} (${details.join(', ')})`;
     }
@@ -66,7 +66,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     });
     
     setShowCustomizer(false);
-    setCustomOptions({ cor: '', nome: '', entremeio: '', crucifixo: '' });
+    setCustomOptions({});
     setSelectedVariation(null);
   };
 
@@ -252,63 +252,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 )}
               </div>
 
-              {isMonteSeuTerco && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
-                >
-                  <div className="space-y-3">
-                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                      2. Selecione o Entremeio <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {['Nossa Senhora Aparecida', 'Nossa Senhora das Graças', 'Sagrado Coração de Jesus', 'Santo Expedito', 'São Bento'].map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => setCustomOptions({...customOptions, entremeio: opt})}
-                          className={`flex items-center justify-between p-4 rounded-xl text-xs font-bold transition-all border ${
-                            customOptions.entremeio === opt 
-                              ? 'bg-gold/10 text-gold border-gold shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-                              : 'bg-navy-light/50 text-gold/40 border-gold/5 hover:border-gold/20'
-                          }`}
-                        >
-                          {opt}
-                          {customOptions.entremeio === opt && <Check size={14} />}
-                        </button>
-                      ))}
-                    </div>
+              {/* Dynamic Customization Lists */}
+              {product.customizationLists?.map((list) => (
+                <div key={list.id} className="space-y-4">
+                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                    {list.title} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {list.options.split(',').map(opt => opt.trim()).filter(o => o).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCustomOptions(prev => ({ ...prev, [list.id]: opt }))}
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all border ${
+                          customOptions[list.id] === opt 
+                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
                   </div>
-
-                  <div className="space-y-3">
-                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                      3. Escolha o Crucifixo <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {['Clássico Dourado', 'Trabalhado Luxo', 'Cruz de São Bento', 'Minimalista'].map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => setCustomOptions({...customOptions, crucifixo: opt})}
-                          className={`flex items-center justify-between p-4 rounded-xl text-xs font-bold transition-all border ${
-                            customOptions.crucifixo === opt 
-                              ? 'bg-gold/10 text-gold border-gold shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-                              : 'bg-navy-light/50 text-gold/40 border-gold/5 hover:border-gold/20'
-                          }`}
-                        >
-                          {opt}
-                          {customOptions.crucifixo === opt && <Check size={14} />}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                </div>
+              ))}
 
               {hasNameOption && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                      {isMonteSeuTerco ? '4.' : '2.'} Nome na Peça <span className="text-gold/20 font-normal">(Opcional)</span>
+                      Nome na Peça <span className="text-gold/20 font-normal">(Opcional)</span>
                     </label>
                     <span className={`text-[10px] font-black tracking-tighter ${nameLength > 10 ? 'text-red-500' : 'text-gold/40'}`}>
                       {nameLength}/10
@@ -352,11 +324,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <div className="text-[10px] text-gold/50 font-medium italic">
                   {selectedVariation ? `Opção: ${selectedVariation.name}` : (customOptions.cor ? `Cor: ${customOptions.cor}` : 'Selecione a cor...')}
                   {customOptions.nome && ` • Nome: ${customOptions.nome}`}
+                  {product.customizationLists?.map(list => customOptions[list.id] && ` • ${list.title}: ${customOptions[list.id]}`)}
                 </div>
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={(!selectedVariation && !customOptions.cor && colorList.length > 0) || (isMonteSeuTerco && (!customOptions.entremeio || !customOptions.crucifixo))}
+                disabled={
+                  (!selectedVariation && !customOptions.cor && colorList.length > 0) || 
+                  (product.customizationLists?.some(list => !customOptions[list.id]))
+                }
                 className="w-full gold-bg-gradient text-navy py-5 rounded-[22px] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:shadow-gold/40"
               >
                 <ShoppingBag size={18} strokeWidth={2.5} />

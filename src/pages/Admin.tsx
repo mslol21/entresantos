@@ -48,7 +48,8 @@ export const Admin: React.FC = () => {
     isActive: true,
     availableColors: '',
     hasNameOption: true,
-    variations: []
+    variations: [],
+    customizationLists: []
   });
 
   const [formSettings, setFormSettings] = useState(settings);
@@ -480,8 +481,112 @@ export const Admin: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Variations Section - Moved Higher for Visibility */}
+                  <div className="pt-6 border-t border-gold/10 md:col-span-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-gold/60 flex items-center gap-2">
+                        <ShoppingBag size={16} /> Variantes com Foto (Estilo Shopee)
+                      </h3>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const newVariations = [...(formProduct.variations || [])];
+                          newVariations.push({ id: Math.random().toString(36).substr(2, 9), name: '', price: formProduct.price || 0, image: formProduct.image || '' });
+                          setFormProduct({...formProduct, variations: newVariations});
+                        }}
+                        className="text-gold bg-gold/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
+                      >
+                        + Adicionar Cor/Material
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                      {(formProduct.variations || []).map((v, index) => (
+                        <div key={v.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col md:flex-row gap-4 items-start md:items-center shadow-lg">
+                          <div className="relative w-16 h-16 bg-navy-light rounded-xl overflow-hidden border border-gold/10 flex-shrink-0">
+                            {v.image ? (
+                              <img src={v.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gold/20"><Plus size={16} /></div>
+                            )}
+                            <input 
+                              id={`var-upload-${v.id}`}
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const url = await uploadFile(file);
+                                  const newVars = [...(formProduct.variations || [])];
+                                  newVars[index].image = url;
+                                  setFormProduct({...formProduct, variations: newVars});
+                                }
+                              }}
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => document.getElementById(`var-upload-${v.id}`)?.click()}
+                              className="absolute inset-0 bg-navy/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                          
+                          <div className="flex-grow grid grid-cols-2 gap-3 w-full">
+                            <div className="space-y-1">
+                              <label className="text-[8px] uppercase font-bold text-gold/30">Nome da Cor/Tipo</label>
+                              <input 
+                                type="text" 
+                                placeholder="Ex: Azul Marinho"
+                                value={v.name}
+                                onChange={(e) => {
+                                  const newVars = [...(formProduct.variations || [])];
+                                  newVars[index].name = e.target.value;
+                                  setFormProduct({...formProduct, variations: newVars});
+                                }}
+                                className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[8px] uppercase font-bold text-gold/30">Preço (R$)</label>
+                              <input 
+                                type="number" 
+                                step="0.01"
+                                value={v.price}
+                                onChange={(e) => {
+                                  const newVars = [...(formProduct.variations || [])];
+                                  newVars[index].price = parseFloat(e.target.value);
+                                  setFormProduct({...formProduct, variations: newVars});
+                                }}
+                                className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
+                              />
+                            </div>
+                          </div>
+                          
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newVars = (formProduct.variations || []).filter(item => item.id !== v.id);
+                              setFormProduct({...formProduct, variations: newVars});
+                            }}
+                            className="p-2 text-red-500/40 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      {(formProduct.variations || []).length === 0 && (
+                        <p className="text-[10px] text-gold/20 italic text-center py-4 border border-dashed border-gold/5 rounded-2xl">
+                          Nenhuma variante cadastrada. Use isto para cores com fotos e preços diferentes.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Cores para Seleção (separadas por vírgula)</label>
+                    <label className="text-[10px] uppercase font-bold text-gold/40">Cores Simples (Somente Texto)</label>
                     <input 
                       type="text"
                       placeholder="Ex: Azul, Rosa, Branco (Se vazio, o cliente digita a cor)"
@@ -493,102 +598,70 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Variations Section */}
+                {/* Customization Lists (Monte seu Terço) */}
                 <div className="pt-6 border-t border-gold/10">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gold/60">Variantes (Cores/Materiais)</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-gold/60">Opções de Montagem (Entremeios, Crucifixos, etc.)</h3>
                     <button 
                       type="button"
                       onClick={() => {
-                        const newVariations = [...(formProduct.variations || [])];
-                        newVariations.push({ id: Math.random().toString(36).substr(2, 9), name: '', price: formProduct.price || 0, image: formProduct.image || '' });
-                        setFormProduct({...formProduct, variations: newVariations});
+                        const newLists = [...(formProduct.customizationLists || [])];
+                        newLists.push({ id: Math.random().toString(36).substr(2, 9), title: '', options: '' });
+                        setFormProduct({...formProduct, customizationLists: newLists});
                       }}
                       className="text-gold bg-gold/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
                     >
-                      + Adicionar Variante
+                      + Nova Lista de Opções
                     </button>
                   </div>
                   
                   <div className="space-y-4">
-                    {(formProduct.variations || []).map((v, index) => (
-                      <div key={v.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col md:flex-row gap-4 items-start md:items-center">
-                        <div className="relative w-16 h-16 bg-navy-light rounded-xl overflow-hidden border border-gold/10 flex-shrink-0">
-                          {v.image ? (
-                            <img src={v.image} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gold/20"><Plus size={16} /></div>
-                          )}
-                          <input 
-                            id={`var-upload-${v.id}`}
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const url = await uploadFile(file);
-                                const newVars = [...(formProduct.variations || [])];
-                                newVars[index].image = url;
-                                setFormProduct({...formProduct, variations: newVars});
-                              }
-                            }}
-                          />
-                          <button 
-                            type="button"
-                            onClick={() => document.getElementById(`var-upload-${v.id}`)?.click()}
-                            className="absolute inset-0 bg-navy/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-                        
-                        <div className="flex-grow grid grid-cols-2 gap-3 w-full">
-                          <div className="space-y-1">
-                            <label className="text-[8px] uppercase font-bold text-gold/30">Nome da Cor/Tipo</label>
+                    {(formProduct.customizationLists || []).map((list, index) => (
+                      <div key={list.id} className="bg-navy p-4 rounded-2xl border border-gold/5 space-y-4">
+                        <div className="flex justify-between gap-4">
+                          <div className="flex-grow space-y-1">
+                            <label className="text-[8px] uppercase font-bold text-gold/30">Título da Lista (ex: Entremeios)</label>
                             <input 
                               type="text" 
-                              placeholder="Ex: Azul Marinho"
-                              value={v.name}
+                              placeholder="Ex: Escolha o Entremeio"
+                              value={list.title}
                               onChange={(e) => {
-                                const newVars = [...(formProduct.variations || [])];
-                                newVars[index].name = e.target.value;
-                                setFormProduct({...formProduct, variations: newVars});
+                                const newLists = [...(formProduct.customizationLists || [])];
+                                newLists[index].title = e.target.value;
+                                setFormProduct({...formProduct, customizationLists: newLists});
                               }}
-                              className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
+                              className="w-full bg-navy-light border border-gold/10 rounded-lg p-3 text-xs text-gold outline-none focus:border-gold/30"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[8px] uppercase font-bold text-gold/30">Preço (R$)</label>
-                            <input 
-                              type="number" 
-                              step="0.01"
-                              value={v.price}
-                              onChange={(e) => {
-                                const newVars = [...(formProduct.variations || [])];
-                                newVars[index].price = parseFloat(e.target.value);
-                                setFormProduct({...formProduct, variations: newVars});
-                              }}
-                              className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
-                            />
-                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newLists = (formProduct.customizationLists || []).filter(item => item.id !== list.id);
+                              setFormProduct({...formProduct, customizationLists: newLists});
+                            }}
+                            className="mt-6 p-2 text-red-500/40 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
-                        
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const newVars = (formProduct.variations || []).filter(item => item.id !== v.id);
-                            setFormProduct({...formProduct, variations: newVars});
-                          }}
-                          className="p-2 text-red-500/40 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="space-y-1">
+                          <label className="text-[8px] uppercase font-bold text-gold/30">Opções (separadas por vírgula)</label>
+                          <textarea 
+                            placeholder="Ex: Sagrado Coração, São Bento, Nossa Senhora..."
+                            value={list.options}
+                            onChange={(e) => {
+                              const newLists = [...(formProduct.customizationLists || [])];
+                              newLists[index].options = e.target.value;
+                              setFormProduct({...formProduct, customizationLists: newLists});
+                            }}
+                            className="w-full bg-navy-light border border-gold/10 rounded-lg p-3 text-xs text-gold outline-none focus:border-gold/30 h-20"
+                          />
+                        </div>
                       </div>
                     ))}
-                    {(formProduct.variations || []).length === 0 && (
+                    {(formProduct.customizationLists || []).length === 0 && (
                       <p className="text-[10px] text-gold/20 italic text-center py-4 border border-dashed border-gold/5 rounded-2xl">
-                        Nenhuma variante cadastrada. O produto usará o preço e imagem padrão.
+                        Nenhuma lista de opções cadastrada. Use isto para gerenciar Entremeios e Crucifixos.
                       </p>
                     )}
                   </div>
