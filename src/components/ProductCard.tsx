@@ -11,6 +11,8 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
+
   const [customOptions, setCustomOptions] = useState({
     cor: '',
     nome: '',
@@ -19,26 +21,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   });
 
   const isMonteSeuTerco = product.isCustomizable;
-  const hasNameOption = product.hasNameOption; // Use strictly what's in the DB
+  const hasNameOption = product.hasNameOption;
   const colorList = product.availableColors 
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
   
-  // A product needs customizer if it's a special item, has name option or has specific color list
-  // If it doesn't have these, but "cor" is still required, we might still show customizer.
-  // Let's assume if it has NO specific colors and NO name option and NOT monte-seu-terco, it's a direct buy.
-  const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0;
+  const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0 || (product.variations && product.variations.length > 0);
 
   const handleDirectAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
   };
 
+  // Sync price and image with variation
+  const displayPrice = selectedVariation ? selectedVariation.price : product.price;
+  const displayImage = selectedVariation ? selectedVariation.image : product.image;
+
   const handleAddToCart = () => {
     let customName = product.name;
     const details = [];
     
-    if (customOptions.cor) details.push(`Cor: ${customOptions.cor}`);
+    if (selectedVariation) {
+      details.push(`${selectedVariation.name}`);
+    } else if (customOptions.cor) {
+      details.push(`Cor: ${customOptions.cor}`);
+    }
+
     if (customOptions.nome && hasNameOption) details.push(`Nome: ${customOptions.nome}`);
     if (isMonteSeuTerco) {
       if (customOptions.entremeio) details.push(`Entremeio: ${customOptions.entremeio}`);
@@ -49,16 +57,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       customName = `${product.name} (${details.join(', ')})`;
     }
     
-    addToCart({ ...product, name: customName });
+    addToCart({ 
+      ...product, 
+      name: customName, 
+      price: displayPrice, 
+      image: displayImage,
+      selectedVariation: selectedVariation || undefined 
+    });
+    
     setShowCustomizer(false);
     setCustomOptions({ cor: '', nome: '', entremeio: '', crucifixo: '' });
+    setSelectedVariation(null);
   };
 
   const nameLength = customOptions.nome.length;
 
   const renderMedia = () => {
-    const url = product.image;
+    const url = displayImage;
     if (!url) return <div className="w-full h-full bg-navy-light flex items-center justify-center text-gold/20"><ShoppingBag size={48} /></div>;
+    // ... (rest of renderMedia stays similar but uses displayImage)
 
     const isVideo = url.match(/\.(mp4|webm|ogg)$/i) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
 
@@ -122,7 +139,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="flex flex-col">
             <span className="text-[10px] text-gold/30 block mb-0.5 uppercase tracking-widest font-black">Investimento</span>
             <span className="text-2xl font-bold text-gold tabular-nums leading-none">
-              {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
           
@@ -169,7 +186,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
             
             <div className="space-y-8 flex-grow pb-24">
-              {/* Color Selection */}
+              {/* Variations (Shopee Style) */}
+              {(product.variations && product.variations.length > 0) && (
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                    Escolha a Variação <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {product.variations.map(v => (
+                      <button
+                        key={v.id}
+                        onClick={() => setSelectedVariation(v)}
+                        className={`p-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-3 ${
+                          selectedVariation?.id === v.id 
+                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                        }`}
+                      >
+                        <img src={v.image} className="w-10 h-10 rounded-lg object-cover" />
+                        <div className="flex flex-col items-start leading-tight">
+                          <span>{v.name}</span>
+                          <span className="text-[8px] opacity-60">{v.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Color Selection (Legacy / Additional) */}
               <div className="space-y-4">
                 <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
                   1. Escolha a Cor <span className="text-red-500">*</span>
@@ -302,16 +347,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <div className="mb-4 px-2">
                 <div className="flex justify-between items-end mb-1">
                   <span className="text-[9px] uppercase font-black text-gold/30 tracking-[0.2em]">Resumo</span>
-                  <span className="text-gold font-bold text-lg tabular-nums">{product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <span className="text-gold font-bold text-lg tabular-nums">{displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
                 <div className="text-[10px] text-gold/50 font-medium italic">
-                  {customOptions.cor ? `Cor: ${customOptions.cor}` : 'Selecione a cor...'}
+                  {selectedVariation ? `Opção: ${selectedVariation.name}` : (customOptions.cor ? `Cor: ${customOptions.cor}` : 'Selecione a cor...')}
                   {customOptions.nome && ` • Nome: ${customOptions.nome}`}
                 </div>
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={!customOptions.cor || (isMonteSeuTerco && (!customOptions.entremeio || !customOptions.crucifixo))}
+                disabled={(!selectedVariation && !customOptions.cor && colorList.length > 0) || (isMonteSeuTerco && (!customOptions.entremeio || !customOptions.crucifixo))}
                 className="w-full gold-bg-gradient text-navy py-5 rounded-[22px] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:shadow-gold/40"
               >
                 <ShoppingBag size={18} strokeWidth={2.5} />

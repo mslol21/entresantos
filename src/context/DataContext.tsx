@@ -58,7 +58,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCustomizable: p.is_customizable,
         isActive: p.is_active,
         availableColors: p.available_colors,
-        hasNameOption: p.has_name_option
+        hasNameOption: p.has_name_option,
+        variations: p.variations || []
       }));
       setProducts(mappedProducts);
 
@@ -93,7 +94,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_customizable: product.isCustomizable,
         is_active: product.isActive,
         available_colors: product.availableColors,
-        has_name_option: product.hasNameOption
+        has_name_option: product.hasNameOption,
+        variations: product.variations || []
       }])
       .select();
 
@@ -114,7 +116,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_customizable: product.isCustomizable,
         is_active: product.isActive,
         available_colors: product.availableColors,
-        has_name_option: product.hasNameOption
+        has_name_option: product.hasNameOption,
+        variations: product.variations || []
       })
       .eq('id', product.id);
 

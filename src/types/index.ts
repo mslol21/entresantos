@@ -1,3 +1,10 @@
+export type Variation = {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+}
+
 export type Product = {
   id: string;
   name: string;
@@ -8,12 +15,14 @@ export type Product = {
   subcategory?: string;
   isCustomizable?: boolean;
   isActive?: boolean;
-  availableColors?: string; // Comma separated colors
+  availableColors?: string;
   hasNameOption?: boolean;
+  variations?: Variation[];
 }
 
 export type CartItem = Product & {
   quantity: number;
+  selectedVariation?: Variation;
 }
 
 export type CartContextType = {
