@@ -9,8 +9,8 @@ export const Admin: React.FC = () => {
   const { 
     products, settings, loading, categories, globalOptions,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
-    addCategory, deleteCategory,
-    addGlobalOption, deleteGlobalOption 
+    addCategory, updateCategory, deleteCategory,
+    addGlobalOption, updateGlobalOption, deleteGlobalOption 
   } = useData();
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
