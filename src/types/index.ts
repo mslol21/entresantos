@@ -10,6 +10,7 @@ export type GlobalOption = {
   price?: number;
   image?: string;
   categoryIds?: string[];
+  type?: 'color' | 'assembly';
 }
 
 export type Variation = {
@@ -39,12 +40,12 @@ export type Product = {
   hasNameOption?: boolean;
   variations?: Variation[];
   customizationLists?: CustomizationList[];
-  selectedVariation?: Variation;
+  selectedVariation?: any;
 }
 
 export type CartItem = Product & {
   quantity: number;
-  selectedVariation?: Variation;
+  selectedVariation?: any;
 }
 
 export type CartContextType = {

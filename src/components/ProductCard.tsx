@@ -92,9 +92,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       ...product, 
       name: customName, 
       price: displayPrice, 
-      image: displayImage,
+      image: displayImage || product.image,
       selectedVariation: selectedVariation || undefined 
-    });
+    } as Product);
     
     setShowCustomizer(false);
     setCustomOptions({});

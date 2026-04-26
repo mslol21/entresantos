@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import type { Product } from '../types';
+import type { Product, GlobalOption } from '../types';
 import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
