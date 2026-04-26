@@ -454,7 +454,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 onClick={handleAddToCart}
                 disabled={
                   (!selectedVariation && !customOptions.cor && colorList.length > 0) || 
-                  (relevantAssembly.some(opt => opt.group !== 'Outros' && !customOptions[opt.group]))
+                  (relevantAssembly.some(opt => opt.group && opt.group !== 'Outros' && !customOptions[opt.group]))
                 }
                 className="w-full gold-bg-gradient text-navy py-5 rounded-[22px] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:shadow-gold/40"
               >
