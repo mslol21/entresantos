@@ -48,8 +48,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
     // Add Assembly options prices
     relevantAssembly.forEach(opt => {
-      if (customOptions[opt.id]) total += opt.price || 0;
+      if (customOptions[`${opt.group}_id`] === opt.id) {
+        total += opt.price || 0;
+      }
     });
+    // Add Name price if filled
+    if (customOptions.nome && product.namePrice) {
+      total += product.namePrice;
+    }
     return total;
   };
 
@@ -325,43 +331,48 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 )}
               </div>
 
-              {/* Global Assembly Options */}
-              {relevantAssembly.length > 0 && (
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                    Escolha as Opções <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {relevantAssembly.map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => setCustomOptions(prev => ({ ...prev, [opt.id]: opt.name }))}
-                        className={`p-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-3 ${
-                          customOptions[opt.id] === opt.name 
-                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
-                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
-                        }`}
-                      >
-                        <div className="w-10 h-10 bg-navy rounded-lg overflow-hidden flex-shrink-0 border border-gold/10">
-                          {opt.image ? (
-                            opt.image.match(/\.(mp4|webm|ogg)$/i) ? (
-                              <video src={opt.image} className="w-full h-full object-cover" />
+              {/* Grouped Assembly Options */}
+              {['Entremeio', 'Crucifixo', 'Outros'].map(groupName => {
+                const groupItems = relevantAssembly.filter(o => o.group === groupName);
+                if (groupItems.length === 0) return null;
+
+                return (
+                  <div key={groupName} className="space-y-4">
+                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                      Escolha o {groupName} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {groupItems.map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setCustomOptions(prev => ({ ...prev, [groupName]: opt.name, [`${groupName}_id`]: opt.id }))}
+                          className={`p-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-3 ${
+                            customOptions[groupName] === opt.name 
+                              ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                              : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                          }`}
+                        >
+                          <div className="w-10 h-10 bg-navy rounded-lg overflow-hidden flex-shrink-0 border border-gold/10">
+                            {opt.image ? (
+                              opt.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                                <video src={opt.image} className="w-full h-full object-cover" />
+                              ) : (
+                                <img src={opt.image} className="w-full h-full object-cover" />
+                              )
                             ) : (
-                              <img src={opt.image} className="w-full h-full object-cover" />
-                            )
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gold/10"><Check size={16} /></div>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-start leading-tight">
-                          <span>{opt.name}</span>
-                          {opt.price && opt.price > 0 && <span className="text-[8px] opacity-60">+ R$ {opt.price.toFixed(2)}</span>}
-                        </div>
-                      </button>
-                    ))}
+                              <div className="w-full h-full flex items-center justify-center text-gold/10"><Check size={16} /></div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-start leading-tight">
+                            <span>{opt.name}</span>
+                            {opt.price && opt.price > 0 && <span className="text-[8px] opacity-60">+ R$ {opt.price.toFixed(2)}</span>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })}
 
               {/* Dynamic Customization Lists (Legacy) */}
               {(!relevantAssembly.length && product.customizationLists) && product.customizationLists.map((list) => (
@@ -391,7 +402,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                      Nome na Peça <span className="text-gold/20 font-normal">(Opcional)</span>
+                      Nome na Peça {product.namePrice && product.namePrice > 0 && <span className="text-gold/60">(+ R$ {product.namePrice.toFixed(2)})</span>}
                     </label>
                     <span className={`text-[10px] font-black tracking-tighter ${nameLength > 10 ? 'text-red-500' : 'text-gold/40'}`}>
                       {nameLength}/10
@@ -433,8 +444,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   <span className="text-gold font-bold text-lg tabular-nums">{displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
                 <div className="text-[10px] text-gold/50 font-medium italic">
-                  {selectedVariation ? `Opção: ${selectedVariation.name}` : (customOptions.cor ? `Cor: ${customOptions.cor}` : 'Selecione a cor...')}
+                  {customOptions.cor ? `Cor: ${customOptions.cor}` : (selectedVariation ? `Opção: ${selectedVariation.name}` : 'Selecione a cor...')}
                   {customOptions.nome && ` • Nome: ${customOptions.nome}`}
+                  {['Entremeio', 'Crucifixo', 'Outros'].map(g => customOptions[g] && ` • ${g}: ${customOptions[g]}`)}
                   {product.customizationLists?.map(list => customOptions[list.id] && ` • ${list.title}: ${customOptions[list.id]}`)}
                 </div>
               </div>
@@ -442,7 +454,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 onClick={handleAddToCart}
                 disabled={
                   (!selectedVariation && !customOptions.cor && colorList.length > 0) || 
-                  (product.customizationLists?.some(list => !customOptions[list.id]))
+                  (relevantAssembly.some(opt => opt.group !== 'Outros' && !customOptions[opt.group]))
                 }
                 className="w-full gold-bg-gradient text-navy py-5 rounded-[22px] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:shadow-gold/40"
               >

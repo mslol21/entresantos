@@ -61,6 +61,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isActive: p.is_active,
         availableColors: p.available_colors,
         hasNameOption: p.has_name_option,
+        namePrice: p.name_price,
         variations: p.variations || [],
         customizationLists: p.customization_lists || []
       }));
@@ -90,7 +91,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Fetch Global Options
       const { data: optData } = await supabase.from('global_options').select('*').order('name');
-      setGlobalOptions(optData || []);
+      const mappedOptions = (optData || []).map(o => ({
+        ...o,
+        categoryIds: o.category_ids || []
+      }));
+      setGlobalOptions(mappedOptions);
 
       setLoading(false);
     }
@@ -111,7 +116,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         available_colors: product.availableColors,
         has_name_option: product.hasNameOption,
         variations: product.variations || [],
-        customization_lists: product.customizationLists || []
+        customization_lists: product.customizationLists || [],
+        name_price: product.namePrice
       }])
       .select();
 
@@ -134,7 +140,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         available_colors: product.availableColors,
         has_name_option: product.hasNameOption,
         variations: product.variations || [],
-        customization_lists: product.customizationLists || []
+        customization_lists: product.customizationLists || [],
+        name_price: product.namePrice
       })
       .eq('id', product.id);
 
@@ -204,19 +211,36 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addGlobalOption = async (option: Partial<GlobalOption>) => {
+    const dbOption = {
+      ...option,
+      category_ids: option.categoryIds
+    };
+    delete (dbOption as any).categoryIds;
+
     const { data, error } = await supabase
       .from('global_options')
-      .insert([option])
+      .insert([dbOption])
       .select();
+    
     if (error) console.error(error);
-    if (data) setGlobalOptions([...globalOptions, data[0]]);
+    if (data) {
+      const mapped = { ...data[0], categoryIds: data[0].category_ids };
+      setGlobalOptions([...globalOptions, mapped]);
+    }
   };
 
   const updateGlobalOption = async (option: GlobalOption) => {
+    const dbOption = {
+      ...option,
+      category_ids: option.categoryIds
+    };
+    delete (dbOption as any).categoryIds;
+
     const { error } = await supabase
       .from('global_options')
-      .update(option)
+      .update(dbOption)
       .eq('id', option.id);
+    
     if (error) console.error(error);
     setGlobalOptions(globalOptions.map(o => o.id === option.id ? option : o));
   };

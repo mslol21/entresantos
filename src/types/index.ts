@@ -10,6 +10,7 @@ export type GlobalOption = {
   price?: number;
   image?: string;
   categoryIds?: string[];
+  group?: string; // e.g., 'Entremeio', 'Crucifixo'
 }
 
 export type Variation = {
@@ -37,6 +38,7 @@ export type Product = {
   isActive?: boolean;
   availableColors?: string;
   hasNameOption?: boolean;
+  namePrice?: number;
   variations?: Variation[];
   customizationLists?: CustomizationList[];
   selectedVariation?: any;

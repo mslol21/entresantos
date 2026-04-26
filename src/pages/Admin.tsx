@@ -61,7 +61,8 @@ export const Admin: React.FC = () => {
     name: '',
     price: 0,
     image: '',
-    categoryIds: []
+    categoryIds: [],
+    group: 'Entremeio'
   });
 
   useEffect(() => {
@@ -458,6 +459,21 @@ export const Admin: React.FC = () => {
                         </div>
                       </div>
 
+                      {activeTab === 'options' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-gold/40">Grupo / Tipo de Peça</label>
+                          <select 
+                            value={formOption.group}
+                            onChange={(e) => setFormOption({...formOption, group: e.target.value})}
+                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none"
+                          >
+                            <option value="Entremeio">Entremeio</option>
+                            <option value="Crucifixo">Crucifixo</option>
+                            <option value="Outros">Outros</option>
+                          </select>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-gold/40 block">Vincular às Categorias:</label>
                         <div className="flex flex-wrap gap-2">
@@ -520,6 +536,7 @@ export const Admin: React.FC = () => {
                             <div className="text-gold font-bold text-xs">{o.name}</div>
                             {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
                             <div className="flex flex-wrap gap-1 mt-1">
+                              {o.group && <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 uppercase">{o.group}</span>}
                               {o.categoryIds?.map(cid => (
                                 <span key={cid} className="text-[8px] bg-gold/10 px-1.5 py-0.5 rounded text-gold/40">{categories.find(c => c.id === cid)?.name}</span>
                               ))}
@@ -741,15 +758,29 @@ export const Admin: React.FC = () => {
 
 
                 <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gold/10">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={formProduct.hasNameOption}
-                      onChange={(e) => setFormProduct({...formProduct, hasNameOption: e.target.checked})}
-                      className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                    />
-                    <span className="text-sm font-medium">Permitir Nome Personalizado</span>
-                  </label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={formProduct.hasNameOption}
+                        onChange={(e) => setFormProduct({...formProduct, hasNameOption: e.target.checked})}
+                        className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
+                      />
+                      <span className="text-sm font-medium">Permitir Nome</span>
+                    </label>
+                    {formProduct.hasNameOption && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-[9px] uppercase font-bold text-gold/40">Custo:</label>
+                        <input 
+                          type="number" step="0.01"
+                          placeholder="0.00"
+                          value={formProduct.namePrice}
+                          onChange={(e) => setFormProduct({...formProduct, namePrice: parseFloat(e.target.value)})}
+                          className="w-20 bg-navy border border-gold/20 rounded-lg p-1.5 text-gold text-xs outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
