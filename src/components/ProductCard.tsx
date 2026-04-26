@@ -36,15 +36,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // Price Calculation: Base + Variation Add-on + Assembly Add-ons
   const getBasePrice = () => {
     // If it's a legacy variation (Variation type), it usually replaces the price
-    if (selectedVariation && !('type' in selectedVariation)) return selectedVariation.price;
+    if (selectedVariation && !('type' in (selectedVariation as any))) return (selectedVariation as any).price || 0;
     return product.price;
   };
 
   const getAddonsPrice = () => {
     let total = 0;
     // Add Global Color price if selected
-    if (selectedVariation && 'type' in selectedVariation) {
-      total += selectedVariation.price || 0;
+    if (selectedVariation && 'type' in (selectedVariation as any)) {
+      total += (selectedVariation as any).price || 0;
     }
     // Add Assembly options prices
     relevantAssembly.forEach(opt => {

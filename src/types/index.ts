@@ -10,7 +10,6 @@ export type GlobalOption = {
   price?: number;
   image?: string;
   categoryIds?: string[];
-  type?: 'color' | 'assembly';
 }
 
 export type Variation = {
