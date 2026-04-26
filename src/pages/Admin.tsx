@@ -400,43 +400,82 @@ export const Admin: React.FC = () => {
                       {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">URL da Imagem ou Vídeo</label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" required
-                        placeholder="Link ou faça o upload ao lado"
-                        value={formProduct.image}
-                        onChange={(e) => setFormProduct({...formProduct, image: e.target.value})}
-                        className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                      />
-                      <div className="relative">
-                        <input 
-                          id="file-upload"
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*,video/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              try {
-                                const url = await uploadFile(file);
-                                setFormProduct({...formProduct, image: url});
-                              } catch (err) {
-                                alert('Erro ao fazer upload. Verifique se o bucket "products" foi criado na Supabase.');
-                                console.error(err);
-                              }
-                            }
-                          }}
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => document.getElementById('file-upload')?.click()}
-                          className="h-full bg-gold/10 hover:bg-gold/20 border border-gold/20 rounded-xl px-6 py-3 text-gold transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-                        >
-                          <Plus size={16} />
-                          <span className="text-xs font-black uppercase tracking-widest">Anexar</span>
-                        </button>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia do Produto (Imagem ou Vídeo)</label>
+                    <div className="flex flex-col md:flex-row gap-4 items-start">
+                      {/* Preview Area */}
+                      <div className="w-full md:w-40 h-40 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
+                        {formProduct.image ? (
+                          <>
+                            {formProduct.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <video src={formProduct.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={formProduct.image} className="w-full h-full object-cover" />
+                            )}
+                            <div className="absolute inset-0 bg-navy/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button 
+                                type="button"
+                                onClick={() => setFormProduct({...formProduct, image: ''})}
+                                className="bg-red-500 text-white p-2 rounded-full hover:scale-110 transition-transform"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gold/20">
+                            <ShoppingBag size={32} strokeWidth={1} />
+                            <span className="text-[10px] font-bold uppercase">Sem Mídia</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload Controls */}
+                      <div className="flex-grow space-y-4 w-full">
+                        <div className="flex gap-2">
+                          <div className="relative flex-grow">
+                            <input 
+                              id="file-upload"
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*,video/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  try {
+                                    const url = await uploadFile(file);
+                                    setFormProduct({...formProduct, image: url});
+                                  } catch (err) {
+                                    alert('Erro ao fazer upload. Verifique se o bucket "products" foi criado na Supabase.');
+                                    console.error(err);
+                                  }
+                                }
+                              }}
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => document.getElementById('file-upload')?.click()}
+                              className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-gold/20 hover:scale-[1.02] transition-all"
+                            >
+                              <Plus size={18} strokeWidth={2.5} />
+                              Carregar do Dispositivo
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[9px] uppercase font-bold text-gold/20 block">Ou insira um link manual:</label>
+                          <input 
+                            type="text" 
+                            placeholder="https://exemplo.com/imagem.jpg"
+                            value={formProduct.image}
+                            onChange={(e) => setFormProduct({...formProduct, image: e.target.value})}
+                            className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px] outline-none focus:border-gold/40 transition-all font-mono"
+                          />
+                        </div>
+                        <p className="text-[9px] text-gold/30 italic leading-relaxed">
+                          Dica: Use vídeos curtos para dar mais vida ao catálogo. O sistema aceita links diretos ou arquivos locais.
+                        </p>
                       </div>
                     </div>
                   </div>
