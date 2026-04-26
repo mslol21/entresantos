@@ -85,8 +85,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     // Add relevant assembly options
     relevantAssembly.forEach(opt => {
-      if (customOptions[opt.id]) {
-        details.push(`${opt.name}`);
+      if (opt.group && customOptions[`${opt.group}_id`] === opt.id) {
+        details.push(`${opt.group}: ${opt.name}`);
       }
     });
 
