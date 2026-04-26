@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Minus, Plus, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
-import { COMPANY_DATA } from '../data';
 
 interface CartDrawerProps {
   isOpen: boolean;

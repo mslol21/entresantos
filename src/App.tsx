@@ -8,7 +8,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { FixedFooter } from './components/FixedFooter';
 import { Admin } from './pages/Admin';
 import { useData } from './context/DataContext';
-import { MessageCircle, Globe, MapPin, Phone, Lock } from 'lucide-react';
+import { MapPin, Phone, Lock } from 'lucide-react';
 
 function Store() {
   const [isCartOpen, setIsCartOpen] = useState(false);
