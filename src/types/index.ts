@@ -1,3 +1,16 @@
+export type Category = {
+  id: string;
+  name: string;
+}
+
+export type GlobalOption = {
+  id: string;
+  type: 'color' | 'assembly';
+  name: string;
+  price?: number;
+  image?: string;
+}
+
 export type Variation = {
   id: string;
   name: string;
@@ -41,6 +54,15 @@ export type CartContextType = {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+}
+
+export type ShopSettings = {
+  name: string;
+  whatsapp: string;
+  niche: string;
+  instagram: string;
+  tiktok: string;
+  slogan: string;
 }
 
 // Dummy export to ensure this is treated as a module with values if needed

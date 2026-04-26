@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import type { Product } from '../types';
-import { CATEGORIES } from '../data';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Admin: React.FC = () => {
-  const { products, settings, loading, addProduct, updateProduct, deleteProduct, updateSettings, uploadFile } = useData();
-  const [activeTab, setActiveTab] = useState<'products' | 'settings'>('products');
+  const { 
+    products, settings, loading, categories, globalOptions,
+    addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
+    addCategory, updateCategory, deleteCategory,
+    addGlobalOption, updateGlobalOption, deleteGlobalOption 
+  } = useData();
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   
@@ -42,7 +46,7 @@ export const Admin: React.FC = () => {
     description: '',
     price: 0,
     image: '',
-    category: CATEGORIES[0].id,
+    category: '',
     subcategory: 'Todos',
     isCustomizable: false,
     isActive: true,
@@ -53,6 +57,12 @@ export const Admin: React.FC = () => {
   });
 
   const [formSettings, setFormSettings] = useState(settings);
+
+  useEffect(() => {
+    if (categories.length > 0 && !formProduct.category) {
+      setFormProduct(prev => ({ ...prev, category: categories[0].id }));
+    }
+  }, [categories]);
 
   useEffect(() => {
     if (settings) {
@@ -153,6 +163,27 @@ export const Admin: React.FC = () => {
               <span className="font-bold text-sm">Produtos</span>
             </button>
             <button 
+              onClick={() => setActiveTab('colors')}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+            >
+              <Palette size={20} />
+              <span className="font-bold text-sm">Cores</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('categories')}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+            >
+              <Grid size={20} />
+              <span className="font-bold text-sm">Categorias</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('options')}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'options' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+            >
+              <Wrench size={20} />
+              <span className="font-bold text-sm">Opções (Montagem)</span>
+            </button>
+            <button 
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
             >
@@ -169,16 +200,34 @@ export const Admin: React.FC = () => {
 
         {/* Mobile Header Navigation */}
         <div className="md:hidden fixed top-0 left-0 right-0 bg-navy-light border-b border-gold/10 z-40 p-4 flex items-center justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1 pr-4">
             <button 
               onClick={() => setActiveTab('products')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Produtos
             </button>
             <button 
+              onClick={() => setActiveTab('colors')}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Cores
+            </button>
+            <button 
+              onClick={() => setActiveTab('categories')}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Categorias
+            </button>
+            <button 
+              onClick={() => setActiveTab('options')}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'options' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Opções
+            </button>
+            <button 
               onClick={() => setActiveTab('settings')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Ajustes
             </button>
@@ -276,6 +325,100 @@ export const Admin: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            ) : activeTab === 'categories' ? (
+              <div className="space-y-8">
+                <div>
+                  <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Categorias</h1>
+                  <p className="text-gold/40 text-sm">Organize seu catálogo em seções.</p>
+                </div>
+
+                <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 max-w-xl shadow-2xl">
+                  <div className="space-y-4">
+                    <div className="flex gap-4">
+                      <input 
+                        id="new-category"
+                        type="text" 
+                        placeholder="Nome da nova categoria"
+                        className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
+                      />
+                      <button 
+                        onClick={() => {
+                          const input = document.getElementById('new-category') as HTMLInputElement;
+                          if (input.value) {
+                            addCategory(input.value);
+                            input.value = '';
+                          }
+                        }}
+                        className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-gold/5">
+                      {categories.map(c => (
+                        <div key={c.id} className="py-4 flex justify-between items-center group">
+                          <span className="text-gold/80 font-bold">{c.name}</span>
+                          <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (activeTab === 'colors' || activeTab === 'options') ? (
+              <div className="space-y-8">
+                <div>
+                  <h1 className="text-3xl font-serif font-bold mb-1 text-gold">
+                    {activeTab === 'colors' ? 'Cadastro de Cores/Materiais' : 'Opções de Montagem'}
+                  </h1>
+                  <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser usadas em diversos produtos.</p>
+                </div>
+
+                <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 shadow-2xl">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <input id="opt-name" type="text" placeholder="Nome (Ex: Cristal Azul)" className="bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm" />
+                    <div className="flex gap-2">
+                      <input id="opt-price" type="number" step="0.01" placeholder="Preço Adicional (Opcional)" className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm" />
+                      <button 
+                        onClick={async () => {
+                          const name = (document.getElementById('opt-name') as HTMLInputElement).value;
+                          const price = parseFloat((document.getElementById('opt-price') as HTMLInputElement).value) || 0;
+                          if (name) {
+                            addGlobalOption({ 
+                              id: Math.random().toString(36).substr(2, 9),
+                              name, 
+                              price, 
+                              type: activeTab === 'colors' ? 'color' : 'assembly' 
+                            });
+                            (document.getElementById('opt-name') as HTMLInputElement).value = '';
+                            (document.getElementById('opt-price') as HTMLInputElement).value = '';
+                          }
+                        }}
+                        className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm"
+                      >
+                        Cadastrar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {globalOptions.filter(o => o.type === (activeTab === 'colors' ? 'color' : 'assembly')).map(o => (
+                      <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex justify-between items-center group">
+                        <div>
+                          <div className="text-gold font-bold text-sm">{o.name}</div>
+                          {o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
+                        </div>
+                        <button onClick={() => deleteGlobalOption(o.id)} className="p-2 text-red-500/40 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -399,7 +542,7 @@ export const Admin: React.FC = () => {
                       onChange={(e) => setFormProduct({...formProduct, category: e.target.value})}
                       className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
                     >
-                      {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2 md:col-span-2">

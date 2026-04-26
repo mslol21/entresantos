@@ -1,18 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { ProductCard } from './ProductCard';
-import { CATEGORIES } from '../data';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter } from 'lucide-react';
 
 export const ProductGrid: React.FC = () => {
-  const { products } = useData();
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
+  const { products, categories } = useData();
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('Todos');
 
+  // Set initial category when categories load
+  React.useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories]);
+
   const categoriesWithSub = useMemo(() => {
-    return CATEGORIES.find(c => c.id === selectedCategory);
-  }, [selectedCategory]);
+    return categories.find(c => c.id === selectedCategory);
+  }, [selectedCategory, categories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -34,7 +40,7 @@ export const ProductGrid: React.FC = () => {
           
           {/* Categorias Principais */}
           <div className="flex flex-wrap gap-2 mb-8">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => {
