@@ -64,6 +64,7 @@ export const Admin: React.FC = () => {
     categoryIds: [],
     group: 'Entremeio'
   });
+  const [editingOption, setEditingOption] = useState<GlobalOption | null>(null);
 
   useEffect(() => {
     if (categories.length > 0 && !formProduct.category) {
@@ -499,21 +500,44 @@ export const Admin: React.FC = () => {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={async () => {
-                          if (formOption.name) {
-                            addGlobalOption({ 
-                              ...formOption,
-                              id: Math.random().toString(36).substr(2, 9),
-                              type: activeTab === 'colors' ? 'color' : 'assembly' 
-                            });
-                            setFormOption({ name: '', price: 0, image: '', categoryIds: [] });
-                          }
-                        }}
-                        className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold text-sm shadow-lg shadow-gold/20"
-                      >
-                        Cadastrar Opção Global
-                      </button>
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={async () => {
+                            if (!formOption.name) return;
+                            
+                            if (editingOption) {
+                              updateGlobalOption({
+                                ...editingOption,
+                                ...formOption,
+                                type: activeTab === 'colors' ? 'color' : 'assembly'
+                              });
+                              setEditingOption(null);
+                            } else {
+                              addGlobalOption({ 
+                                ...formOption,
+                                id: Math.random().toString(36).substr(2, 9),
+                                type: activeTab === 'colors' ? 'color' : 'assembly' 
+                              });
+                            }
+                            setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
+                          }}
+                          className="flex-grow gold-bg-gradient text-navy py-4 rounded-xl font-bold text-sm shadow-lg shadow-gold/20"
+                        >
+                          {editingOption ? 'Salvar Alterações' : 'Cadastrar Opção Global'}
+                        </button>
+                        
+                        {editingOption && (
+                          <button 
+                            onClick={() => {
+                              setEditingOption(null);
+                              setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
+                            }}
+                            className="px-6 bg-navy border border-gold/20 text-gold rounded-xl font-bold text-sm"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -532,7 +556,7 @@ export const Admin: React.FC = () => {
                           )}
                         </div>
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-grow">
                             <div className="text-gold font-bold text-xs">{o.name}</div>
                             {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -542,9 +566,30 @@ export const Admin: React.FC = () => {
                               ))}
                             </div>
                           </div>
-                          <button onClick={() => deleteGlobalOption(o.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-all">
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setEditingOption(o);
+                                setFormOption({
+                                  name: o.name,
+                                  price: o.price || 0,
+                                  image: o.image || '',
+                                  categoryIds: o.categoryIds || [],
+                                  group: o.group
+                                });
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="text-gold/40 hover:text-gold p-1 transition-all"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => deleteGlobalOption(o.id)} 
+                              className="text-red-500/40 hover:text-red-500 p-1 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
