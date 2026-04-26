@@ -70,7 +70,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     setSelectedVariation(null);
   };
 
-  const nameLength = customOptions.nome.length;
+  const nameLength = (customOptions.nome || '').length;
 
   const renderMedia = () => {
     const url = displayImage;

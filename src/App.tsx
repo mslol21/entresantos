@@ -41,7 +41,7 @@ function Store() {
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 border border-gold rounded-full flex items-center justify-center text-gold font-serif text-sm">
-                  {settings.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  {(settings?.name || 'ES').split(' ').map(n => n?.[0] || '').join('').slice(0, 2)}
                 </div>
                 <div className="flex flex-col">
                   <span className="font-serif font-bold text-lg leading-none uppercase tracking-wider">

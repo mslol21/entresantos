@@ -123,7 +123,7 @@ export const Admin: React.FC = () => {
       addProduct(formProduct as Product);
       setIsAdding(false);
     }
-    setFormProduct({ name: '', description: '', price: 0, image: '', category: CATEGORIES[0].id, subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true });
+    setFormProduct({ name: '', description: '', price: 0, image: '', category: CATEGORIES[0].id, subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
   };
 
   const startEdit = (product: Product) => {
