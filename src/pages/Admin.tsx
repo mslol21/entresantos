@@ -9,8 +9,8 @@ export const Admin: React.FC = () => {
   const { 
     products, settings, loading, categories, globalOptions,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
-    addCategory, updateCategory, deleteCategory,
-    addGlobalOption, updateGlobalOption, deleteGlobalOption 
+    addCategory, deleteCategory,
+    addGlobalOption, deleteGlobalOption 
   } = useData();
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -133,7 +133,7 @@ export const Admin: React.FC = () => {
       addProduct(formProduct as Product);
       setIsAdding(false);
     }
-    setFormProduct({ name: '', description: '', price: 0, image: '', category: CATEGORIES[0].id, subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
+    setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
   };
 
   const startEdit = (product: Product) => {
@@ -411,7 +411,7 @@ export const Admin: React.FC = () => {
                       <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex justify-between items-center group">
                         <div>
                           <div className="text-gold font-bold text-sm">{o.name}</div>
-                          {o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
+                          {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
                         </div>
                         <button onClick={() => deleteGlobalOption(o.id)} className="p-2 text-red-500/40 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                           <Trash2 size={16} />

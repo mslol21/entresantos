@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { ProductCard } from './ProductCard';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter } from 'lucide-react';
 
 export const ProductGrid: React.FC = () => {
   const { products, categories } = useData();
@@ -58,32 +57,6 @@ export const ProductGrid: React.FC = () => {
             ))}
           </div>
 
-          {/* Subcategorias */}
-          {categoriesWithSub && categoriesWithSub.subcategories.length > 1 && (
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex flex-wrap gap-2 p-4 bg-navy-light/50 rounded-2xl border border-gold/5"
-            >
-              <div className="flex items-center gap-2 mr-2 text-gold/40 text-xs uppercase font-bold tracking-widest">
-                <Filter size={14} />
-                Filtro:
-              </div>
-              {categoriesWithSub.subcategories.map((sub) => (
-                <button
-                  key={sub}
-                  onClick={() => setSelectedSubcategory(sub)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                    selectedSubcategory === sub
-                      ? 'bg-gold/20 text-gold border border-gold/30'
-                      : 'text-gold/40 hover:text-gold/70'
-                  }`}
-                >
-                  {sub}
-                </button>
-              ))}
-            </motion.div>
-          )}
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-10">
