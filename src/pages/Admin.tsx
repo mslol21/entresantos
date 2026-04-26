@@ -737,6 +737,7 @@ export const Admin: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </div>
 
 
                 <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gold/10">
