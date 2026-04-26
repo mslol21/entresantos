@@ -15,10 +15,6 @@ export const ProductGrid: React.FC = () => {
     }
   }, [categories]);
 
-  const categoriesWithSub = useMemo(() => {
-    return categories.find(c => c.id === selectedCategory);
-  }, [selectedCategory, categories]);
-
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchStatus = product.isActive !== false;
