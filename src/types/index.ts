@@ -9,6 +9,7 @@ export type GlobalOption = {
   name: string;
   price?: number;
   image?: string;
+  categoryIds?: string[];
 }
 
 export type Variation = {

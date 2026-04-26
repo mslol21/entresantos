@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Settings2, Check, X, ShoppingBag } from 'lucide-react';
-import type { Product, Variation } from '../types';
+import type { Product, Variation, GlobalOption } from '../types';
 import { useCart } from '../context/CartContext';
+import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductCardProps {
@@ -10,10 +11,14 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const { globalOptions } = useData();
   const [showCustomizer, setShowCustomizer] = useState(false);
-  const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<Variation | GlobalOption | null>(null);
 
   const [customOptions, setCustomOptions] = useState<Record<string, string>>({});
+
+  const relevantColors = globalOptions.filter(o => o.type === 'color' && o.categoryIds?.includes(product.category || ''));
+  const relevantAssembly = globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || ''));
 
   const isMonteSeuTerco = product.isCustomizable;
   const hasNameOption = product.hasNameOption;
@@ -21,15 +26,34 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
   
-  const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0 || (product.variations && product.variations.length > 0);
+  const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0 || (product.variations && product.variations.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
 
   const handleDirectAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
   };
 
-  // Sync price and image with variation
-  const displayPrice = selectedVariation ? selectedVariation.price : product.price;
+  // Price Calculation: Base + Variation Add-on + Assembly Add-ons
+  const getBasePrice = () => {
+    // If it's a legacy variation (Variation type), it usually replaces the price
+    if (selectedVariation && !('type' in selectedVariation)) return selectedVariation.price;
+    return product.price;
+  };
+
+  const getAddonsPrice = () => {
+    let total = 0;
+    // Add Global Color price if selected
+    if (selectedVariation && 'type' in selectedVariation) {
+      total += selectedVariation.price || 0;
+    }
+    // Add Assembly options prices
+    relevantAssembly.forEach(opt => {
+      if (customOptions[opt.id]) total += opt.price || 0;
+    });
+    return total;
+  };
+
+  const displayPrice = getBasePrice() + getAddonsPrice();
   const displayImage = selectedVariation ? selectedVariation.image : product.image;
 
   const handleAddToCart = () => {
@@ -52,6 +76,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         }
       });
     }
+
+    // Add relevant assembly options
+    relevantAssembly.forEach(opt => {
+      if (customOptions[opt.id]) {
+        details.push(`${opt.name}`);
+      }
+    });
 
     if (details.length > 0) {
       customName = `${product.name} (${details.join(', ')})`;
@@ -186,8 +217,50 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
             
             <div className="space-y-8 flex-grow pb-24">
-              {/* Variations (Shopee Style) */}
-              {(product.variations && product.variations.length > 0) && (
+              {/* Global Colors (Library) */}
+              {relevantColors.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                    Cores / Materiais <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {relevantColors.map(v => (
+                      <button
+                        key={v.id}
+                        onClick={() => setSelectedVariation(v)}
+                        className={`p-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-3 ${
+                          selectedVariation?.id === v.id 
+                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                        }`}
+                      >
+                        <div className="w-12 h-12 bg-navy rounded-lg overflow-hidden flex-shrink-0 border border-gold/10">
+                          {v.image ? (
+                            v.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <video src={v.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={v.image} className="w-full h-full object-cover" />
+                            )
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gold/10"><ShoppingBag size={16} /></div>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start leading-tight">
+                          <span>{v.name}</span>
+                          {v.price && v.price > 0 && (
+                            <span className="text-[8px] opacity-60">
+                              + {(v.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Old Variations Section (Hidden if Global Colors exist to avoid redundancy) */}
+              {(!relevantColors.length && product.variations && product.variations.length > 0) && (
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
                     Escolha a Variação <span className="text-red-500">*</span>
@@ -252,8 +325,46 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 )}
               </div>
 
-              {/* Dynamic Customization Lists */}
-              {product.customizationLists?.map((list) => (
+              {/* Global Assembly Options */}
+              {relevantAssembly.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                    Escolha as Opções <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {relevantAssembly.map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setCustomOptions(prev => ({ ...prev, [opt.id]: opt.name }))}
+                        className={`p-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-3 ${
+                          customOptions[opt.id] === opt.name 
+                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                        }`}
+                      >
+                        <div className="w-10 h-10 bg-navy rounded-lg overflow-hidden flex-shrink-0 border border-gold/10">
+                          {opt.image ? (
+                            opt.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <video src={opt.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={opt.image} className="w-full h-full object-cover" />
+                            )
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gold/10"><Check size={16} /></div>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start leading-tight">
+                          <span>{opt.name}</span>
+                          {opt.price && opt.price > 0 && <span className="text-[8px] opacity-60">+ R$ {opt.price.toFixed(2)}</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Customization Lists (Legacy) */}
+              {(!relevantAssembly.length && product.customizationLists) && product.customizationLists.map((list) => (
                 <div key={list.id} className="space-y-4">
                   <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
                     {list.title} <span className="text-red-500">*</span>

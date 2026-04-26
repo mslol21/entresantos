@@ -57,6 +57,12 @@ export const Admin: React.FC = () => {
   });
 
   const [formSettings, setFormSettings] = useState(settings);
+  const [formOption, setFormOption] = useState<Partial<GlobalOption>>({
+    name: '',
+    price: 0,
+    image: '',
+    categoryIds: []
+  });
 
   useEffect(() => {
     if (categories.length > 0 && !formProduct.category) {
@@ -376,46 +382,153 @@ export const Admin: React.FC = () => {
                   <h1 className="text-3xl font-serif font-bold mb-1 text-gold">
                     {activeTab === 'colors' ? 'Cadastro de Cores/Materiais' : 'Opções de Montagem'}
                   </h1>
-                  <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser usadas em diversos produtos.</p>
+                  <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser anexadas a categorias inteiras.</p>
                 </div>
 
                 <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 shadow-2xl">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <input id="opt-name" type="text" placeholder="Nome (Ex: Cristal Azul)" className="bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm" />
-                    <div className="flex gap-2">
-                      <input id="opt-price" type="number" step="0.01" placeholder="Preço Adicional (Opcional)" className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    {/* Media Upload Area */}
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia da Opção (Imagem ou Vídeo)</label>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-32 h-32 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
+                          {formOption.image ? (
+                            <>
+                              {formOption.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                                <video src={formOption.image} className="w-full h-full object-cover" />
+                              ) : (
+                                <img src={formOption.image} className="w-full h-full object-cover" />
+                              )}
+                            </>
+                          ) : (
+                            <Palette size={32} className="text-gold/10" />
+                          )}
+                        </div>
+                        <div className="flex-grow space-y-2">
+                          <input 
+                            id="opt-file-upload" type="file" className="hidden" accept="image/*,video/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const url = await uploadFile(file);
+                                setFormOption({...formOption, image: url});
+                              }
+                            }}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => document.getElementById('opt-file-upload')?.click()}
+                            className="w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest"
+                          >
+                            Anexar Arquivo
+                          </button>
+                          <input 
+                            type="text" 
+                            placeholder="Link manual (opcional)"
+                            value={formOption.image}
+                            onChange={(e) => setFormOption({...formOption, image: e.target.value})}
+                            className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Data Fields Area */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Opção</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: Cristal Azul"
+                            value={formOption.name}
+                            onChange={(e) => setFormOption({...formOption, name: e.target.value})}
+                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-gold/40">Preço Adicional</label>
+                          <input 
+                            type="number" 
+                            step="0.01"
+                            value={formOption.price}
+                            onChange={(e) => setFormOption({...formOption, price: parseFloat(e.target.value)})}
+                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-gold/40 block">Vincular às Categorias:</label>
+                        <div className="flex flex-wrap gap-2">
+                          {categories.map(cat => (
+                            <label key={cat.id} className="flex items-center gap-2 bg-navy border border-gold/10 px-3 py-2 rounded-lg cursor-pointer hover:border-gold/30 transition-all">
+                              <input 
+                                type="checkbox"
+                                checked={formOption.categoryIds?.includes(cat.id)}
+                                onChange={(e) => {
+                                  const ids = [...(formOption.categoryIds || [])];
+                                  if (e.target.checked) ids.push(cat.id);
+                                  else {
+                                    const idx = ids.indexOf(cat.id);
+                                    if (idx > -1) ids.splice(idx, 1);
+                                  }
+                                  setFormOption({...formOption, categoryIds: ids});
+                                }}
+                                className="w-3 h-3 rounded border-gold/20 bg-navy text-gold"
+                              />
+                              <span className="text-[10px] font-bold text-gold/60">{cat.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
                       <button 
                         onClick={async () => {
-                          const name = (document.getElementById('opt-name') as HTMLInputElement).value;
-                          const price = parseFloat((document.getElementById('opt-price') as HTMLInputElement).value) || 0;
-                          if (name) {
+                          if (formOption.name) {
                             addGlobalOption({ 
+                              ...formOption,
                               id: Math.random().toString(36).substr(2, 9),
-                              name, 
-                              price, 
                               type: activeTab === 'colors' ? 'color' : 'assembly' 
                             });
-                            (document.getElementById('opt-name') as HTMLInputElement).value = '';
-                            (document.getElementById('opt-price') as HTMLInputElement).value = '';
+                            setFormOption({ name: '', price: 0, image: '', categoryIds: [] });
                           }
                         }}
-                        className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm"
+                        className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold text-sm shadow-lg shadow-gold/20"
                       >
-                        Cadastrar
+                        Cadastrar Opção Global
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {globalOptions.filter(o => o.type === (activeTab === 'colors' ? 'color' : 'assembly')).map(o => (
-                      <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex justify-between items-center group">
-                        <div>
-                          <div className="text-gold font-bold text-sm">{o.name}</div>
-                          {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
+                      <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col gap-3 group">
+                        <div className="w-full aspect-square bg-navy-light rounded-xl overflow-hidden border border-gold/10">
+                          {o.image ? (
+                            o.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <video src={o.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={o.image} className="w-full h-full object-cover" />
+                            )
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gold/10"><Palette size={24} /></div>
+                          )}
                         </div>
-                        <button onClick={() => deleteGlobalOption(o.id)} className="p-2 text-red-500/40 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-gold font-bold text-xs">{o.name}</div>
+                            {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {o.categoryIds?.map(cid => (
+                                <span key={cid} className="text-[8px] bg-gold/10 px-1.5 py-0.5 rounded text-gold/40">{categories.find(c => c.id === cid)?.name}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <button onClick={() => deleteGlobalOption(o.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-all">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -625,190 +738,6 @@ export const Admin: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Variations Section - Moved Higher for Visibility */}
-                  <div className="pt-6 border-t border-gold/10 md:col-span-2">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-gold/60 flex items-center gap-2">
-                        <ShoppingBag size={16} /> Variantes com Foto (Estilo Shopee)
-                      </h3>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          const newVariations = [...(formProduct.variations || [])];
-                          newVariations.push({ id: Math.random().toString(36).substr(2, 9), name: '', price: formProduct.price || 0, image: formProduct.image || '' });
-                          setFormProduct({...formProduct, variations: newVariations});
-                        }}
-                        className="text-gold bg-gold/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
-                      >
-                        + Adicionar Cor/Material
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      {(formProduct.variations || []).map((v, index) => (
-                        <div key={v.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col md:flex-row gap-4 items-start md:items-center shadow-lg">
-                          <div className="relative w-16 h-16 bg-navy-light rounded-xl overflow-hidden border border-gold/10 flex-shrink-0">
-                            {v.image ? (
-                              <img src={v.image} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gold/20"><Plus size={16} /></div>
-                            )}
-                            <input 
-                              id={`var-upload-${v.id}`}
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const url = await uploadFile(file);
-                                  const newVars = [...(formProduct.variations || [])];
-                                  newVars[index].image = url;
-                                  setFormProduct({...formProduct, variations: newVars});
-                                }
-                              }}
-                            />
-                            <button 
-                              type="button"
-                              onClick={() => document.getElementById(`var-upload-${v.id}`)?.click()}
-                              className="absolute inset-0 bg-navy/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                            >
-                              <Plus size={12} />
-                            </button>
-                          </div>
-                          
-                          <div className="flex-grow grid grid-cols-2 gap-3 w-full">
-                            <div className="space-y-1">
-                              <label className="text-[8px] uppercase font-bold text-gold/30">Nome da Cor/Tipo</label>
-                              <input 
-                                type="text" 
-                                placeholder="Ex: Azul Marinho"
-                                value={v.name}
-                                onChange={(e) => {
-                                  const newVars = [...(formProduct.variations || [])];
-                                  newVars[index].name = e.target.value;
-                                  setFormProduct({...formProduct, variations: newVars});
-                                }}
-                                className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[8px] uppercase font-bold text-gold/30">Preço (R$)</label>
-                              <input 
-                                type="number" 
-                                step="0.01"
-                                value={v.price}
-                                onChange={(e) => {
-                                  const newVars = [...(formProduct.variations || [])];
-                                  newVars[index].price = parseFloat(e.target.value);
-                                  setFormProduct({...formProduct, variations: newVars});
-                                }}
-                                className="w-full bg-navy-light border border-gold/10 rounded-lg p-2 text-xs text-gold outline-none focus:border-gold/30"
-                              />
-                            </div>
-                          </div>
-                          
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const newVars = (formProduct.variations || []).filter(item => item.id !== v.id);
-                              setFormProduct({...formProduct, variations: newVars});
-                            }}
-                            className="p-2 text-red-500/40 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                      {(formProduct.variations || []).length === 0 && (
-                        <p className="text-[10px] text-gold/20 italic text-center py-4 border border-dashed border-gold/5 rounded-2xl">
-                          Nenhuma variante cadastrada. Use isto para cores com fotos e preços diferentes.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Cores Simples (Somente Texto)</label>
-                    <input 
-                      type="text"
-                      placeholder="Ex: Azul, Rosa, Branco (Se vazio, o cliente digita a cor)"
-                      value={formProduct.availableColors}
-                      onChange={(e) => setFormProduct({...formProduct, availableColors: e.target.value})}
-                      className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                    />
-                    <p className="text-[9px] text-gold/30 italic">A escolha da cor será sempre OBRIGATÓRIA para o cliente.</p>
-                  </div>
-                </div>
-
-                {/* Customization Lists (Monte seu Terço) */}
-                <div className="pt-6 border-t border-gold/10">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gold/60">Opções de Montagem (Entremeios, Crucifixos, etc.)</h3>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const newLists = [...(formProduct.customizationLists || [])];
-                        newLists.push({ id: Math.random().toString(36).substr(2, 9), title: '', options: '' });
-                        setFormProduct({...formProduct, customizationLists: newLists});
-                      }}
-                      className="text-gold bg-gold/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
-                    >
-                      + Nova Lista de Opções
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {(formProduct.customizationLists || []).map((list, index) => (
-                      <div key={list.id} className="bg-navy p-4 rounded-2xl border border-gold/5 space-y-4">
-                        <div className="flex justify-between gap-4">
-                          <div className="flex-grow space-y-1">
-                            <label className="text-[8px] uppercase font-bold text-gold/30">Título da Lista (ex: Entremeios)</label>
-                            <input 
-                              type="text" 
-                              placeholder="Ex: Escolha o Entremeio"
-                              value={list.title}
-                              onChange={(e) => {
-                                const newLists = [...(formProduct.customizationLists || [])];
-                                newLists[index].title = e.target.value;
-                                setFormProduct({...formProduct, customizationLists: newLists});
-                              }}
-                              className="w-full bg-navy-light border border-gold/10 rounded-lg p-3 text-xs text-gold outline-none focus:border-gold/30"
-                            />
-                          </div>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const newLists = (formProduct.customizationLists || []).filter(item => item.id !== list.id);
-                              setFormProduct({...formProduct, customizationLists: newLists});
-                            }}
-                            className="mt-6 p-2 text-red-500/40 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8px] uppercase font-bold text-gold/30">Opções (separadas por vírgula)</label>
-                          <textarea 
-                            placeholder="Ex: Sagrado Coração, São Bento, Nossa Senhora..."
-                            value={list.options}
-                            onChange={(e) => {
-                              const newLists = [...(formProduct.customizationLists || [])];
-                              newLists[index].options = e.target.value;
-                              setFormProduct({...formProduct, customizationLists: newLists});
-                            }}
-                            className="w-full bg-navy-light border border-gold/10 rounded-lg p-3 text-xs text-gold outline-none focus:border-gold/30 h-20"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                    {(formProduct.customizationLists || []).length === 0 && (
-                      <p className="text-[10px] text-gold/20 italic text-center py-4 border border-dashed border-gold/5 rounded-2xl">
-                        Nenhuma lista de opções cadastrada. Use isto para gerenciar Entremeios e Crucifixos.
-                      </p>
-                    )}
-                  </div>
-                </div>
 
                 <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gold/10">
                   <label className="flex items-center gap-3 cursor-pointer">
