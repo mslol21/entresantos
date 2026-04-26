@@ -19,8 +19,8 @@ export type CartItem = Product & {
 export type CartContextType = {
   cart: CartItem[];
   addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: string, productName?: string) => void;
+  updateQuantity: (productId: string, quantity: number, productName?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;

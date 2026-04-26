@@ -21,22 +21,24 @@ export const FixedFooter: React.FC<FixedFooterProps> = ({ onClick }) => {
         >
           <button
             onClick={onClick}
-            className="w-full bg-navy border border-gold/20 text-gold p-4 rounded-2xl flex items-center justify-between shadow-2xl active:scale-95 transition-transform"
+            className="w-full gold-bg-gradient text-navy p-5 rounded-[24px] flex items-center justify-between shadow-2xl active:scale-95 transition-all group"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-gold w-10 h-10 rounded-xl flex items-center justify-center text-navy">
-                <ShoppingBag size={20} />
+            <div className="flex items-center gap-4">
+              <div className="bg-navy/10 w-12 h-12 rounded-xl flex items-center justify-center text-navy shadow-inner group-hover:scale-110 transition-transform">
+                <ShoppingBag size={24} strokeWidth={2.5} />
               </div>
               <div className="text-left">
-                <p className="text-[10px] uppercase font-bold text-gold/40 leading-none mb-1">Ver Carrinho</p>
-                <p className="font-bold">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+                <p className="text-[10px] uppercase font-black text-navy/40 tracking-widest leading-none mb-1">Ver Carrinho</p>
+                <p className="font-black text-lg leading-none">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-lg font-bold">
+              <span className="text-xl font-black tabular-nums">
                 {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </span>
-              <ArrowRight size={20} className="text-gold" />
+              <div className="bg-navy/10 p-2 rounded-full group-hover:translate-x-1 transition-transform">
+                <ArrowRight size={20} strokeWidth={3} />
+              </div>
             </div>
           </button>
         </motion.div>
