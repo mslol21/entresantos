@@ -5,6 +5,16 @@ import './index.css'
 import { CartProvider } from './context/CartContext.tsx'
 import { DataProvider } from './context/DataContext.tsx'
 import { BrowserRouter } from 'react-router-dom'
+import { registerSW } from 'virtual:pwa-register'
+
+// Add this to prompt for a service worker update
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm('Nova versão disponível. Deseja atualizar?')) {
+      updateSW(true)
+    }
+  },
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
