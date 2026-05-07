@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const ProductGrid: React.FC = () => {
   const { products, categories } = useData();
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Set initial category when categories load

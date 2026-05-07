@@ -37,7 +37,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleDirectAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart({ ...product, quantity: 1 });
+    addToCart(product, 1);
     showSuccessFeedback();
   };
 
@@ -107,9 +107,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       name: customName, 
       price: displayPrice, 
       image: displayImage || product.image,
-      selectedVariation: selectedVariation || undefined,
-      quantity: quantity
-    } as Product);
+      selectedVariation: selectedVariation || undefined
+    } as Product, quantity);
     
     showSuccessFeedback();
     setShowCustomizer(false);

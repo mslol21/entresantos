@@ -13,16 +13,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('pedido-zap-cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
     setCart((prevCart) => {
       // Use name + id as a unique key for customized items
       const existingItem = prevCart.find((item) => item.id === product.id && item.name === product.name);
       if (existingItem) {
         return prevCart.map((item) =>
-          (item.id === product.id && item.name === product.name) ? { ...item, quantity: item.quantity + 1 } : item
+          (item.id === product.id && item.name === product.name) ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prevCart, { ...product, quantity }];
     });
   };
 
