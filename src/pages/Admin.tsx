@@ -15,6 +15,7 @@ export const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Security state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -132,16 +133,21 @@ export const Admin: React.FC = () => {
     );
   }
 
-  const handleProductSubmit = (e: React.FormEvent) => {
+  const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingProduct) {
-      updateProduct({ ...editingProduct, ...formProduct } as Product);
+    try {
+      if (editingProduct) {
+        await updateProduct({ ...editingProduct, ...formProduct } as Product);
+      } else {
+        await addProduct(formProduct as Product);
+      }
       setEditingProduct(null);
-    } else {
-      addProduct(formProduct as Product);
       setIsAdding(false);
+      setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
+    } catch (err) {
+      console.error('Erro ao salvar produto:', err);
+      alert('Erro ao salvar o produto. Verifique sua conexão ou tente novamente.');
     }
-    setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
   };
 
   const startEdit = (product: Product) => {
@@ -412,17 +418,26 @@ export const Admin: React.FC = () => {
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const url = await uploadFile(file);
-                                setFormOption({...formOption, image: url});
+                                try {
+                                  setIsUploading(true);
+                                  const url = await uploadFile(file);
+                                  setFormOption({...formOption, image: url});
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Erro ao fazer upload da mídia.');
+                                } finally {
+                                  setIsUploading(false);
+                                }
                               }
                             }}
                           />
                           <button 
                             type="button"
                             onClick={() => document.getElementById('opt-file-upload')?.click()}
-                            className="w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest"
+                            disabled={isUploading}
+                            className={`w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
-                            Anexar Arquivo
+                            {isUploading ? 'Enviando...' : 'Anexar Arquivo'}
                           </button>
                           <input 
                             type="text" 
@@ -763,11 +778,14 @@ export const Admin: React.FC = () => {
                                 const file = e.target.files?.[0];
                                 if (file) {
                                   try {
+                                    setIsUploading(true);
                                     const url = await uploadFile(file);
                                     setFormProduct({...formProduct, image: url});
                                   } catch (err) {
                                     alert('Erro ao fazer upload. Verifique se o bucket "products" foi criado na Supabase.');
                                     console.error(err);
+                                  } finally {
+                                    setIsUploading(false);
                                   }
                                 }
                               }}
@@ -775,10 +793,15 @@ export const Admin: React.FC = () => {
                             <button 
                               type="button"
                               onClick={() => document.getElementById('file-upload')?.click()}
-                              className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-gold/20 hover:scale-[1.02] transition-all"
+                              disabled={isUploading}
+                              className={`w-full gold-bg-gradient text-navy py-4 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              <Plus size={18} strokeWidth={2.5} />
-                              Carregar do Dispositivo
+                              {isUploading ? (
+                                <div className="w-5 h-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Plus size={18} strokeWidth={2.5} />
+                              )}
+                              {isUploading ? 'Enviando...' : 'Carregar do Dispositivo'}
                             </button>
                           </div>
                         </div>
@@ -846,7 +869,11 @@ export const Admin: React.FC = () => {
                   </label>
                 </div>
 
-                <button type="submit" className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-gold/20 hover:scale-[1.02] transition-all">
+                <button 
+                  type="submit" 
+                  disabled={isUploading}
+                  className={`w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <Save size={20} />
                   {editingProduct ? 'Salvar Alterações' : 'Cadastrar Produto'}
                 </button>
