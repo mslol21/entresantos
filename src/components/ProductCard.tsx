@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Settings2, Check, X, ShoppingBag } from 'lucide-react';
+import { Plus, Settings2, Check, X, ShoppingBag, Minus } from 'lucide-react';
 import type { Product, Variation, GlobalOption } from '../types';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
@@ -14,6 +14,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { globalOptions } = useData();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [selectedVariation, setSelectedVariation] = useState<Variation | GlobalOption | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdded, setIsAdded] = useState(false);
 
   const [customOptions, setCustomOptions] = useState<Record<string, string>>({});
 
@@ -28,9 +30,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   
   const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0 || (product.variations && product.variations.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
 
+  const showSuccessFeedback = () => {
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2000);
+  };
+
   const handleDirectAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart(product);
+    addToCart({ ...product, quantity: 1 });
+    showSuccessFeedback();
   };
 
   // Price Calculation: Base + Variation Add-on + Assembly Add-ons
@@ -99,12 +107,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       name: customName, 
       price: displayPrice, 
       image: displayImage || product.image,
-      selectedVariation: selectedVariation || undefined 
+      selectedVariation: selectedVariation || undefined,
+      quantity: quantity
     } as Product);
     
+    showSuccessFeedback();
     setShowCustomizer(false);
     setCustomOptions({});
     setSelectedVariation(null);
+    setQuantity(1);
   };
 
   const nameLength = (customOptions.nome || '').length;
@@ -180,23 +191,43 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           </div>
           
-          {needsCustomizer ? (
-            <button
-              onClick={() => setShowCustomizer(true)}
-              className="w-full sm:w-auto gold-bg-gradient text-navy px-6 py-3.5 rounded-2xl hover:scale-105 transition-all active:scale-95 shadow-xl shadow-gold/20 flex items-center justify-center gap-2"
-            >
-              <Settings2 size={18} strokeWidth={2.5} />
-              <span className="text-[11px] font-black uppercase tracking-wider">Opções</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleDirectAdd}
-              className="w-full sm:w-auto bg-gold/10 text-gold border border-gold/30 px-6 py-3.5 rounded-2xl hover:bg-gold hover:text-navy transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              <span className="text-[11px] font-black uppercase tracking-wider">Add</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <AnimatePresence>
+              {isAdded && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="absolute -top-12 right-0 bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 z-10"
+                >
+                  <Check size={12} strokeWidth={4} />
+                  Adicionado!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {needsCustomizer ? (
+              <button
+                onClick={() => setShowCustomizer(true)}
+                className="w-full sm:w-auto gold-bg-gradient text-navy px-6 py-3.5 rounded-2xl hover:scale-105 transition-all active:scale-95 shadow-xl shadow-gold/20 flex items-center justify-center gap-2"
+              >
+                <Settings2 size={18} strokeWidth={2.5} />
+                <span className="text-[11px] font-black uppercase tracking-wider">Opções</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleDirectAdd}
+                className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                  isAdded 
+                  ? 'bg-green-500 text-white border-green-500' 
+                  : 'bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-navy'
+                }`}
+              >
+                {isAdded ? <Check size={18} strokeWidth={3} /> : <Plus size={18} strokeWidth={2.5} />}
+                <span className="text-[11px] font-black uppercase tracking-wider">{isAdded ? 'No Carrinho' : 'Add'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -438,13 +469,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
 
             <div className="mt-auto pt-6 border-t border-gold/10 bg-navy sticky bottom-0 z-30 pb-4">
-              <div className="mb-4 px-2">
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-[9px] uppercase font-black text-gold/30 tracking-[0.2em]">Resumo</span>
-                  <span className="text-gold font-bold text-lg tabular-nums">{displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              <div className="mb-6 px-2">
+                <div className="flex justify-between items-end mb-4">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-black text-gold/30 tracking-[0.2em] mb-2">Quantidade</span>
+                    <div className="flex items-center gap-4 bg-navy-light px-4 py-2 rounded-xl border border-gold/10">
+                      <button 
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="text-gold/40 hover:text-gold transition-colors p-1"
+                      >
+                        <Minus size={16} strokeWidth={3} />
+                      </button>
+                      <span className="text-gold font-black text-sm w-4 text-center">{quantity}</span>
+                      <button 
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="text-gold/40 hover:text-gold transition-colors p-1"
+                      >
+                        <Plus size={16} strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[9px] uppercase font-black text-gold/30 tracking-[0.2em] mb-1">Total Parcial</span>
+                    <span className="text-gold font-bold text-2xl tabular-nums">
+                      {(displayPrice * quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-[10px] text-gold/50 font-medium italic">
-                  {customOptions.cor ? `Cor: ${customOptions.cor}` : (selectedVariation ? `Opção: ${selectedVariation.name}` : 'Selecione a cor...')}
+                <div className="text-[10px] text-gold/50 font-medium italic p-3 bg-navy-light/30 rounded-xl border border-gold/5">
+                  {customOptions.cor ? `Cor: ${customOptions.cor}` : (selectedVariation ? `Opção: ${selectedVariation.name}` : 'Personalize para ver o resumo...')}
                   {customOptions.nome && ` • Nome: ${customOptions.nome}`}
                   {['Entremeio', 'Crucifixo', 'Outros'].map(g => customOptions[g] && ` • ${g}: ${customOptions[g]}`)}
                   {product.customizationLists?.map(list => customOptions[list.id] && ` • ${list.title}: ${customOptions[list.id]}`)}

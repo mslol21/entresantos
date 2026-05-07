@@ -98,35 +98,52 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       layout
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex gap-5 p-4 bg-navy-light/40 rounded-[24px] border border-gold/5 group hover:border-gold/20 hover:bg-navy-light/60 transition-all duration-500"
+                      className="flex flex-col p-5 bg-navy-light/40 rounded-[32px] border border-gold/5 group hover:border-gold/20 hover:bg-navy-light/60 transition-all duration-500"
                     >
-                      <div className="w-24 h-24 bg-navy rounded-2xl overflow-hidden flex-shrink-0 border border-gold/10 shadow-inner group-hover:border-gold/30 transition-colors">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
-                        />
-                      </div>
-                      <div className="flex-grow flex flex-col justify-between py-1">
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <h4 className="font-bold text-gold text-sm line-clamp-2 leading-tight mb-1 group-hover:text-gold-light transition-colors">
-                              {item.name}
-                            </h4>
-                            <p className="text-[9px] text-gold/30 uppercase tracking-widest font-medium">{item.category}</p>
-                          </div>
-                          <button
-                            onClick={() => removeFromCart(item.id, item.name)}
-                            className="text-gold/20 hover:text-red-500 transition-all p-1 hover:bg-red-500/5 rounded-lg"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                      <div className="flex gap-5">
+                        <div className="w-24 h-24 bg-navy rounded-2xl overflow-hidden flex-shrink-0 border border-gold/10 shadow-inner group-hover:border-gold/30 transition-colors">
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+                          />
                         </div>
-                        
-                        <div className="flex items-center justify-between mt-4">
-                          <span className="font-bold text-gold text-lg tabular-nums">
-                            {(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </span>
+                        <div className="flex-grow flex flex-col py-1">
+                          <div className="flex justify-between items-start gap-4 mb-2">
+                            <div>
+                              <h4 className="font-bold text-gold text-base line-clamp-1 leading-tight group-hover:text-gold-light transition-colors">
+                                {item.name.split('(')[0].trim()}
+                              </h4>
+                              <p className="text-[10px] text-gold/30 uppercase tracking-[0.15em] font-black">{item.category}</p>
+                            </div>
+                            <button
+                              onClick={() => removeFromCart(item.id, item.name)}
+                              className="text-gold/20 hover:text-red-500 transition-all p-2 hover:bg-red-500/5 rounded-xl"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+
+                          <div className="flex-grow">
+                            {item.name.includes('(') && (
+                              <div className="bg-navy/40 p-2 rounded-xl border border-gold/5 mt-1">
+                                <p className="text-[10px] text-gold/50 leading-relaxed italic">
+                                  {item.name.match(/\(([^)]+)\)/)?.[1].split(',').map((detail, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 mr-2 mb-1 px-2 py-0.5 bg-gold/5 rounded-full border border-gold/10">
+                                      <span className="w-1 h-1 bg-gold/40 rounded-full" />
+                                      {detail.trim()}
+                                    </span>
+                                  ))}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gold/5">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-gold/30 uppercase tracking-widest font-black mr-2">Qtd:</span>
                           <div className="flex items-center gap-4 bg-navy/80 px-4 py-2 rounded-xl border border-gold/10 shadow-lg">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1, item.name)}
@@ -142,6 +159,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                               <Plus size={14} strokeWidth={3} />
                             </button>
                           </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] text-gold/30 uppercase tracking-[0.2em] font-black leading-none mb-1">Subtotal</p>
+                          <span className="font-bold text-gold text-lg tabular-nums">
+                            {(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </span>
                         </div>
                       </div>
                     </motion.div>
