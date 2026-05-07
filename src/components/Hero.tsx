@@ -4,7 +4,7 @@ import { ArrowRight, Zap } from 'lucide-react';
 
 export const Hero: React.FC = () => {
   const scrollToCatalog = () => {
-    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (

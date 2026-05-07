@@ -10,7 +10,7 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
+  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
 
   const { settings } = useData();
 
@@ -22,6 +22,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${settings.whatsapp}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
+    
+    // Clear cart after checkout
+    setTimeout(() => {
+      clearCart();
+      onClose();
+    }, 1000);
   };
 
   return (

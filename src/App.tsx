@@ -30,9 +30,15 @@ function Store() {
       <Navbar onCartClick={() => setIsCartOpen(true)} />
       
       <main>
-        <Hero />
-        <SocialProof />
-        <ProductGrid />
+        <div id="inicio">
+          <Hero />
+        </div>
+        <div id="depoimentos">
+          <SocialProof />
+        </div>
+        <div id="produtos">
+          <ProductGrid />
+        </div>
       </main>
 
       <footer className="bg-navy-light text-gold py-16 px-4 border-t border-gold/10">
