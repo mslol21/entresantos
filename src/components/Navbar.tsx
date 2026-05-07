@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Menu, X, Home, ShoppingBag, MessageSquare, Instagram } from 'lucide-react';
+import { ShoppingCart, Menu, X, Home, ShoppingBag, MessageSquare, Camera } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -130,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 p-4 rounded-2xl text-gold/40 hover:text-gold transition-all"
                 >
-                  <Instagram size={20} />
+                  <Camera size={20} />
                   <span className="text-xs font-bold uppercase tracking-widest">Siga no Instagram</span>
                 </a>
                 <p className="text-[10px] text-gold/20 text-center uppercase tracking-[0.3em] font-medium">

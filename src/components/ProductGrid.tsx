@@ -68,7 +68,6 @@ export const ProductGrid: React.FC = () => {
               key={cat.id}
               onClick={() => {
                 setSelectedCategory(cat.id);
-                setSelectedSubcategory('Todos');
               }}
               className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
                 selectedCategory === cat.id
