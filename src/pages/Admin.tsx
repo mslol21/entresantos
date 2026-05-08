@@ -9,12 +9,16 @@ export const Admin: React.FC = () => {
   const { 
     products, settings, loading, categories, globalOptions,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
-    addCategory, deleteCategory,
+    addCategory, updateCategory, deleteCategory,
     addGlobalOption, updateGlobalOption, deleteGlobalOption 
   } = useData();
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingOption, setEditingOption] = useState<GlobalOption | null>(null);
+  const [isAddingOption, setIsAddingOption] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
   // Security state
@@ -65,7 +69,7 @@ export const Admin: React.FC = () => {
     categoryIds: [],
     group: 'Entremeio'
   });
-  const [editingOption, setEditingOption] = useState<GlobalOption | null>(null);
+  const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
     if (categories.length > 0 && !formProduct.category) {
@@ -142,7 +146,7 @@ export const Admin: React.FC = () => {
         await addProduct(formProduct as Product);
       }
       setEditingProduct(null);
-      setIsAdding(false);
+      setIsAddingProduct(false);
       setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
     } catch (err) {
       console.error('Erro ao salvar produto:', err);
@@ -150,10 +154,70 @@ export const Admin: React.FC = () => {
     }
   };
 
-  const startEdit = (product: Product) => {
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryName) return;
+    try {
+      if (editingCategory) {
+        await updateCategory({ ...editingCategory, name: categoryName });
+      } else {
+        await addCategory(categoryName);
+      }
+      setEditingCategory(null);
+      setIsAddingCategory(false);
+      setCategoryName('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOptionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formOption.name) return;
+    try {
+      if (editingOption) {
+        await updateGlobalOption({
+          ...editingOption,
+          ...formOption,
+          type: activeTab === 'colors' ? 'color' : 'assembly'
+        });
+      } else {
+        await addGlobalOption({ 
+          ...formOption,
+          id: Math.random().toString(36).substr(2, 9),
+          type: activeTab === 'colors' ? 'color' : 'assembly' 
+        });
+      }
+      setEditingOption(null);
+      setIsAddingOption(false);
+      setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startEditProduct = (product: Product) => {
     setEditingProduct(product);
     setFormProduct(product);
-    setIsAdding(true);
+    setIsAddingProduct(true);
+  };
+
+  const startEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryName(category.name);
+    setIsAddingCategory(true);
+  };
+
+  const startEditOption = (option: GlobalOption) => {
+    setEditingOption(option);
+    setFormOption({
+      name: option.name,
+      price: option.price || 0,
+      image: option.image || '',
+      categoryIds: option.categoryIds || [],
+      group: option.group
+    });
+    setIsAddingOption(true);
   };
 
   return (
@@ -262,7 +326,7 @@ export const Admin: React.FC = () => {
                     <p className="text-gold/40 text-sm">Adicione, edite ou remova peças do seu catálogo.</p>
                   </div>
                   <button 
-                    onClick={() => { setIsAdding(true); setEditingProduct(null); }}
+                    onClick={() => { setIsAddingProduct(true); setEditingProduct(null); setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] }); }}
                     className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
                   >
                     <Plus size={20} />
@@ -303,7 +367,7 @@ export const Admin: React.FC = () => {
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => startEdit(p)} className="p-2 hover:bg-gold/10 rounded-lg text-gold/60 hover:text-gold transition-all">
+                              <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-lg text-gold/60 hover:text-gold transition-all">
                                 <Edit2 size={16} />
                               </button>
                               <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500/60 hover:text-red-500 transition-all">
@@ -330,7 +394,7 @@ export const Admin: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <button onClick={() => startEdit(p)} className="p-3 bg-gold/10 rounded-xl text-gold">
+                        <button onClick={() => startEditProduct(p)} className="p-3 bg-gold/10 rounded-xl text-gold">
                           <Edit2 size={18} />
                         </button>
                         <button onClick={() => deleteProduct(p.id)} className="p-3 bg-red-500/10 rounded-xl text-red-500">
@@ -343,41 +407,34 @@ export const Admin: React.FC = () => {
               </div>
             ) : activeTab === 'categories' ? (
               <div className="space-y-8">
-                <div>
-                  <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Categorias</h1>
-                  <p className="text-gold/40 text-sm">Organize seu catálogo em seções.</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Categorias</h1>
+                    <p className="text-gold/40 text-sm">Organize seu catálogo em seções.</p>
+                  </div>
+                  <button 
+                    onClick={() => { setIsAddingCategory(true); setEditingCategory(null); setCategoryName(''); }}
+                    className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
+                  >
+                    <Plus size={20} />
+                    Nova Categoria
+                  </button>
                 </div>
 
                 <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 max-w-xl shadow-2xl">
                   <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <input 
-                        id="new-category"
-                        type="text" 
-                        placeholder="Nome da nova categoria"
-                        className="flex-grow bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                      />
-                      <button 
-                        onClick={() => {
-                          const input = document.getElementById('new-category') as HTMLInputElement;
-                          if (input.value) {
-                            addCategory(input.value);
-                            input.value = '';
-                          }
-                        }}
-                        className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm"
-                      >
-                        Adicionar
-                      </button>
-                    </div>
-
                     <div className="divide-y divide-gold/5">
                       {categories.map(c => (
                         <div key={c.id} className="py-4 flex justify-between items-center group">
                           <span className="text-gold/80 font-bold">{c.name}</span>
-                          <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex gap-2">
+                            <button onClick={() => startEditCategory(c)} className="p-2 text-gold/40 hover:text-gold transition-colors">
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -386,176 +443,23 @@ export const Admin: React.FC = () => {
               </div>
             ) : (activeTab === 'colors' || activeTab === 'options') ? (
               <div className="space-y-8">
-                <div>
-                  <h1 className="text-3xl font-serif font-bold mb-1 text-gold">
-                    {activeTab === 'colors' ? 'Cadastro de Cores/Materiais' : 'Opções de Montagem'}
-                  </h1>
-                  <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser anexadas a categorias inteiras.</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">
+                      {activeTab === 'colors' ? 'Cadastro de Cores/Materiais' : 'Opções de Montagem'}
+                    </h1>
+                    <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser anexadas a categorias inteiras.</p>
+                  </div>
+                  <button 
+                    onClick={() => { setIsAddingOption(true); setEditingOption(null); setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' }); }}
+                    className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
+                  >
+                    <Plus size={20} />
+                    Nova Opção
+                  </button>
                 </div>
 
                 <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 shadow-2xl">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    {/* Media Upload Area */}
-                    <div className="space-y-4">
-                      <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia da Opção (Imagem ou Vídeo)</label>
-                      <div className="flex gap-4 items-start">
-                        <div className="w-32 h-32 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
-                          {formOption.image ? (
-                            <>
-                              {formOption.image.match(/\.(mp4|webm|ogg)$/i) ? (
-                                <video src={formOption.image} className="w-full h-full object-cover" />
-                              ) : (
-                                <img src={formOption.image} className="w-full h-full object-cover" />
-                              )}
-                            </>
-                          ) : (
-                            <Palette size={32} className="text-gold/10" />
-                          )}
-                        </div>
-                        <div className="flex-grow space-y-2">
-                          <input 
-                            id="opt-file-upload" type="file" className="hidden" accept="image/*,video/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                try {
-                                  setIsUploading(true);
-                                  const url = await uploadFile(file);
-                                  setFormOption({...formOption, image: url});
-                                } catch (err) {
-                                  console.error(err);
-                                  alert('Erro ao fazer upload da mídia.');
-                                } finally {
-                                  setIsUploading(false);
-                                }
-                              }
-                            }}
-                          />
-                          <button 
-                            type="button"
-                            onClick={() => document.getElementById('opt-file-upload')?.click()}
-                            disabled={isUploading}
-                            className={`w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            {isUploading ? 'Enviando...' : 'Anexar Arquivo'}
-                          </button>
-                          <input 
-                            type="text" 
-                            placeholder="Link manual (opcional)"
-                            value={formOption.image}
-                            onChange={(e) => setFormOption({...formOption, image: e.target.value})}
-                            className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Data Fields Area */}
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Opção</label>
-                          <input 
-                            type="text" 
-                            placeholder="Ex: Cristal Azul"
-                            value={formOption.name}
-                            onChange={(e) => setFormOption({...formOption, name: e.target.value})}
-                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] uppercase font-bold text-gold/40">Preço Adicional</label>
-                          <input 
-                            type="number" 
-                            step="0.01"
-                            value={formOption.price}
-                            onChange={(e) => setFormOption({...formOption, price: parseFloat(e.target.value)})}
-                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm"
-                          />
-                        </div>
-                      </div>
-
-                      {activeTab === 'options' && (
-                        <div className="space-y-1">
-                          <label className="text-[10px] uppercase font-bold text-gold/40">Grupo / Tipo de Peça</label>
-                          <select 
-                            value={formOption.group}
-                            onChange={(e) => setFormOption({...formOption, group: e.target.value})}
-                            className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none"
-                          >
-                            <option value="Entremeio">Entremeio</option>
-                            <option value="Crucifixo">Crucifixo</option>
-                            <option value="Outros">Outros</option>
-                          </select>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40 block">Vincular às Categorias:</label>
-                        <div className="flex flex-wrap gap-2">
-                          {categories.map(cat => (
-                            <label key={cat.id} className="flex items-center gap-2 bg-navy border border-gold/10 px-3 py-2 rounded-lg cursor-pointer hover:border-gold/30 transition-all">
-                              <input 
-                                type="checkbox"
-                                checked={formOption.categoryIds?.includes(cat.id)}
-                                onChange={(e) => {
-                                  const ids = [...(formOption.categoryIds || [])];
-                                  if (e.target.checked) ids.push(cat.id);
-                                  else {
-                                    const idx = ids.indexOf(cat.id);
-                                    if (idx > -1) ids.splice(idx, 1);
-                                  }
-                                  setFormOption({...formOption, categoryIds: ids});
-                                }}
-                                className="w-3 h-3 rounded border-gold/20 bg-navy text-gold"
-                              />
-                              <span className="text-[10px] font-bold text-gold/60">{cat.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <button 
-                          onClick={async () => {
-                            if (!formOption.name) return;
-                            
-                            if (editingOption) {
-                              updateGlobalOption({
-                                ...editingOption,
-                                ...formOption,
-                                type: activeTab === 'colors' ? 'color' : 'assembly'
-                              });
-                              setEditingOption(null);
-                            } else {
-                              addGlobalOption({ 
-                                ...formOption,
-                                id: Math.random().toString(36).substr(2, 9),
-                                type: activeTab === 'colors' ? 'color' : 'assembly' 
-                              });
-                            }
-                            setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
-                          }}
-                          className="flex-grow gold-bg-gradient text-navy py-4 rounded-xl font-bold text-sm shadow-lg shadow-gold/20"
-                        >
-                          {editingOption ? 'Salvar Alterações' : 'Cadastrar Opção Global'}
-                        </button>
-                        
-                        {editingOption && (
-                          <button 
-                            onClick={() => {
-                              setEditingOption(null);
-                              setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
-                            }}
-                            className="px-6 bg-navy border border-gold/20 text-gold rounded-xl font-bold text-sm"
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {globalOptions.filter(o => o.type === (activeTab === 'colors' ? 'color' : 'assembly')).map(o => (
                       <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col gap-3 group">
@@ -583,17 +487,7 @@ export const Admin: React.FC = () => {
                           </div>
                           <div className="flex gap-2">
                             <button 
-                              onClick={() => {
-                                setEditingOption(o);
-                                setFormOption({
-                                  name: o.name,
-                                  price: o.price || 0,
-                                  image: o.image || '',
-                                  categoryIds: o.categoryIds || [],
-                                  group: o.group
-                                });
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
+                              onClick={() => startEditOption(o)}
                               className="text-gold/40 hover:text-gold p-1 transition-all"
                             >
                               <Edit2 size={14} />
@@ -682,19 +576,19 @@ export const Admin: React.FC = () => {
 
       {/* Product Form Modal */}
       <AnimatePresence>
-        {isAdding && (
+        {isAddingProduct && (
           <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar"
             >
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-8 sticky top-0 bg-navy-light z-10 py-2">
                 <h2 className="text-2xl font-serif font-bold text-gold">
                   {editingProduct ? 'Editar Produto' : 'Novo Produto'}
                 </h2>
-                <button onClick={() => setIsAdding(false)} className="text-gold/40 hover:text-gold"><X size={24} /></button>
+                <button onClick={() => setIsAddingProduct(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
               </div>
 
               <form onSubmit={handleProductSubmit} className="space-y-6">
@@ -876,6 +770,206 @@ export const Admin: React.FC = () => {
                 >
                   <Save size={20} />
                   {editingProduct ? 'Salvar Alterações' : 'Cadastrar Produto'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Category Form Modal */}
+      <AnimatePresence>
+        {isAddingCategory && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-md p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-serif font-bold text-gold">
+                  {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+                </h2>
+                <button onClick={() => setIsAddingCategory(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
+              </div>
+
+              <form onSubmit={handleCategorySubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Categoria</label>
+                  <input 
+                    type="text" required
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                    className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
+                    autoFocus
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold hover:scale-105 transition-all shadow-lg shadow-gold/20"
+                >
+                  {editingCategory ? 'Salvar Alterações' : 'Criar Categoria'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Global Option Form Modal */}
+      <AnimatePresence>
+        {isAddingOption && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar"
+            >
+              <div className="flex justify-between items-center mb-8 sticky top-0 bg-navy-light z-10 py-2">
+                <h2 className="text-2xl font-serif font-bold text-gold">
+                  {editingOption ? 'Editar Opção' : 'Nova Opção'}
+                </h2>
+                <button onClick={() => setIsAddingOption(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
+              </div>
+
+              <form onSubmit={handleOptionSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Media Upload Area */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia da Opção (Imagem ou Vídeo)</label>
+                    <div className="flex flex-col gap-4 items-center">
+                      <div className="w-48 h-48 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
+                        {formOption.image ? (
+                          <>
+                            {formOption.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <video src={formOption.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={formOption.image} className="w-full h-full object-cover" />
+                            )}
+                            <div className="absolute inset-0 bg-navy/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button 
+                                type="button"
+                                onClick={() => setFormOption({...formOption, image: ''})}
+                                className="bg-red-500 text-white p-2 rounded-full"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <Palette size={48} className="text-gold/10" />
+                        )}
+                      </div>
+                      <div className="w-full space-y-2">
+                        <input 
+                          id="opt-file-upload-modal" type="file" className="hidden" accept="image/*,video/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                setIsUploading(true);
+                                const url = await uploadFile(file);
+                                setFormOption({...formOption, image: url});
+                              } catch (err) {
+                                console.error(err);
+                                alert('Erro ao fazer upload da mídia.');
+                              } finally {
+                                setIsUploading(false);
+                              }
+                            }
+                          }}
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => document.getElementById('opt-file-upload-modal')?.click()}
+                          disabled={isUploading}
+                          className={`w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isUploading ? 'Enviando...' : 'Anexar Arquivo'}
+                        </button>
+                        <input 
+                          type="text" 
+                          placeholder="Link manual (opcional)"
+                          value={formOption.image}
+                          onChange={(e) => setFormOption({...formOption, image: e.target.value})}
+                          className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Data Fields Area */}
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Opção</label>
+                      <input 
+                        type="text" required
+                        placeholder="Ex: Cristal Azul"
+                        value={formOption.name}
+                        onChange={(e) => setFormOption({...formOption, name: e.target.value})}
+                        className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-gold/40">Preço Adicional (R$)</label>
+                      <input 
+                        type="number" step="0.01"
+                        value={formOption.price}
+                        onChange={(e) => setFormOption({...formOption, price: parseFloat(e.target.value)})}
+                        className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
+                      />
+                    </div>
+
+                    {activeTab === 'options' && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-gold/40">Grupo / Tipo de Peça</label>
+                        <select 
+                          value={formOption.group}
+                          onChange={(e) => setFormOption({...formOption, group: e.target.value})}
+                          className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
+                        >
+                          <option value="Entremeio">Entremeio</option>
+                          <option value="Crucifixo">Crucifixo</option>
+                          <option value="Outros">Outros</option>
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase font-bold text-gold/40 block">Vincular às Categorias:</label>
+                      <div className="flex flex-wrap gap-2">
+                        {categories.map(cat => (
+                          <label key={cat.id} className="flex items-center gap-2 bg-navy border border-gold/10 px-3 py-2 rounded-lg cursor-pointer hover:border-gold/30 transition-all">
+                            <input 
+                              type="checkbox"
+                              checked={formOption.categoryIds?.includes(cat.id)}
+                              onChange={(e) => {
+                                const ids = [...(formOption.categoryIds || [])];
+                                if (e.target.checked) ids.push(cat.id);
+                                else {
+                                  const idx = ids.indexOf(cat.id);
+                                  if (idx > -1) ids.splice(idx, 1);
+                                }
+                                setFormOption({...formOption, categoryIds: ids});
+                              }}
+                              className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
+                            />
+                            <span className="text-[10px] font-bold text-gold/60">{cat.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold hover:scale-105 transition-all shadow-lg shadow-gold/20 mt-4"
+                >
+                  {editingOption ? 'Salvar Alterações' : 'Cadastrar Opção Global'}
                 </button>
               </form>
             </motion.div>
