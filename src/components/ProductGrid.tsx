@@ -8,17 +8,10 @@ export const ProductGrid: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Set initial category when categories load
-  React.useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0].id);
-    }
-  }, [categories]);
-
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchStatus = product.isActive !== false;
-      const matchCategory = product.category === selectedCategory;
+      const matchCategory = !selectedCategory || product.category === selectedCategory;
       const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           product.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchStatus && matchCategory && matchSearch;
@@ -63,6 +56,16 @@ export const ProductGrid: React.FC = () => {
         
         {/* Categorias Principais */}
         <div className="flex flex-wrap gap-2 mb-12 scrollbar-hide overflow-x-auto pb-2">
+          <button
+            onClick={() => setSelectedCategory('')}
+            className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
+              selectedCategory === ''
+                ? 'bg-gold text-navy border-gold shadow-xl shadow-gold/20'
+                : 'bg-navy-light/40 text-gold/40 border-gold/10 hover:border-gold/30 hover:text-gold'
+            }`}
+          >
+            Todos
+          </button>
           {categories.map((cat) => (
             <button
               key={cat.id}
