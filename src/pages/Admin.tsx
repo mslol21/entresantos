@@ -57,6 +57,7 @@ export const Admin: React.FC = () => {
     isActive: true,
     availableColors: '',
     hasNameOption: true,
+    hasColorOption: false,
     variations: [],
     customizationLists: []
   });
@@ -147,7 +148,7 @@ export const Admin: React.FC = () => {
       }
       setEditingProduct(null);
       setIsAddingProduct(false);
-      setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] });
+      setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] });
     } catch (err) {
       console.error('Erro ao salvar produto:', err);
       alert('Erro ao salvar o produto. Verifique sua conexão ou tente novamente.');
@@ -326,7 +327,7 @@ export const Admin: React.FC = () => {
                     <p className="text-gold/40 text-sm">Adicione, edite ou remova peças do seu catálogo.</p>
                   </div>
                   <button 
-                    onClick={() => { setIsAddingProduct(true); setEditingProduct(null); setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, variations: [], customizationLists: [] }); }}
+                    onClick={() => { setIsAddingProduct(true); setEditingProduct(null); setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] }); }}
                     className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
                   >
                     <Plus size={20} />
@@ -724,11 +725,11 @@ export const Admin: React.FC = () => {
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input 
                         type="checkbox" 
-                        checked={formProduct.hasNameOption}
+                        checked={!!formProduct.hasNameOption}
                         onChange={(e) => setFormProduct({...formProduct, hasNameOption: e.target.checked})}
                         className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
                       />
-                      <span className="text-sm font-medium">Permitir Nome</span>
+                      <span className="text-sm font-medium">Personalizar Nome</span>
                     </label>
                     {formProduct.hasNameOption && (
                       <div className="flex items-center gap-2">
@@ -746,16 +747,25 @@ export const Admin: React.FC = () => {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      checked={formProduct.isCustomizable}
-                      onChange={(e) => setFormProduct({...formProduct, isCustomizable: e.target.checked})}
+                      checked={!!formProduct.hasColorOption}
+                      onChange={(e) => setFormProduct({...formProduct, hasColorOption: e.target.checked})}
                       className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
                     />
-                    <span className="text-sm font-medium">Produto Especial (Monte seu Terço)</span>
+                    <span className="text-sm font-medium">Personalizar Cor</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      checked={formProduct.isActive}
+                      checked={!!formProduct.isCustomizable}
+                      onChange={(e) => setFormProduct({...formProduct, isCustomizable: e.target.checked})}
+                      className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
+                    />
+                    <span className="text-sm font-medium">Personalizar Montagem Terço</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={!!formProduct.isActive}
                       onChange={(e) => setFormProduct({...formProduct, isActive: e.target.checked})}
                       className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
                     />

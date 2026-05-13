@@ -34,7 +34,9 @@ export type Product = {
   image: string;
   category?: string;
   subcategory?: string;
-  isCustomizable?: boolean;
+  isCustomizable?: boolean; // Legacy/Montagem
+  hasAssemblyOption?: boolean;
+  hasColorOption?: boolean;
   isActive?: boolean;
   availableColors?: string;
   hasNameOption?: boolean;

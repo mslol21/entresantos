@@ -19,16 +19,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const [customOptions, setCustomOptions] = useState<Record<string, string>>({});
 
-  const relevantColors = globalOptions.filter(o => o.type === 'color' && o.categoryIds?.includes(product.category || ''));
-  const relevantAssembly = globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || ''));
-
   const isMonteSeuTerco = product.isCustomizable;
   const hasNameOption = product.hasNameOption;
+  const hasColorOption = product.hasColorOption;
+
+  const relevantColors = hasColorOption ? globalOptions.filter(o => o.type === 'color' && o.categoryIds?.includes(product.category || '')) : [];
+  const relevantAssembly = isMonteSeuTerco ? globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || '')) : [];
+
   const colorList = product.availableColors 
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
   
-  const needsCustomizer = isMonteSeuTerco || hasNameOption || colorList.length > 0 || (product.variations && product.variations.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
+  const needsCustomizer = isMonteSeuTerco || hasNameOption || hasColorOption || (product.variations && product.variations.length > 0) || (product.customizationLists && product.customizationLists.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
 
   const showSuccessFeedback = () => {
     setIsAdded(true);
@@ -324,42 +326,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               )}
 
               {/* Color Selection (Legacy / Additional) */}
-              <div className="space-y-4">
-                <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
-                  1. Escolha a Cor <span className="text-red-500">*</span>
-                </label>
-                {colorList.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {colorList.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setCustomOptions({...customOptions, cor: color})}
-                        className={`p-3 rounded-xl text-xs font-bold transition-all border ${
-                          customOptions.cor === color 
-                            ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
-                            : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="relative group">
-                    <input 
-                      type="text"
-                      placeholder="Ex: Azul Celeste, Rosa Quartzo..."
-                      value={customOptions.cor}
-                      onChange={(e) => setCustomOptions({...customOptions, cor: e.target.value})}
-                      className="w-full bg-navy-light border border-gold/20 rounded-2xl p-5 text-gold text-sm focus:border-gold outline-none transition-all placeholder:text-gold/20"
-                      autoFocus
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/20 group-focus-within:text-gold transition-colors">
-                      <Check size={20} />
+              {hasColorOption && (!relevantColors.length || colorList.length > 0) && (
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-black text-gold/40 block tracking-[0.2em]">
+                    1. Escolha a Cor <span className="text-red-500">*</span>
+                  </label>
+                  {colorList.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {colorList.map(color => (
+                        <button
+                          key={color}
+                          onClick={() => setCustomOptions({...customOptions, cor: color})}
+                          className={`p-3 rounded-xl text-xs font-bold transition-all border ${
+                            customOptions.cor === color 
+                              ? 'bg-gold text-navy border-gold shadow-lg shadow-gold/20' 
+                              : 'bg-navy-light text-gold/60 border-gold/10 hover:border-gold/30'
+                          }`}
+                        >
+                          {color}
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="relative group">
+                      <input 
+                        type="text"
+                        placeholder="Ex: Azul Celeste, Rosa Quartzo..."
+                        value={customOptions.cor}
+                        onChange={(e) => setCustomOptions({...customOptions, cor: e.target.value})}
+                        className="w-full bg-navy-light border border-gold/20 rounded-2xl p-5 text-gold text-sm focus:border-gold outline-none transition-all placeholder:text-gold/20"
+                        autoFocus
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/20 group-focus-within:text-gold transition-colors">
+                        <Check size={20} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Grouped Assembly Options */}
               {['Entremeio', 'Crucifixo', 'Outros'].map(groupName => {
