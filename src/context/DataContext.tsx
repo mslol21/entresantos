@@ -55,16 +55,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (pError) throw pError;
       
       // Map Supabase snake_case to camelCase if necessary, or just use as is if types match
-      const mappedProducts = (productsData || []).map(p => ({
-        ...p,
-        isCustomizable: p.is_customizable,
-        isActive: p.is_active,
-        availableColors: p.available_colors,
-        hasNameOption: p.has_name_option,
-        namePrice: p.name_price,
-        variations: p.variations || [],
-        customizationLists: p.customization_lists || []
-      }));
+      const mappedProducts = (productsData || []).map(p => {
+        const hasColorOption = p.available_colors?.includes('[HAS_COLOR_OPTION]') || false;
+        const availableColors = p.available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '';
+        return {
+          ...p,
+          isCustomizable: p.is_customizable,
+          isActive: p.is_active,
+          availableColors,
+          hasColorOption,
+          hasNameOption: p.has_name_option,
+          namePrice: p.name_price,
+          variations: p.variations || [],
+          customizationLists: p.customization_lists || []
+        };
+      });
       setProducts(mappedProducts);
 
       // Fetch Settings
@@ -113,7 +118,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subcategory: product.subcategory,
         is_customizable: product.isCustomizable,
         is_active: product.isActive,
-        available_colors: product.availableColors,
+        available_colors: product.hasColorOption ? `${product.availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (product.availableColors || ''),
         has_name_option: product.hasNameOption,
         variations: product.variations || [],
         customization_lists: product.customizationLists || [],
@@ -137,7 +142,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subcategory: product.subcategory,
         is_customizable: product.isCustomizable,
         is_active: product.isActive,
-        available_colors: product.availableColors,
+        available_colors: product.hasColorOption ? `${product.availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (product.availableColors || ''),
         has_name_option: product.hasNameOption,
         variations: product.variations || [],
         customization_lists: product.customizationLists || [],
