@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product, Category, GlobalOption, ShopSettings } from '../types';
+import type { Product, Category, GlobalOption, ShopSettings, Transaction } from '../types';
 import { supabase } from '../lib/supabase';
 import { CATEGORIES as INITIAL_CATEGORIES } from '../data';
 
@@ -8,6 +8,7 @@ interface DataContextType {
   categories: Category[];
   globalOptions: GlobalOption[];
   settings: ShopSettings;
+  transactions: Transaction[];
   loading: boolean;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
@@ -20,6 +21,8 @@ interface DataContextType {
   addGlobalOption: (option: Partial<GlobalOption>) => Promise<void>;
   updateGlobalOption: (option: GlobalOption) => Promise<void>;
   deleteGlobalOption: (id: string) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -28,6 +31,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [globalOptions, setGlobalOptions] = useState<GlobalOption[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<ShopSettings>({
     name: 'Ateliê Entre Santos',
     whatsapp: '',
@@ -101,6 +105,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         categoryIds: o.category_ids || []
       }));
       setGlobalOptions(mappedOptions);
+
+      // Fetch Transactions
+      try {
+        const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+        if (!txError && txData) {
+          setTransactions(txData);
+        }
+      } catch (e) {
+        console.warn("Transactions table might not exist yet.", e);
+      }
 
       setLoading(false);
     }
@@ -256,12 +270,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setGlobalOptions(globalOptions.filter(o => o.id !== id));
   };
 
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([transaction])
+      .select();
+    
+    if (error) throw error;
+    if (data) {
+      setTransactions([data[0], ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    }
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (error) throw error;
+    setTransactions(transactions.filter(t => t.id !== id));
+  };
+
   return (
     <DataContext.Provider value={{ 
-      products, settings, loading, categories, globalOptions,
+      products, settings, loading, categories, globalOptions, transactions,
       addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
       addCategory, updateCategory, deleteCategory,
-      addGlobalOption, updateGlobalOption, deleteGlobalOption
+      addGlobalOption, updateGlobalOption, deleteGlobalOption,
+      addTransaction, deleteTransaction
     }}>
       {children}
     </DataContext.Provider>

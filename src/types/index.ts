@@ -70,5 +70,15 @@ export type ShopSettings = {
   slogan: string;
 }
 
+export type Transaction = {
+  id: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category?: string;
+  date: string;
+  created_at?: string;
+}
+
 // Dummy export to ensure this is treated as a module with values if needed
 export const TYPES_VERSION = "1.0.0";

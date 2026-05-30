@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import type { Product, GlobalOption, Category } from '../types';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FinancePanel } from '../components/FinancePanel';
 
 export const Admin: React.FC = () => {
   const { 
@@ -12,7 +13,7 @@ export const Admin: React.FC = () => {
     addCategory, updateCategory, deleteCategory,
     addGlobalOption, updateGlobalOption, deleteGlobalOption 
   } = useData();
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings' | 'finance'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -269,6 +270,13 @@ export const Admin: React.FC = () => {
               <Settings size={20} />
               <span className="font-bold text-sm">Configurações</span>
             </button>
+            <button 
+              onClick={() => setActiveTab('finance')}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+            >
+              <LineChart size={20} />
+              <span className="font-bold text-sm">Financeiro</span>
+            </button>
           </nav>
 
           <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-500 mt-auto transition-all">
@@ -309,6 +317,12 @@ export const Admin: React.FC = () => {
               className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Ajustes
+            </button>
+            <button 
+              onClick={() => setActiveTab('finance')}
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+            >
+              Financeiro
             </button>
           </div>
           <Link to="/" className="text-red-500 p-2">
@@ -506,6 +520,8 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
               </div>
+            ) : activeTab === 'finance' ? (
+              <FinancePanel />
             ) : (
               <div className="space-y-8">
                 <div className="pt-16 md:pt-0">
