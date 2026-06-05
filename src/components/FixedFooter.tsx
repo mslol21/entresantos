@@ -21,10 +21,10 @@ export const FixedFooter: React.FC<FixedFooterProps> = ({ onClick }) => {
         >
           <button
             onClick={onClick}
-            className="w-full gold-bg-gradient text-navy p-5 rounded-[24px] flex items-center justify-between shadow-2xl active:scale-95 transition-all group"
+            className="w-full gold-bg-gradient text-navy p-5 rounded-full flex items-center justify-between shadow-2xl active:scale-95 transition-all group"
           >
             <div className="flex items-center gap-4">
-              <div className="bg-navy/10 w-12 h-12 rounded-xl flex items-center justify-center text-navy shadow-inner group-hover:scale-110 transition-transform">
+              <div className="bg-navy/10 w-12 h-12 rounded-full flex items-center justify-center text-navy shadow-inner group-hover:scale-110 transition-transform">
                 <ShoppingBag size={24} strokeWidth={2.5} />
               </div>
               <div className="text-left">

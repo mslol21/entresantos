@@ -89,7 +89,7 @@ export const FinancePanel: React.FC = () => {
         </div>
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
+          className="gold-bg-gradient text-navy px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
         >
           {isAdding ? 'Cancelar' : <><Plus size={20} /> Nova Transação</>}
         </button>
@@ -98,7 +98,7 @@ export const FinancePanel: React.FC = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-navy-light rounded-3xl border border-gold/10 p-6 flex items-center gap-4 shadow-xl">
-          <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500">
+          <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
             <TrendingUp size={28} />
           </div>
           <div>
@@ -110,7 +110,7 @@ export const FinancePanel: React.FC = () => {
         </div>
 
         <div className="bg-navy-light rounded-3xl border border-gold/10 p-6 flex items-center gap-4 shadow-xl">
-          <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500">
+          <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center text-red-500">
             <TrendingDown size={28} />
           </div>
           <div>
@@ -123,7 +123,7 @@ export const FinancePanel: React.FC = () => {
 
         <div className="bg-navy-light rounded-3xl border border-gold/10 p-6 flex items-center gap-4 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full -mr-16 -mt-16" />
-          <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center text-gold relative z-10">
+          <div className="w-14 h-14 bg-gold/10 rounded-full flex items-center justify-center text-gold relative z-10">
             <DollarSign size={28} />
           </div>
           <div className="relative z-10">
@@ -180,12 +180,12 @@ export const FinancePanel: React.FC = () => {
               <h2 className="text-gold font-serif font-bold text-lg mb-2">Nova Transação</h2>
               
               <div className="grid grid-cols-2 gap-4">
-                <label className={`p-4 rounded-xl border flex flex-col items-center gap-2 cursor-pointer transition-all ${form.type === 'income' ? 'border-green-500 bg-green-500/10 text-green-500' : 'border-gold/10 text-gold/40 hover:border-gold/30'}`}>
+                <label className={`p-3 rounded-full border flex flex-col items-center gap-1 cursor-pointer transition-all ${form.type === 'income' ? 'border-green-500 bg-green-500/10 text-green-500' : 'border-gold/10 text-gold/40 hover:border-gold/30'}`}>
                   <input type="radio" name="type" value="income" className="hidden" checked={form.type === 'income'} onChange={() => setForm({...form, type: 'income'})} />
                   <TrendingUp size={20} />
                   <span className="text-xs font-bold uppercase">Receita</span>
                 </label>
-                <label className={`p-4 rounded-xl border flex flex-col items-center gap-2 cursor-pointer transition-all ${form.type === 'expense' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-gold/10 text-gold/40 hover:border-gold/30'}`}>
+                <label className={`p-3 rounded-full border flex flex-col items-center gap-1 cursor-pointer transition-all ${form.type === 'expense' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-gold/10 text-gold/40 hover:border-gold/30'}`}>
                   <input type="radio" name="type" value="expense" className="hidden" checked={form.type === 'expense'} onChange={() => setForm({...form, type: 'expense'})} />
                   <TrendingDown size={20} />
                   <span className="text-xs font-bold uppercase">Despesa</span>
@@ -227,7 +227,7 @@ export const FinancePanel: React.FC = () => {
 
               <button 
                 type="submit" 
-                className={`w-full py-4 rounded-xl font-bold uppercase text-xs tracking-widest mt-auto shadow-lg transition-all ${form.type === 'income' ? 'bg-green-500 text-navy hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-400'}`}
+                className={`w-full py-4 rounded-full font-bold uppercase text-xs tracking-widest mt-auto shadow-lg transition-all ${form.type === 'income' ? 'bg-green-500 text-navy hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-400'}`}
               >
                 Salvar Transação
               </button>

@@ -25,8 +25,8 @@ export const SocialProof: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {benefits.map((benefit, index) => (
-            <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-navy border border-gold/10 transition-transform hover:-translate-y-1">
-              <div className="mt-1 bg-gold/10 p-2 rounded-lg">
+            <div key={index} className="flex items-start gap-4 p-6 rounded-3xl bg-navy border border-gold/10 transition-transform hover:-translate-y-1">
+              <div className="mt-1 bg-gold/10 p-2.5 rounded-full text-gold">
                 {benefit.icon}
               </div>
               <div>

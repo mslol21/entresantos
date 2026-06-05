@@ -53,7 +53,7 @@ export const Hero: React.FC = () => {
             >
               <button
                 onClick={scrollToCatalog}
-                className="w-full sm:w-auto gold-bg-gradient text-navy px-10 py-5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gold/20 hover:scale-105 active:scale-95"
+                className="w-full sm:w-auto gold-bg-gradient text-navy px-10 py-5 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gold/20 hover:scale-105 active:scale-95"
               >
                 Conhecer Coleções
                 <ArrowRight size={22} />

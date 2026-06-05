@@ -6,6 +6,24 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
 
+const getColorHex = (name: string): string => {
+  const lower = name.toLowerCase();
+  if (lower.includes('areia')) return '#E2DBD0';
+  if (lower.includes('bege')) return '#D4C4B5';
+  if (lower.includes('off-white') || lower.includes('off white')) return '#F5F2EB';
+  if (lower.includes('nude')) return '#E3C8B7';
+  if (lower.includes('terracota')) return '#C06C53';
+  if (lower.includes('cinza quente')) return '#9E948B';
+  if (lower.includes('marrom claro')) return '#92765A';
+  if (lower.includes('branco')) return '#FFFFFF';
+  if (lower.includes('preto')) return '#1A1A1A';
+  if (lower.includes('azul')) return '#6A8CA6';
+  if (lower.includes('rosa')) return '#E0A899';
+  if (lower.includes('verde')) return '#7B8E78';
+  if (lower.includes('dourado') || lower.includes('ouro')) return '#D4AF37';
+  return '#666666';
+};
+
 export const Admin: React.FC = () => {
   const { 
     products, settings, loading, categories, globalOptions,
@@ -21,6 +39,7 @@ export const Admin: React.FC = () => {
   const [editingOption, setEditingOption] = useState<GlobalOption | null>(null);
   const [isAddingOption, setIsAddingOption] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [subTab, setSubTab] = useState<'colors' | 'entremeio' | 'crucifixo' | 'outros'>('colors');
   
   // Security state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -237,45 +256,38 @@ export const Admin: React.FC = () => {
           <nav className="space-y-2 flex-grow">
             <button 
               onClick={() => setActiveTab('products')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'products' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
             >
               <ShoppingBag size={20} />
-              <span className="font-bold text-sm">Produtos</span>
+              <span className="text-sm">Produtos</span>
             </button>
             <button 
-              onClick={() => setActiveTab('colors')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+              onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'colors' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
             >
-              <Palette size={20} />
-              <span className="font-bold text-sm">Cores</span>
+              <Settings size={20} />
+              <span className="text-sm">Opções Globais</span>
             </button>
             <button 
               onClick={() => setActiveTab('categories')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'categories' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
             >
               <Grid size={20} />
-              <span className="font-bold text-sm">Categorias</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('options')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'options' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
-            >
-              <Wrench size={20} />
-              <span className="font-bold text-sm">Opções (Montagem)</span>
+              <span className="text-sm">Categorias</span>
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'settings' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
             >
               <Settings size={20} />
-              <span className="font-bold text-sm">Configurações</span>
+              <span className="text-sm">Configurações</span>
             </button>
             <button 
               onClick={() => setActiveTab('finance')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'hover:bg-gold/5'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'finance' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
             >
               <LineChart size={20} />
-              <span className="font-bold text-sm">Financeiro</span>
+              <span className="text-sm">Financeiro</span>
             </button>
           </nav>
 
@@ -290,37 +302,31 @@ export const Admin: React.FC = () => {
           <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1 pr-4">
             <button 
               onClick={() => setActiveTab('products')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Produtos
             </button>
             <button 
-              onClick={() => setActiveTab('colors')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
-              Cores
+              Opções Globais
             </button>
             <button 
               onClick={() => setActiveTab('categories')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Categorias
             </button>
             <button 
-              onClick={() => setActiveTab('options')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'options' ? 'bg-gold text-navy' : 'text-gold/60'}`}
-            >
-              Opções
-            </button>
-            <button 
               onClick={() => setActiveTab('settings')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Ajustes
             </button>
             <button 
               onClick={() => setActiveTab('finance')}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-gold/60'}`}
             >
               Financeiro
             </button>
@@ -456,29 +462,74 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : (activeTab === 'colors' || activeTab === 'options') ? (
+            ) : activeTab === 'colors' ? (
               <div className="space-y-8">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">
-                      {activeTab === 'colors' ? 'Cadastro de Cores/Materiais' : 'Opções de Montagem'}
-                    </h1>
-                    <p className="text-gold/40 text-sm">Gerencie opções globais que podem ser anexadas a categorias inteiras.</p>
+                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Opções Globais</h1>
+                    <p className="text-gold/40 text-sm">Biblioteca de cores, tecidos, acabamentos e tamanhos.</p>
                   </div>
                   <button 
-                    onClick={() => { setIsAddingOption(true); setEditingOption(null); setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' }); }}
-                    className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
+                    onClick={() => { 
+                      setIsAddingOption(true); 
+                      setEditingOption(null); 
+                      setFormOption({ 
+                        name: '', 
+                        price: 0, 
+                        image: '', 
+                        categoryIds: [], 
+                        group: subTab === 'colors' ? 'Cores' : (subTab === 'entremeio' ? 'Entremeio' : (subTab === 'crucifixo' ? 'Crucifixo' : 'Outros'))
+                      }); 
+                    }}
+                    className="gold-bg-gradient text-navy px-6 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
                   >
                     <Plus size={20} />
                     Nova Opção
                   </button>
                 </div>
 
-                <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 shadow-2xl">
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {globalOptions.filter(o => o.type === (activeTab === 'colors' ? 'color' : 'assembly')).map(o => (
-                      <div key={o.id} className="bg-navy p-4 rounded-2xl border border-gold/5 flex flex-col gap-3 group">
-                        <div className="w-full aspect-square bg-navy-light rounded-xl overflow-hidden border border-gold/10">
+                {/* Pills Tab Menu */}
+                <div className="flex flex-wrap gap-2.5 bg-navy-light/45 p-2 rounded-full w-fit border border-gold/10">
+                  <button
+                    onClick={() => setSubTab('colors')}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'colors' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                  >
+                    <Palette size={14} />
+                    Cores
+                  </button>
+                  <button
+                    onClick={() => setSubTab('entremeio')}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'entremeio' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                  >
+                    <Grid size={14} />
+                    Entremeios
+                  </button>
+                  <button
+                    onClick={() => setSubTab('crucifixo')}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'crucifixo' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                  >
+                    <Wrench size={14} />
+                    Crucifixos
+                  </button>
+                  <button
+                    onClick={() => setSubTab('outros')}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'outros' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                  >
+                    <Settings size={14} />
+                    Outras Opções
+                  </button>
+                </div>
+
+                <div className="bg-navy-light rounded-[32px] border border-gold/10 p-8 shadow-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {globalOptions.filter(o => {
+                      if (subTab === 'colors') return o.type === 'color';
+                      if (subTab === 'entremeio') return o.type === 'assembly' && o.group === 'Entremeio';
+                      if (subTab === 'crucifixo') return o.type === 'assembly' && o.group === 'Crucifixo';
+                      return o.type === 'assembly' && o.group === 'Outros';
+                    }).map(o => (
+                      <div key={o.id} className="bg-navy p-4.5 rounded-[24px] border border-gold/10 flex flex-col gap-3 group hover:border-gold/30 transition-all shadow-lg text-left">
+                        <div className="w-full aspect-square bg-navy-light rounded-2xl overflow-hidden border border-gold/10 flex items-center justify-center">
                           {o.image ? (
                             o.image.match(/\.(mp4|webm|ogg)$/i) ? (
                               <video src={o.image} className="w-full h-full object-cover" />
@@ -486,33 +537,41 @@ export const Admin: React.FC = () => {
                               <img src={o.image} className="w-full h-full object-cover" />
                             )
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gold/10"><Palette size={24} /></div>
+                            subTab === 'colors' ? (
+                              <div className="w-12 h-12 rounded-full border border-gold/25 shadow-lg shadow-gold/10" style={{ backgroundColor: getColorHex(o.name) }} />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gold/10"><Palette size={24} /></div>
+                            )
                           )}
                         </div>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-grow">
-                            <div className="text-gold font-bold text-xs">{o.name}</div>
-                            {o.price && o.price > 0 && <div className="text-[10px] text-gold/40">+ R$ {o.price.toFixed(2)}</div>}
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {o.group && <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 uppercase">{o.group}</span>}
-                              {o.categoryIds?.map(cid => (
-                                <span key={cid} className="text-[8px] bg-gold/10 px-1.5 py-0.5 rounded text-gold/40">{categories.find(c => c.id === cid)?.name}</span>
-                              ))}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full font-bold">Ativo</span>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => startEditOption(o)}
+                                className="text-gold/40 hover:text-gold p-1 transition-all"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button 
+                                onClick={() => deleteGlobalOption(o.id)} 
+                                className="text-red-500/40 hover:text-red-500 p-1 transition-all"
+                              >
+                                <Trash2 size={13} />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => startEditOption(o)}
-                              className="text-gold/40 hover:text-gold p-1 transition-all"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button 
-                              onClick={() => deleteGlobalOption(o.id)} 
-                              className="text-red-500/40 hover:text-red-500 p-1 transition-all"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                          <div className="flex-grow text-left">
+                            <div className="text-gold font-bold text-sm line-clamp-1">{o.name}</div>
+                            <div className="text-[10px] text-gold/40 mt-0.5">
+                              {o.price && o.price > 0 ? `+ R$ ${o.price.toFixed(2)}` : 'Preço padrão'}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {o.categoryIds?.map(cid => (
+                                <span key={cid} className="text-[8px] bg-gold/10 px-1.5 py-0.5 rounded text-gold/45 font-medium">{categories.find(c => c.id === cid)?.name}</span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -789,14 +848,23 @@ export const Admin: React.FC = () => {
                   </label>
                 </div>
 
-                <button 
-                  type="submit" 
-                  disabled={isUploading}
-                  className={`w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Save size={20} />
-                  {editingProduct ? 'Salvar Alterações' : 'Cadastrar Produto'}
-                </button>
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddingProduct(false)}
+                    className="w-1/2 bg-navy border border-gold/20 hover:border-gold/50 text-gold py-4 rounded-full font-bold transition-all text-center text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isUploading}
+                    className={`w-1/2 gold-bg-gradient text-navy py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-xl shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Save size={18} />
+                    {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -991,12 +1059,22 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
 
-                <button 
-                  type="submit"
-                  className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold hover:scale-105 transition-all shadow-lg shadow-gold/20 mt-4"
-                >
-                  {editingOption ? 'Salvar Alterações' : 'Cadastrar Opção Global'}
-                </button>
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddingOption(false)}
+                    className="w-1/2 bg-navy border border-gold/20 hover:border-gold/50 text-gold py-4 rounded-full font-bold transition-all text-center text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    className="w-1/2 gold-bg-gradient text-navy py-4 rounded-full font-bold hover:scale-[1.02] transition-all shadow-lg shadow-gold/20 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Save size={18} />
+                    {editingOption ? 'Salvar Alterações' : 'Criar Opção'}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>

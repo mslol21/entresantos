@@ -33,11 +33,11 @@ export const ProductGrid: React.FC = () => {
           <div className="w-full md:w-80 group">
             <div className="relative">
               <input 
-                type="text"
-                placeholder="Buscar por nome ou modelo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-navy-light/50 border border-gold/10 rounded-2xl p-4 pl-12 text-gold text-sm focus:border-gold/50 outline-none transition-all placeholder:text-gold/20 focus:bg-navy-light"
+                type="text" 
+                placeholder="Buscar por nome ou modelo..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                className="w-full bg-navy-light/50 border border-gold/15 rounded-full p-4 pl-12 text-gold text-sm focus:border-gold/50 outline-none transition-all placeholder:text-gold/20 focus:bg-navy-light" 
               />
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gold/30 group-focus-within:text-gold transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -58,7 +58,7 @@ export const ProductGrid: React.FC = () => {
         <div className="flex flex-wrap gap-2 mb-12 scrollbar-hide overflow-x-auto pb-2">
           <button
             onClick={() => setSelectedCategory('')}
-            className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
+            className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
               selectedCategory === ''
                 ? 'bg-gold text-navy border-gold shadow-xl shadow-gold/20'
                 : 'bg-navy-light/40 text-gold/40 border-gold/10 hover:border-gold/30 hover:text-gold'
@@ -72,7 +72,7 @@ export const ProductGrid: React.FC = () => {
               onClick={() => {
                 setSelectedCategory(cat.id);
               }}
-              className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
+              className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
                 selectedCategory === cat.id
                   ? 'bg-gold text-navy border-gold shadow-xl shadow-gold/20'
                   : 'bg-navy-light/40 text-gold/40 border-gold/10 hover:border-gold/30 hover:text-gold'

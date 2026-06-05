@@ -28,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleMenu}
-              className="md:hidden p-2 text-gold hover:bg-gold/10 rounded-xl transition-all active:scale-90"
+              className="md:hidden p-2 text-gold hover:bg-gold/10 rounded-full transition-all active:scale-90"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
 
           <button
             onClick={onCartClick}
-            className="relative p-3 text-gold hover:bg-gold/10 rounded-2xl transition-all active:scale-90 group"
+            className="relative p-3 text-gold hover:bg-gold/10 rounded-full transition-all active:scale-90 group"
           >
             <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
             {totalItems > 0 && (
@@ -113,9 +113,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                     key={item.label}
                     href={item.href}
                     onClick={toggleMenu}
-                    className="flex items-center gap-4 p-4 rounded-2xl text-gold/60 hover:text-gold hover:bg-gold/5 transition-all group"
+                    className="flex items-center gap-4 p-4 rounded-full text-gold/60 hover:text-gold hover:bg-gold/5 transition-all group"
                   >
-                    <div className="p-2 bg-navy rounded-xl border border-gold/5 group-hover:border-gold/20 group-hover:text-gold transition-all">
+                    <div className="p-2 bg-navy rounded-full border border-gold/5 group-hover:border-gold/20 group-hover:text-gold transition-all">
                       {item.icon}
                     </div>
                     <span className="text-sm font-black uppercase tracking-[0.2em]">{item.label}</span>
@@ -128,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                   href={`https://instagram.com/${settings.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-4 rounded-2xl text-gold/40 hover:text-gold transition-all"
+                  className="flex items-center gap-4 p-4 rounded-full text-gold/40 hover:text-gold transition-all"
                 >
                   <Camera size={20} />
                   <span className="text-xs font-bold uppercase tracking-widest">Siga no Instagram</span>

@@ -51,7 +51,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="p-8 border-b border-gold/10 flex items-center justify-between bg-navy-light/50 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center gap-4">
-                <div className="bg-gold/10 p-3 rounded-2xl text-gold border border-gold/20 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                <div className="bg-gold/10 p-3 rounded-full text-gold border border-gold/20 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
                   <ShoppingBag size={24} strokeWidth={2.5} />
                 </div>
                 <div>
@@ -85,7 +85,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   </p>
                   <button
                     onClick={onClose}
-                    className="text-navy bg-gold px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-gold/20"
+                    className="text-navy bg-gold px-10 py-4 rounded-full font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-gold/20"
                   >
                     Explorar Coleções
                   </button>
@@ -101,7 +101,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       className="flex flex-col p-5 bg-navy-light/40 rounded-[32px] border border-gold/5 group hover:border-gold/20 hover:bg-navy-light/60 transition-all duration-500"
                     >
                       <div className="flex gap-5">
-                        <div className="w-24 h-24 bg-navy rounded-2xl overflow-hidden flex-shrink-0 border border-gold/10 shadow-inner group-hover:border-gold/30 transition-colors">
+                        <div className="w-24 h-24 bg-navy rounded-[20px] overflow-hidden flex-shrink-0 border border-gold/10 shadow-inner group-hover:border-gold/30 transition-colors">
                           <img 
                             src={item.image} 
                             alt={item.name} 
@@ -118,7 +118,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             </div>
                             <button
                               onClick={() => removeFromCart(item.id, item.name)}
-                              className="text-gold/20 hover:text-red-500 transition-all p-2 hover:bg-red-500/5 rounded-xl"
+                              className="text-gold/20 hover:text-red-500 transition-all p-2 hover:bg-red-500/5 rounded-full"
                             >
                               <Trash2 size={18} />
                             </button>
@@ -144,7 +144,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gold/5">
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] text-gold/30 uppercase tracking-widest font-black mr-2">Qtd:</span>
-                          <div className="flex items-center gap-4 bg-navy/80 px-4 py-2 rounded-xl border border-gold/10 shadow-lg">
+                          <div className="flex items-center gap-4 bg-navy/80 px-4 py-2 rounded-full border border-gold/10 shadow-lg">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1, item.name)}
                               className="text-gold/40 hover:text-gold transition-all active:scale-75"
@@ -193,7 +193,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full gold-bg-gradient text-navy py-6 rounded-[24px] font-black text-lg flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:scale-[1.02] hover:shadow-gold/40 group"
+                  className="w-full gold-bg-gradient text-navy py-6 rounded-full font-black text-lg flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gold/30 active:scale-[0.98] hover:scale-[1.02] hover:shadow-gold/40 group"
                 >
                   <MessageCircle size={24} strokeWidth={2.5} className="group-hover:animate-bounce" />
                   Finalizar no WhatsApp
