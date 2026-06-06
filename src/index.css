@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #050B18;
-  --color-navy-light: #0B1120;
-  --color-gold: #D4AF37;
-  --color-gold-light: #F3E5AB;
-  --color-gold-dark: #A67C00;
-  --color-cream: #F5F2EB;
-  --color-cream-light: #FBF9F6;
+  --color-navy: #0B284C;
+  --color-navy-light: #153C68;
+  --color-gold: #CF9E1C;
+  --color-gold-light: #F7EAB7;
+  --color-gold-dark: #A3790F;
+  --color-cream: #F7F4EB;
+  --color-cream-light: #FDFBF7;
   
   --font-serif: "Playfair Display", "Cormorant Garamond", "Cinzel", serif;
   --font-inter: "Raleway", "Inter", system-ui, sans-serif;
   
-  --shadow-gold: 0 10px 30px -10px rgba(212, 175, 55, 0.2);
-  --shadow-premium: 0 10px 30px -10px rgba(5, 11, 24, 0.08);
+  --shadow-gold: 0 10px 30px -10px rgba(207, 158, 28, 0.25);
+  --shadow-premium: 0 10px 30px -10px rgba(11, 40, 76, 0.08);
 }
 
 html {
@@ -54,13 +54,13 @@ body {
 }
 
 .gold-gradient {
-  background: linear-gradient(135deg, #050B18 0%, #D4AF37 50%, #A67C00 100%);
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-gold) 50%, var(--color-gold-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gold-bg-gradient {
-  background: linear-gradient(135deg, #050B18 0%, #D4AF37 100%);
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-gold) 100%);
 }
 
 .glass-morphism {
@@ -168,7 +168,7 @@ body {
 }
 
 .admin-light-content button.gold-bg-gradient {
-  background: linear-gradient(135deg, #050B18 0%, #D4AF37 100%) !important;
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-gold) 100%) !important;
   color: #ffffff !important;
 }
 
