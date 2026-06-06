@@ -343,16 +343,27 @@ export const ProductDetails: React.FC = () => {
                               setSelectedVariation(opt);
                             }
                           }}
-                          className={`w-9 h-9 rounded-full border-2 transition-all duration-300 hover:scale-110 flex items-center justify-center ${
+                          className={`w-10 h-10 rounded-full border-2 transition-all duration-300 hover:scale-110 flex items-center justify-center relative overflow-hidden ${
                             customOptions.cor === opt.name
-                              ? 'border-gold scale-110 shadow-lg'
+                              ? 'border-gold scale-110 shadow-lg ring-2 ring-gold/20'
                               : 'border-navy/10 hover:border-navy/40'
                           }`}
-                          style={{ backgroundColor: getColorHex(opt.name) }}
+                          style={opt.image ? {} : { backgroundColor: getColorHex(opt.name) }}
                           title={opt.name}
                         >
-                          {customOptions.cor === opt.name && (
-                            <Check size={14} strokeWidth={3} className={opt.name.toLowerCase().includes('branco') ? 'text-navy' : 'text-white'} />
+                          {opt.image ? (
+                            <>
+                              <img src={opt.image} className="w-full h-full object-cover rounded-full" />
+                              {customOptions.cor === opt.name && (
+                                <div className="absolute inset-0 bg-navy/40 rounded-full flex items-center justify-center">
+                                  <Check size={16} strokeWidth={3} className="text-white" />
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            customOptions.cor === opt.name && (
+                              <Check size={14} strokeWidth={3} className={opt.name.toLowerCase().includes('branco') ? 'text-navy' : 'text-white'} />
+                            )
                           )}
                         </button>
                       ))}
@@ -440,18 +451,27 @@ export const ProductDetails: React.FC = () => {
                                     return next;
                                   });
                                 }}
-                                className={`p-3 rounded-2xl text-left text-xs font-bold border flex flex-col gap-1 transition-all ${
+                                className={`p-2 rounded-2xl text-left text-xs font-bold border flex items-center gap-3 transition-all ${
                                   customOptions[`${group}_id`] === opt.id
                                     ? 'bg-navy text-white border-navy shadow-md'
                                     : 'bg-white text-navy/70 border-navy/15 hover:border-navy/40'
                                 }`}
                               >
-                                <span>{opt.name}</span>
-                                {opt.price && opt.price > 0 ? (
-                                  <span className={customOptions[`${group}_id`] === opt.id ? 'text-gold' : 'text-gold-dark'}>
-                                    +{opt.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                  </span>
-                                ) : null}
+                                {opt.image && (
+                                  <img 
+                                    src={opt.image} 
+                                    alt={opt.name} 
+                                    className="w-12 h-12 rounded-xl object-cover border border-gold/10 flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex flex-col">
+                                  <span>{opt.name}</span>
+                                  {opt.price && opt.price > 0 ? (
+                                    <span className={customOptions[`${group}_id`] === opt.id ? 'text-gold' : 'text-gold-dark'}>
+                                      +{opt.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
+                                  ) : null}
+                                </div>
                               </button>
                             ))}
                           </div>
