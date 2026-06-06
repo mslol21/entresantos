@@ -64,7 +64,7 @@ body {
 }
 
 .glass-morphism {
-  @apply bg-navy/95 backdrop-blur-md border border-gold/15;
+  @apply bg-cream-light/90 backdrop-blur-md border border-gold/15;
 }
 
 .card-premium {
