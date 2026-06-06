@@ -238,7 +238,7 @@ export const ProductDetails: React.FC = () => {
           
           {/* Left Column: Media Gallery */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="relative aspect-square max-w-sm mx-auto lg:max-w-none rounded-2xl md:rounded-[32px] overflow-hidden bg-white border border-gold/15 shadow-premium group">
+            <div className="relative aspect-square max-w-[300px] md:max-w-md lg:max-w-none mx-auto rounded-2xl md:rounded-[32px] overflow-hidden bg-white border border-gold/15 shadow-premium group">
               <img 
                 src={displayImage || product.image} 
                 alt={product.name}
