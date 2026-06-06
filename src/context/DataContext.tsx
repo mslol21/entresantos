@@ -121,6 +121,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
+    const isCustomizable = product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable;
+    const hasNameOption = product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option;
+    const isActive = product.isActive !== undefined ? product.isActive : (product as any).is_active;
+    const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
+    const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
+
     const { error } = await supabase
       .from('products')
       .insert([{
@@ -130,13 +136,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         image: product.image,
         category: product.category,
         subcategory: product.subcategory,
-        is_customizable: product.isCustomizable,
-        is_active: product.isActive,
-        available_colors: product.hasColorOption ? `${product.availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (product.availableColors || ''),
-        has_name_option: product.hasNameOption,
+        is_customizable: !!isCustomizable,
+        is_active: isActive !== false,
+        available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
+        has_name_option: !!hasNameOption,
         variations: product.variations || [],
         customization_lists: product.customizationLists || [],
-        name_price: product.namePrice
+        name_price: product.namePrice || null
       }])
       .select();
 
@@ -145,6 +151,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProduct = async (product: Product) => {
+    const isCustomizable = product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable;
+    const hasNameOption = product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option;
+    const isActive = product.isActive !== undefined ? product.isActive : (product as any).is_active;
+    const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
+    const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
+
     const { error } = await supabase
       .from('products')
       .update({
@@ -154,13 +166,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         image: product.image,
         category: product.category,
         subcategory: product.subcategory,
-        is_customizable: product.isCustomizable,
-        is_active: product.isActive,
-        available_colors: product.hasColorOption ? `${product.availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (product.availableColors || ''),
-        has_name_option: product.hasNameOption,
+        is_customizable: !!isCustomizable,
+        is_active: isActive !== false,
+        available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
+        has_name_option: !!hasNameOption,
         variations: product.variations || [],
         customization_lists: product.customizationLists || [],
-        name_price: product.namePrice
+        name_price: product.namePrice || null
       })
       .eq('id', product.id);
 

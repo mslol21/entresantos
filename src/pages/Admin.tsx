@@ -161,10 +161,21 @@ export const Admin: React.FC = () => {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...editingProduct,
+        ...formProduct
+      };
+
+      // Garantir propriedades camelCase consistentes
+      payload.isCustomizable = !!payload.isCustomizable;
+      payload.hasNameOption = !!payload.hasNameOption;
+      payload.hasColorOption = !!payload.hasColorOption;
+      payload.isActive = payload.isActive !== false;
+
       if (editingProduct) {
-        await updateProduct({ ...editingProduct, ...formProduct } as Product);
+        await updateProduct(payload as Product);
       } else {
-        await addProduct(formProduct as Product);
+        await addProduct(payload as Product);
       }
       setEditingProduct(null);
       setIsAddingProduct(false);

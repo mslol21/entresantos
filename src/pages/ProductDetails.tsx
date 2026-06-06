@@ -44,6 +44,7 @@ export const ProductDetails: React.FC = () => {
     if (id) {
       const favorites = JSON.parse(localStorage.getItem('es_favorites') || '[]');
       setIsFavorite(favorites.includes(id));
+      window.scrollTo(0, 0);
     }
   }, [id]);
 
@@ -92,7 +93,7 @@ export const ProductDetails: React.FC = () => {
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
 
-  const needsCustomizer = isMonteSeuTerco || hasNameOption || hasColorOption || (product.variations && product.variations.length > 0) || (product.customizationLists && product.customizationLists.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
+  const needsCustomizer = !!(isMonteSeuTerco || hasNameOption || hasColorOption);
 
   const getBasePrice = () => {
     if (selectedVariation && !('type' in (selectedVariation as any))) return (selectedVariation as any).price || 0;
@@ -237,7 +238,7 @@ export const ProductDetails: React.FC = () => {
           
           {/* Left Column: Media Gallery */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="relative aspect-square rounded-[32px] overflow-hidden bg-white border border-gold/15 shadow-premium group">
+            <div className="relative aspect-square max-w-sm mx-auto lg:max-w-none rounded-2xl md:rounded-[32px] overflow-hidden bg-white border border-gold/15 shadow-premium group">
               <img 
                 src={displayImage || product.image} 
                 alt={product.name}
@@ -360,7 +361,7 @@ export const ProductDetails: React.FC = () => {
                 )}
 
                 {/* Legacy String Colors Option */}
-                {relevantColors.length === 0 && colorList.length > 0 && (
+                {hasColorOption && relevantColors.length === 0 && colorList.length > 0 && (
                   <div className="space-y-2">
                     <label className="label-base">Opções de Cor</label>
                     <div className="flex flex-wrap gap-2.5">
