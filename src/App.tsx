@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { SocialProof } from './components/SocialProof';
+import { PrayerGuide } from './components/PrayerGuide';
 import { ProductGrid } from './components/ProductGrid';
 import { CartDrawer } from './components/CartDrawer';
 import { FixedFooter } from './components/FixedFooter';
@@ -124,8 +124,8 @@ function Store() {
       <div id="inicio">
         <Hero />
       </div>
-      <div id="depoimentos">
-        <SocialProof />
+      <div id="como-rezar">
+        <PrayerGuide />
       </div>
       <div id="produtos">
         <ProductGrid />

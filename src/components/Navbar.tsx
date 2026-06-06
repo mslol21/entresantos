@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Menu, X, Home, ShoppingBag, MessageSquare, Camera } from 'lucide-react';
+import { ShoppingCart, Menu, X, Home, ShoppingBag, Compass, Camera } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,8 +15,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
 
   const menuItems = [
     { label: 'Início', icon: <Home size={20} />, href: '#inicio' },
+    { label: 'Como Rezar', icon: <Compass size={20} />, href: '#como-rezar' },
     { label: 'Produtos', icon: <ShoppingBag size={20} />, href: '#produtos' },
-    { label: 'Depoimentos', icon: <MessageSquare size={20} />, href: '#depoimentos' },
   ];
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
