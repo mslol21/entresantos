@@ -31,7 +31,7 @@ html {
 
   color-scheme: light;
   color: var(--color-navy);
-  background-color: var(--color-cream);
+  background: radial-gradient(circle at 50% 35vh, #FFFDF8 0%, #F8F4E8 55%, var(--color-cream) 100%) no-repeat fixed;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
