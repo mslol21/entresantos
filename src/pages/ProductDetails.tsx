@@ -64,7 +64,7 @@ export const ProductDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
           <p className="text-navy font-serif animate-pulse">Carregando produto...</p>
@@ -75,7 +75,7 @@ export const ProductDetails: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-4">
         <h2 className="font-serif text-2xl text-navy">Produto não encontrado</h2>
         <Link to="/" className="btn-primary">Voltar para a Loja</Link>
       </div>
@@ -211,7 +211,7 @@ export const ProductDetails: React.FC = () => {
   const categoryData = categories.find(c => c.id === product.category);
 
   return (
-    <div className="pt-24 min-h-screen bg-cream text-navy font-sans">
+    <div className="pt-24 min-h-screen bg-transparent text-navy font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Back navigation & Breadcrumbs */}

@@ -21,7 +21,7 @@ const benefits = [
 
 export const SocialProof: React.FC = () => {
   return (
-    <section className="py-12 px-4 bg-cream-light border-y border-gold/15">
+    <section className="py-12 px-4 bg-transparent border-y border-gold/15">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {benefits.map((benefit, index) => (

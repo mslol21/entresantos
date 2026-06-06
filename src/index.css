@@ -59,9 +59,9 @@ body::before {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 25% auto;
-  opacity: 0.035;
+  opacity: 0.08;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 @media (max-width: 768px) {

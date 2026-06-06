@@ -27,7 +27,7 @@ function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-cream selection:bg-gold selection:text-navy text-navy">
+    <div className="min-h-screen selection:bg-gold selection:text-navy text-navy">
       <Navbar onCartClick={() => setIsCartOpen(true)} />
       
       <main>

@@ -19,7 +19,7 @@ export const ProductGrid: React.FC = () => {
   }, [products, selectedCategory, searchQuery]);
 
   return (
-    <section id="produtos" className="py-24 px-4 bg-cream relative overflow-hidden">
+    <section id="produtos" className="py-24 px-4 bg-transparent relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-gold/10 rounded-full blur-[100px] pointer-events-none" />
       
