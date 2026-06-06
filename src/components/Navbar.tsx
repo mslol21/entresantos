@@ -34,9 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 border border-gold-dark rounded-full flex items-center justify-center text-gold-dark font-serif text-sm">
-                {settings.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold-dark/20 bg-white" />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-lg leading-none text-navy uppercase tracking-wider">
                   {settings.name}
@@ -94,9 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               className="fixed left-0 top-0 bottom-0 w-[80%] max-w-sm bg-cream-light z-[50] md:hidden border-r border-gold/15 p-8 flex flex-col"
             >
               <div className="flex items-center gap-3 mb-12">
-                <div className="w-12 h-12 border-2 border-gold-dark rounded-full flex items-center justify-center text-gold-dark font-serif text-lg">
-                  {settings.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
+                <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gold-dark/20 bg-white" />
                 <div className="flex flex-col">
                   <span className="font-serif font-bold text-xl text-navy uppercase tracking-wider">
                     {settings.name}
