@@ -16,7 +16,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const [nome, setNome] = useState('');
   const [cep, setCep] = useState('');
   const [cidadeUf, setCidadeUf] = useState('');
-  const pagamento = 'Pix';
+  const [pagamento, setPagamento] = useState<'Pix' | 'Cartão' | 'Boleto'>('Pix');
   const [loadingCep, setLoadingCep] = useState(false);
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,12 +280,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   </div>
 
                   <div>
-                    <label className="label-base">Forma de Pagamento</label>
-                    <div className="grid grid-cols-1">
-                      <div className="py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-widest bg-navy text-white border border-navy shadow-sm flex items-center justify-between">
-                        <span>Pix</span>
-                        <span className="text-[10px] text-gold font-medium normal-case">Liberação imediata</span>
-                      </div>
+                    <label className="label-base">Forma de Pagamento *</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {(['Pix', 'Cartão', 'Boleto'] as const).map((method) => (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => setPagamento(method)}
+                          className={`py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all active:scale-95 cursor-pointer ${
+                            pagamento === method
+                              ? 'bg-navy text-white border-navy shadow-sm'
+                              : 'bg-white text-navy/70 border-gold/25 hover:border-gold/50'
+                          }`}
+                        >
+                          {method}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
