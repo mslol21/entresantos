@@ -55,10 +55,10 @@ body::before {
   bottom: 0;
   background-image: url('/logo.png');
   background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 25% auto;
-  opacity: 0.15;
+  background-repeat: repeat;
+  background-position: 0 0;
+  background-size: 140px 140px;
+  opacity: 0.06;
   pointer-events: none;
   z-index: -1;
   mix-blend-mode: multiply;
@@ -66,7 +66,7 @@ body::before {
 
 @media (max-width: 768px) {
   body::before {
-    background-size: 50% auto;
+    background-size: 90px 90px;
   }
 }
 
