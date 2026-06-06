@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -9,10 +8,11 @@ import { FixedFooter } from './components/FixedFooter';
 import { Admin } from './pages/Admin';
 import { ProductDetails } from './pages/ProductDetails';
 import { useData } from './context/DataContext';
+import { useCart } from './context/CartContext';
 import { MapPin, Phone, Lock } from 'lucide-react';
 
 function Layout() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { isCartOpen, setIsCartOpen } = useCart();
   const { settings, loading } = useData();
 
   if (loading) {

@@ -96,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-auto pt-4 border-t border-gold/10 gap-4">
           <div className="flex flex-col">
-            <span className="text-[9px] text-navy/40 block mb-0.5 uppercase tracking-widest font-black">Investimento</span>
+            <span className="text-[9px] text-navy/40 block mb-0.5 uppercase tracking-widest font-black">Preço</span>
             <span className="text-xl font-bold text-navy tabular-nums leading-none">
               {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>

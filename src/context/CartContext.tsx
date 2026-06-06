@@ -9,6 +9,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [step, setStep] = useState<'cart' | 'checkout'>('cart');
+
   useEffect(() => {
     localStorage.setItem('pedido-zap-cart', JSON.stringify(cart));
   }, [cart]);
@@ -59,6 +62,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearCart,
         totalItems,
         totalPrice,
+        isCartOpen,
+        setIsCartOpen,
+        step,
+        setStep,
       }}
     >
       {children}

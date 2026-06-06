@@ -3,6 +3,7 @@ import { ShoppingCart, Menu, X, Home, ShoppingBag, Compass, Camera } from 'lucid
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   onCartClick: () => void;
@@ -12,12 +13,36 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { totalItems } = useCart();
   const { settings } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
-    { label: 'Início', icon: <Home size={20} />, href: '#inicio' },
-    { label: 'Como Rezar', icon: <Compass size={20} />, href: '#como-rezar' },
-    { label: 'Produtos', icon: <ShoppingBag size={20} />, href: '#produtos' },
+    { label: 'Início', icon: <Home size={20} />, href: '/#inicio' },
+    { label: 'Como Rezar', icon: <Compass size={20} />, href: '/#como-rezar' },
+    { label: 'Produtos', icon: <ShoppingBag size={20} />, href: '/#produtos' },
   ];
+
+  const handleMenuClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    const hash = href.replace('/', '');
+    const id = hash.replace('#', '');
+
+    if (location.pathname === '/') {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      navigate('/' + hash);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+    setIsMenuOpen(false);
+  };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -52,6 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               <a 
                 key={item.label}
                 href={item.href}
+                onClick={(e) => handleMenuClick(e, item.href)}
                 className="text-navy/60 hover:text-navy text-xs uppercase tracking-[0.2em] font-bold transition-all hover:translate-y-[-2px]"
               >
                 {item.label}
@@ -108,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                   <a
                     key={item.label}
                     href={item.href}
-                    onClick={toggleMenu}
+                    onClick={(e) => handleMenuClick(e, item.href)}
                     className="flex items-center gap-4 p-4 rounded-full text-navy/70 hover:text-navy hover:bg-gold/5 transition-all group"
                   >
                     <div className="p-2 bg-white rounded-full border border-gold/15 group-hover:border-gold/45 text-gold-dark group-hover:text-gold transition-all">

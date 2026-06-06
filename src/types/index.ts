@@ -59,6 +59,10 @@ export type CartContextType = {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (isOpen: boolean) => void;
+  step: 'cart' | 'checkout';
+  setStep: (step: 'cart' | 'checkout') => void;
 }
 
 export type ShopSettings = {

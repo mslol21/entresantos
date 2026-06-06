@@ -29,8 +29,8 @@ const getColorHex = (name: string): string => {
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { products, globalOptions, settings, categories, loading } = useData();
+  const { addToCart, setIsCartOpen, setStep } = useCart();
+  const { products, globalOptions, categories, loading } = useData();
 
   const [quantity, setQuantity] = useState(1);
   const [selectedVariation, setSelectedVariation] = useState<Variation | GlobalOption | null>(null);
@@ -93,7 +93,15 @@ export const ProductDetails: React.FC = () => {
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
 
-  const needsCustomizer = !!(isMonteSeuTerco || hasNameOption || hasColorOption);
+  const needsCustomizer = !!(
+    isMonteSeuTerco || 
+    hasNameOption || 
+    hasColorOption || 
+    (product.variations && product.variations.length > 0) || 
+    (product.customizationLists && product.customizationLists.length > 0) || 
+    relevantColors.length > 0 || 
+    relevantAssembly.length > 0
+  );
 
   const getBasePrice = () => {
     if (selectedVariation && !('type' in (selectedVariation as any))) return (selectedVariation as any).price || 0;
@@ -129,7 +137,7 @@ export const ProductDetails: React.FC = () => {
       details.push(`Cor: ${customOptions.cor}`);
     }
 
-    if (customOptions.nome && hasNameOption) details.push(`Nome: ${customOptions.nome}`);
+    if (customOptions.nome) details.push(`Nome: ${customOptions.nome}`);
     
     if (product.customizationLists) {
       product.customizationLists.forEach(list => {
@@ -162,6 +170,8 @@ export const ProductDetails: React.FC = () => {
   };
 
   const handleWhatsAppRequest = () => {
+    if (!product) return;
+
     let customName = product.name;
     const details = [];
     
@@ -171,7 +181,7 @@ export const ProductDetails: React.FC = () => {
       details.push(`Cor: ${customOptions.cor}`);
     }
 
-    if (customOptions.nome && hasNameOption) details.push(`Nome: ${customOptions.nome}`);
+    if (customOptions.nome) details.push(`Nome: ${customOptions.nome}`);
     
     if (product.customizationLists) {
       product.customizationLists.forEach(list => {
@@ -191,11 +201,16 @@ export const ProductDetails: React.FC = () => {
       customName = `${product.name} (${details.join(', ')})`;
     }
 
-    const message = `Olá Ateliê Entre Santos! Gostaria de encomendar este produto:\n\n📦 *${quantity}x ${customName}*\n💰 *Preço Unitário: ${displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}*\n💵 *Total: ${(displayPrice * quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}*\n\nAguardando confirmação! 🙌`;
-    
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${settings.whatsapp}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    addToCart({ 
+      ...product, 
+      name: customName, 
+      price: displayPrice, 
+      image: displayImage || product.image,
+      selectedVariation: selectedVariation || undefined
+    } as Product, quantity);
+
+    setStep('checkout');
+    setIsCartOpen(true);
   };
 
   const handleShare = async () => {
@@ -211,7 +226,7 @@ export const ProductDetails: React.FC = () => {
   const categoryData = categories.find(c => c.id === product.category);
 
   return (
-    <div className="pt-24 min-h-screen bg-transparent text-navy font-sans">
+    <div className="pt-24 pb-20 md:pb-28 min-h-screen bg-transparent text-navy font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Back navigation & Breadcrumbs */}
@@ -482,15 +497,15 @@ export const ProductDetails: React.FC = () => {
                 )}
 
                 {/* Text fields customization (e.g. Engraving Name) */}
-                {hasNameOption && (
+                {needsCustomizer && (
                   <div className="space-y-1">
-                    <label className="label-base" htmlFor="nome">
-                      Nome para Personalizar {product.namePrice ? `(+ ${product.namePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}
+                    <label className="label-base" htmlFor="nome-personalizacao">
+                      ✏️ Nome para personalização
                     </label>
                     <input 
                       type="text" 
-                      id="nome"
-                      placeholder="Digite o nome (Ex: Maria)"
+                      id="nome-personalizacao"
+                      placeholder="Digite o nome aqui..."
                       value={customOptions.nome || ''}
                       onChange={(e) => setCustomOptions(prev => ({ ...prev, nome: e.target.value }))}
                       className="input-base"
