@@ -44,30 +44,6 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--color-cream);
-  position: relative;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/terco-watermark.png');
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 45% auto;
-  opacity: 0.07;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@media (max-width: 768px) {
-  body::before {
-    background-size: 80% auto;
-  }
 }
 
 @layer base {
