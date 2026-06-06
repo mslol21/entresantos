@@ -106,10 +106,10 @@ export const Admin: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
+      <div className="min-h-screen bg-cream flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin" />
-          <p className="text-gold font-serif animate-pulse">Carregando painel...</p>
+          <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
+          <p className="text-navy font-serif animate-pulse">Carregando painel...</p>
         </div>
       </div>
     );
@@ -117,18 +117,18 @@ export const Admin: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-navy flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-navy-light border border-gold/20 p-8 rounded-3xl w-full max-w-md shadow-2xl"
+          className="bg-white border border-gold/15 p-8 rounded-3xl w-full max-w-md shadow-premium text-navy"
         >
           <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center text-gold">
+            <div className="w-16 h-16 bg-gold/15 rounded-full flex items-center justify-center text-gold-dark">
               <Lock size={32} />
             </div>
-            <h1 className="text-2xl font-serif font-bold text-gold">Acesso Restrito</h1>
-            <p className="text-gold/40 text-sm text-center">Digite a senha administrativa para continuar.</p>
+            <h1 className="text-2xl font-serif font-bold text-navy">Acesso Restrito</h1>
+            <p className="text-navy/55 text-sm text-center">Digite a senha administrativa para continuar.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -138,18 +138,18 @@ export const Admin: React.FC = () => {
                 placeholder="Senha de acesso"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-center outline-none focus:border-gold transition-all"
+                className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy text-center outline-none focus:border-gold transition-all"
                 autoFocus
               />
               {error && <p className="text-red-500 text-xs text-center">{error}</p>}
             </div>
             <button 
               type="submit"
-              className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gold/20"
+              className="w-full gold-bg-gradient text-white py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gold/20 cursor-pointer"
             >
               Entrar no Painel
             </button>
-            <Link to="/" className="block text-center text-gold/40 text-xs hover:text-gold transition-colors mt-4">
+            <Link to="/" className="block text-center text-navy/40 text-xs hover:text-navy transition-colors mt-4">
               Voltar para a loja
             </Link>
           </form>
@@ -242,102 +242,102 @@ export const Admin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy text-gold">
+    <div className="min-h-screen bg-cream text-navy flex">
       {/* Admin Sidebar */}
-      <div className="flex h-screen overflow-hidden">
-        <aside className="w-64 bg-navy-light border-r border-gold/10 p-6 hidden md:flex flex-col">
+      <div className="flex w-full h-screen overflow-hidden">
+        <aside className="w-64 bg-navy border-r border-gold/15 p-6 hidden md:flex flex-col text-white">
           <div className="flex items-center justify-between gap-3 mb-10">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-gold rounded-full flex items-center justify-center text-xs">ES</div>
-              <span className="font-serif font-bold text-sm tracking-widest uppercase">Admin</span>
+              <div className="w-8 h-8 border border-white/20 rounded-full flex items-center justify-center text-xs text-white">ES</div>
+              <span className="font-serif font-bold text-sm text-white tracking-widest uppercase">Admin</span>
             </div>
           </div>
 
           <nav className="space-y-2 flex-grow">
             <button 
               onClick={() => setActiveTab('products')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'products' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'products' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
               <ShoppingBag size={20} />
               <span className="text-sm">Produtos</span>
             </button>
             <button 
               onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'colors' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'colors' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
               <Settings size={20} />
               <span className="text-sm">Opções Globais</span>
             </button>
             <button 
               onClick={() => setActiveTab('categories')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'categories' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'categories' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
               <Grid size={20} />
               <span className="text-sm">Categorias</span>
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'settings' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'settings' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
               <Settings size={20} />
               <span className="text-sm">Configurações</span>
             </button>
             <button 
               onClick={() => setActiveTab('finance')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'finance' ? 'bg-gold text-navy font-bold' : 'hover:bg-gold/5 text-gold/60 hover:text-gold'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'finance' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
               <LineChart size={20} />
               <span className="text-sm">Financeiro</span>
             </button>
           </nav>
 
-          <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-500 mt-auto transition-all">
+          <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-red-400 mt-auto transition-all">
             <ArrowLeft size={20} />
             <span className="font-bold text-sm">Voltar à Loja</span>
           </Link>
         </aside>
 
         {/* Mobile Header Navigation */}
-        <div className="md:hidden fixed top-0 left-0 right-0 bg-navy-light border-b border-gold/10 z-40 p-4 flex items-center justify-between">
+        <div className="md:hidden fixed top-0 left-0 right-0 bg-navy border-b border-gold/15 z-40 p-4 flex items-center justify-between text-white">
           <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1 pr-4">
             <button 
               onClick={() => setActiveTab('products')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
               Produtos
             </button>
             <button 
               onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
               Opções Globais
             </button>
             <button 
               onClick={() => setActiveTab('categories')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
               Categorias
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
               Ajustes
             </button>
             <button 
               onClick={() => setActiveTab('finance')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-gold/60'}`}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
               Financeiro
             </button>
           </div>
-          <Link to="/" className="text-red-500 p-2">
+          <Link to="/" className="text-red-400 p-2">
             <ArrowLeft size={20} />
           </Link>
         </div>
 
         {/* Main Content */}
-        <main className="flex-grow overflow-y-auto p-6 md:p-10">
+        <main className="flex-grow overflow-y-auto p-6 md:p-10 bg-cream text-navy admin-light-content">
           <div className="max-w-5xl mx-auto">
             {activeTab === 'products' ? (
               <div className="space-y-8">
@@ -653,18 +653,18 @@ export const Admin: React.FC = () => {
       {/* Product Form Modal */}
       <AnimatePresence>
         {isAddingProduct && (
-          <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar"
+              className="bg-white border border-gold/15 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar text-navy admin-light-content"
             >
-              <div className="flex justify-between items-center mb-8 sticky top-0 bg-navy-light z-10 py-2">
-                <h2 className="text-2xl font-serif font-bold text-gold">
+              <div className="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 py-2">
+                <h2 className="text-2xl font-serif font-bold text-navy">
                   {editingProduct ? 'Editar Produto' : 'Novo Produto'}
                 </h2>
-                <button onClick={() => setIsAddingProduct(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
+                <button onClick={() => setIsAddingProduct(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
               </div>
 
               <form onSubmit={handleProductSubmit} className="space-y-6">
@@ -874,18 +874,18 @@ export const Admin: React.FC = () => {
       {/* Category Form Modal */}
       <AnimatePresence>
         {isAddingCategory && (
-          <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-md p-8 shadow-2xl"
+              className="bg-white border border-gold/15 rounded-3xl w-full max-w-md p-8 shadow-2xl text-navy admin-light-content"
             >
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-serif font-bold text-gold">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-serif font-bold text-navy">
                   {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
                 </h2>
-                <button onClick={() => setIsAddingCategory(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
+                <button onClick={() => setIsAddingCategory(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
               </div>
 
               <form onSubmit={handleCategorySubmit} className="space-y-6">
@@ -914,18 +914,18 @@ export const Admin: React.FC = () => {
       {/* Global Option Form Modal */}
       <AnimatePresence>
         {isAddingOption && (
-          <div className="fixed inset-0 bg-navy/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-navy-light border border-gold/20 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar"
+              className="bg-white border border-gold/15 rounded-3xl w-full max-w-xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar text-navy admin-light-content"
             >
-              <div className="flex justify-between items-center mb-8 sticky top-0 bg-navy-light z-10 py-2">
-                <h2 className="text-2xl font-serif font-bold text-gold">
+              <div className="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 py-2">
+                <h2 className="text-2xl font-serif font-bold text-navy">
                   {editingOption ? 'Editar Opção' : 'Nova Opção'}
                 </h2>
-                <button onClick={() => setIsAddingOption(false)} className="text-gold/40 hover:text-gold p-2"><X size={24} /></button>
+                <button onClick={() => setIsAddingOption(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
               </div>
 
               <form onSubmit={handleOptionSubmit} className="space-y-8">

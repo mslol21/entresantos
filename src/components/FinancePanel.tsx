@@ -146,15 +146,15 @@ export const FinancePanel: React.FC = () => {
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37" opacity={0.1} vertical={false} />
-                  <XAxis dataKey="name" stroke="#D4AF37" opacity={0.5} tick={{ fill: '#D4AF37', opacity: 0.5, fontSize: 12 }} />
-                  <YAxis stroke="#D4AF37" opacity={0.5} tick={{ fill: '#D4AF37', opacity: 0.5, fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#050B18" opacity={0.05} vertical={false} />
+                  <XAxis dataKey="name" stroke="#050B18" opacity={0.3} tick={{ fill: '#050B18', opacity: 0.6, fontSize: 12 }} />
+                  <YAxis stroke="#050B18" opacity={0.3} tick={{ fill: '#050B18', opacity: 0.6, fontSize: 12 }} />
                   <Tooltip 
-                    cursor={{ fill: '#D4AF37', opacity: 0.05 }}
-                    contentStyle={{ backgroundColor: '#0B1120', borderColor: '#D4AF3720', borderRadius: '12px', color: '#D4AF37' }}
-                    itemStyle={{ color: '#D4AF37' }}
+                    cursor={{ fill: '#050B18', opacity: 0.03 }}
+                    contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#D4AF3730', borderRadius: '12px', color: '#050B18' }}
+                    itemStyle={{ color: '#050B18' }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', color: '#D4AF37', opacity: 0.7 }} />
+                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', color: '#050B18', opacity: 0.7 }} />
                   <Bar dataKey="receitas" name="Receitas" fill="#22c55e" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
