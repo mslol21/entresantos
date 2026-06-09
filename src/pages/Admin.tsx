@@ -471,7 +471,7 @@ export const Admin: React.FC = () => {
                   </div>
                   
                   {/* Status Filters */}
-                  <div className="flex bg-navy-light p-1 rounded-xl border border-gold/15 self-start sm:self-auto overflow-x-auto max-w-full">
+                  <div className="flex bg-cream-light p-1 rounded-xl border border-gold/15 self-start sm:self-auto overflow-x-auto max-w-full">
                     {(['pending', 'approved', 'cancelled', 'all'] as const).map((status) => (
                       <button
                         key={status}
@@ -479,7 +479,7 @@ export const Admin: React.FC = () => {
                         className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                           statusFilter === status
                             ? 'bg-gold text-navy shadow-md'
-                            : 'text-white/60 hover:text-white'
+                            : 'text-navy/85 hover:text-navy hover:bg-navy/10'
                         }`}
                       >
                         {status === 'pending' ? 'Pendentes' : status === 'approved' ? 'Aprovados' : status === 'cancelled' ? 'Cancelados' : 'Todos'}
@@ -746,31 +746,31 @@ export const Admin: React.FC = () => {
                 </div>
 
                 {/* Pills Tab Menu */}
-                <div className="flex flex-wrap gap-2.5 bg-navy-light/45 p-2 rounded-full w-fit border border-gold/10">
+                <div className="flex flex-wrap gap-2.5 bg-cream-light p-2 rounded-full w-fit border border-gold/15 shadow-inner">
                   <button
                     onClick={() => setSubTab('colors')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'colors' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'colors' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
                   >
                     <Palette size={14} />
                     Cores
                   </button>
                   <button
                     onClick={() => setSubTab('entremeio')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'entremeio' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'entremeio' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
                   >
                     <Grid size={14} />
                     Entremeios
                   </button>
                   <button
                     onClick={() => setSubTab('crucifixo')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'crucifixo' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'crucifixo' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
                   >
                     <Wrench size={14} />
                     Crucifixos
                   </button>
                   <button
                     onClick={() => setSubTab('outros')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'outros' ? 'bg-gold text-navy shadow-lg' : 'text-gold/50 hover:text-gold'}`}
+                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'outros' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
                   >
                     <Settings size={14} />
                     Outras Opções
