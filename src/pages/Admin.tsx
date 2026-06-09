@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import type { Product, GlobalOption, Category } from '../types';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
@@ -27,12 +27,13 @@ const getColorHex = (name: string): string => {
 
 export const Admin: React.FC = () => {
   const { 
-    products, settings, loading, categories, globalOptions,
+    products, settings, loading, categories, globalOptions, orders,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
     addCategory, updateCategory, deleteCategory,
-    addGlobalOption, updateGlobalOption, deleteGlobalOption 
+    addGlobalOption, updateGlobalOption, deleteGlobalOption,
+    addTransaction, updateOrderStatus, deleteOrder
   } = useData();
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings' | 'finance'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings' | 'finance' | 'orders'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -48,6 +49,7 @@ export const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'cancelled' | 'all'>('pending');
 
   useEffect(() => {
     // Check current session
@@ -219,9 +221,41 @@ export const Admin: React.FC = () => {
       setEditingProduct(null);
       setIsAddingProduct(false);
       setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] });
-    } catch (err) {
-      console.error('Erro ao salvar produto:', err);
-      alert('Erro ao salvar o produto. Verifique sua conexão ou tente novamente.');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAcceptOrder = async (order: any) => {
+    try {
+      await updateOrderStatus(order.id, 'approved');
+      await addTransaction({
+        description: `Pedido de ${order.client_name}`,
+        amount: order.total_price,
+        type: 'income',
+        category: 'Vendas',
+        date: new Date().toISOString().split('T')[0]
+      });
+    } catch (err: any) {
+      alert('Erro ao aceitar pedido: ' + (err.message || err));
+    }
+  };
+
+  const handleCancelOrder = async (order: any) => {
+    try {
+      await updateOrderStatus(order.id, 'cancelled');
+    } catch (err: any) {
+      alert('Erro ao cancelar pedido: ' + (err.message || err));
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (confirm('Deseja realmente excluir permanentemente o registro deste pedido do banco de dados?')) {
+      try {
+        await deleteOrder(orderId);
+      } catch (err: any) {
+        alert('Erro ao excluir pedido: ' + (err.message || err));
+      }
     }
   };
 
@@ -312,6 +346,20 @@ export const Admin: React.FC = () => {
               <span className="text-sm">Produtos</span>
             </button>
             <button 
+              onClick={() => setActiveTab('orders')}
+              className={`w-full flex items-center justify-between p-3 rounded-full transition-all ${activeTab === 'orders' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
+            >
+              <div className="flex items-center gap-3">
+                <ClipboardList size={20} />
+                <span className="text-sm">Pedidos</span>
+              </div>
+              {orders.filter(o => o.status === 'pending').length > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full mr-2">
+                  {orders.filter(o => o.status === 'pending').length}
+                </span>
+              )}
+            </button>
+            <button 
               onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
               className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'colors' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
             >
@@ -366,6 +414,17 @@ export const Admin: React.FC = () => {
               Produtos
             </button>
             <button 
+              onClick={() => setActiveTab('orders')}
+              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all relative ${activeTab === 'orders' ? 'bg-gold text-navy' : 'text-white/60'}`}
+            >
+              <span>Pedidos</span>
+              {orders.filter(o => o.status === 'pending').length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full">
+                  {orders.filter(o => o.status === 'pending').length}
+                </span>
+              )}
+            </button>
+            <button 
               onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
               className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-white/60'}`}
             >
@@ -403,7 +462,141 @@ export const Admin: React.FC = () => {
         {/* Main Content */}
         <main className="flex-grow overflow-y-auto p-6 md:p-10 bg-cream text-navy admin-light-content">
           <div className="max-w-5xl mx-auto">
-            {activeTab === 'products' ? (
+            {activeTab === 'orders' ? (
+              <div className="space-y-8 text-left">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+                  <div>
+                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Pedidos</h1>
+                    <p className="text-gold/40 text-sm">Aprove, cancele ou filtre os pedidos enviados pelos clientes.</p>
+                  </div>
+                  
+                  {/* Status Filters */}
+                  <div className="flex bg-navy-light p-1 rounded-xl border border-gold/15 self-start sm:self-auto overflow-x-auto max-w-full">
+                    {(['pending', 'approved', 'cancelled', 'all'] as const).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                          statusFilter === status
+                            ? 'bg-gold text-navy shadow-md'
+                            : 'text-white/60 hover:text-white'
+                        }`}
+                      >
+                        {status === 'pending' ? 'Pendentes' : status === 'approved' ? 'Aprovados' : status === 'cancelled' ? 'Cancelados' : 'Todos'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Orders Grid */}
+                <div className="grid grid-cols-1 gap-6">
+                  {orders.filter(o => statusFilter === 'all' || o.status === statusFilter).length === 0 ? (
+                    <div className="text-center py-20 bg-navy-light rounded-3xl border border-gold/10">
+                      <p className="text-gold/40 text-sm">Nenhum pedido encontrado nesta categoria.</p>
+                    </div>
+                  ) : (
+                    orders
+                      .filter(o => statusFilter === 'all' || o.status === statusFilter)
+                      .map((order) => (
+                        <div key={order.id} className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium space-y-6 flex flex-col md:flex-row justify-between md:items-start gap-6">
+                          <div className="flex-grow space-y-4">
+                            {/* Order Header */}
+                            <div className="flex flex-wrap items-center gap-3 border-b border-gold/10 pb-3">
+                              <span className="text-xs font-bold uppercase tracking-widest bg-gold/10 text-gold-dark px-3 py-1 rounded-full border border-gold/25">
+                                Pedido #{order.id.slice(0, 8)}
+                              </span>
+                              <span className="text-xs text-navy/40">
+                                {order.created_at ? new Date(order.created_at).toLocaleString('pt-BR') : ''}
+                              </span>
+                              <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
+                                order.status === 'pending'
+                                  ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+                                  : order.status === 'approved'
+                                  ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                                  : 'bg-red-500/10 text-red-600 border-red-500/20'
+                              }`}>
+                                {order.status === 'pending' ? 'Pendente' : order.status === 'approved' ? 'Aprovado' : 'Cancelado'}
+                              </span>
+                            </div>
+
+                            {/* Client Details */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm bg-cream-light p-4 rounded-2xl border border-gold/10">
+                              <div>
+                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Cliente</p>
+                                <p className="font-bold text-navy">{order.client_name}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Pagamento</p>
+                                <p className="font-bold text-navy">{order.payment_method}</p>
+                              </div>
+                              <div className="sm:col-span-2">
+                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Endereço de Entrega</p>
+                                <p className="font-bold text-navy">{order.cidade_uf} (CEP: {order.cep})</p>
+                              </div>
+                            </div>
+
+                            {/* Items List */}
+                            <div className="space-y-3">
+                              <p className="text-[10px] text-navy/40 font-black uppercase tracking-widest">Itens Selecionados</p>
+                              <div className="divide-y divide-gold/10 bg-cream-light/40 border border-gold/10 rounded-2xl p-4">
+                                {order.items.map((item) => (
+                                  <div key={item.id + item.name} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                                    <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-xl border border-gold/15" />
+                                    <div className="flex-grow">
+                                      <p className="text-sm font-bold text-navy leading-tight">{item.name}</p>
+                                      <p className="text-xs text-navy/40">{item.quantity}x de {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                    </div>
+                                    <span className="text-sm font-bold text-navy tabular-nums">
+                                      {(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Order Total & Actions */}
+                          <div className="flex flex-col justify-between items-stretch md:items-end w-full md:w-64 border-t md:border-t-0 md:border-l border-gold/10 pt-6 md:pt-0 md:pl-6 min-h-[180px]">
+                            <div className="text-left md:text-right mb-4">
+                              <p className="text-[10px] text-navy/40 uppercase tracking-[0.2em] font-black mb-1">Valor Total</p>
+                              <p className="text-3xl font-black text-navy tabular-nums">
+                                {order.total_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </p>
+                            </div>
+
+                            <div className="space-y-2 w-full">
+                              {order.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleAcceptOrder(order)}
+                                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-green-500/10 cursor-pointer"
+                                  >
+                                    Aceitar e Lançar no Financeiro
+                                  </button>
+                                  <button
+                                    onClick={() => handleCancelOrder(order)}
+                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                                  >
+                                    Recusar / Cancelar
+                                  </button>
+                                </>
+                              )}
+                              {(order.status === 'approved' || order.status === 'cancelled') && (
+                                <button
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  Excluir Registro
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            ) : activeTab === 'products' ? (
               <div className="space-y-8">
                 <div className="flex justify-between items-center">
                   <div>

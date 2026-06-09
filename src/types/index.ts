@@ -84,5 +84,23 @@ export type Transaction = {
   created_at?: string;
 }
 
+export type Order = {
+  id: string;
+  client_name: string;
+  cep: string;
+  cidade_uf: string;
+  payment_method: string;
+  total_price: number;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }[];
+  status: 'pending' | 'approved' | 'cancelled';
+  created_at?: string;
+}
+
 // Dummy export to ensure this is treated as a module with values if needed
 export const TYPES_VERSION = "1.0.0";

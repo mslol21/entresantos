@@ -11,7 +11,7 @@ interface CartDrawerProps {
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart, step, setStep } = useCart();
-  const { settings } = useData();
+  const { settings, addOrder } = useData();
 
   const [nome, setNome] = useState('');
   const [cep, setCep] = useState('');
@@ -41,7 +41,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     const formattedItems = cart.map(item => {
       const formattedName = item.name.includes('(')
         ? item.name.replace(/\s*\(([^)]+)\)/, ' — $1')
@@ -66,6 +66,29 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       `💳 *Pagamento:* ${pagamento}\n\n` +
       `🙌 Juntos a caminho da santidade!`;
     
+    // Prepare items JSON list for Supabase
+    const itemsJson = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image
+    }));
+
+    // Log the order to the database as pending
+    try {
+      await addOrder({
+        client_name: nome.trim(),
+        cep: cep.trim(),
+        cidade_uf: cidadeUf.trim(),
+        payment_method: pagamento,
+        total_price: totalPrice,
+        items: itemsJson
+      });
+    } catch (err) {
+      console.error('Erro ao registrar pedido no sistema:', err);
+    }
+
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${settings.whatsapp}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');

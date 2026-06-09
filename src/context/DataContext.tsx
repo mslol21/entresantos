@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product, Category, GlobalOption, ShopSettings, Transaction } from '../types';
+import type { Product, Category, GlobalOption, ShopSettings, Transaction, Order } from '../types';
 import { supabase } from '../lib/supabase';
 import { CATEGORIES as INITIAL_CATEGORIES } from '../data';
 
@@ -82,6 +82,10 @@ interface DataContextType {
   deleteGlobalOption: (id: string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  orders: Order[];
+  addOrder: (order: Omit<Order, 'id' | 'status' | 'created_at'>) => Promise<string>;
+  updateOrderStatus: (id: string, status: 'approved' | 'cancelled') => Promise<void>;
+  deleteOrder: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -91,6 +95,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [categories, setCategories] = useState<Category[]>([]);
   const [globalOptions, setGlobalOptions] = useState<GlobalOption[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [settings, setSettings] = useState<ShopSettings>({
     name: 'Ateliê Entre Santos',
     whatsapp: '',
@@ -173,6 +178,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (e) {
         console.warn("Transactions table might not exist yet.", e);
+      }
+
+      // Fetch Orders
+      try {
+        const { data: ordersData, error: oError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!oError && ordersData) {
+          setOrders(ordersData);
+        }
+      } catch (error) {
+        console.warn('Orders table might not exist yet.', error);
       }
 
       setLoading(false);
@@ -368,13 +387,48 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTransactions(transactions.filter(t => t.id !== id));
   };
 
+  const addOrder = async (order: Omit<Order, 'id' | 'status' | 'created_at'>) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([order])
+      .select();
+    
+    if (error) throw error;
+    if (data) {
+      setOrders(prev => [data[0], ...prev]);
+      return data[0].id;
+    }
+    return '';
+  };
+
+  const updateOrderStatus = async (id: string, status: 'approved' | 'cancelled') => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id);
+    
+    if (error) throw error;
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  };
+
+  const deleteOrder = async (id: string) => {
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    setOrders(prev => prev.filter(o => o.id !== id));
+  };
+
   return (
     <DataContext.Provider value={{ 
-      products, settings, loading, categories, globalOptions, transactions,
+      products, settings, loading, categories, globalOptions, transactions, orders,
       addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
       addCategory, updateCategory, deleteCategory,
       addGlobalOption, updateGlobalOption, deleteGlobalOption,
-      addTransaction, deleteTransaction
+      addTransaction, deleteTransaction,
+      addOrder, updateOrderStatus, deleteOrder
     }}>
       {children}
     </DataContext.Provider>
