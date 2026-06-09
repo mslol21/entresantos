@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import type { Product, GlobalOption, Category } from '../types';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
+import { supabase } from '../lib/supabase';
 
 const getColorHex = (name: string): string => {
   const lower = name.toLowerCase();
@@ -42,28 +43,50 @@ export const Admin: React.FC = () => {
   const [subTab, setSubTab] = useState<'colors' | 'entremeio' | 'crucifixo' | 'outros'>('colors');
   
   // Security state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  const ADMIN_PASSWORD = "atelieentresantos"; // Simple security measure
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
 
-  const handleLogin = (e: React.FormEvent) => {
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setError('');
-      sessionStorage.setItem('admin_auth', 'true');
-    } else {
-      setError('Senha incorreta. Tente novamente.');
+    setLoginLoading(true);
+    setError('');
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInError) throw signInError;
+    } catch (err: any) {
+      setError(err.message || 'Erro ao realizar login. Verifique suas credenciais.');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (sessionStorage.getItem('admin_auth') === 'true') {
-      setIsAuthenticated(true);
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error logging out:', err);
     }
-  }, []);
+  };
 
   // Form states
   const [formProduct, setFormProduct] = useState<Partial<Product>>({
@@ -115,7 +138,7 @@ export const Admin: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <motion.div 
@@ -131,28 +154,44 @@ export const Admin: React.FC = () => {
             <p className="text-navy/55 text-sm text-center">Digite a senha administrativa para continuar.</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <input 
-                type="password" 
-                placeholder="Senha de acesso"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy text-center outline-none focus:border-gold transition-all"
-                autoFocus
-              />
-              {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-            </div>
-            <button 
-              type="submit"
-              className="w-full gold-bg-gradient text-white py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gold/20 cursor-pointer"
-            >
-              Entrar no Painel
-            </button>
-            <Link to="/" className="block text-center text-navy/40 text-xs hover:text-navy transition-colors mt-4">
-              Voltar para a loja
-            </Link>
-          </form>
+            <form onSubmit={handleLogin} className="space-y-4 text-left">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase tracking-wider font-bold text-navy/60 block mb-1">E-mail</label>
+                  <input 
+                    type="email" 
+                    placeholder="admin@exemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy outline-none focus:border-gold transition-all"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider font-bold text-navy/60 block mb-1">Senha</label>
+                  <input 
+                    type="password" 
+                    placeholder="Sua senha secreta"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy outline-none focus:border-gold transition-all"
+                    required
+                  />
+                </div>
+                {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+              </div>
+              <button 
+                type="submit"
+                disabled={loginLoading}
+                className="w-full gold-bg-gradient text-white py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gold/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loginLoading ? 'Carregando...' : 'Entrar no Painel'}
+              </button>
+              <Link to="/" className="block text-center text-navy/40 text-xs hover:text-navy transition-colors mt-4">
+                Voltar para a loja
+              </Link>
+            </form>
         </motion.div>
       </div>
     );
@@ -302,10 +341,19 @@ export const Admin: React.FC = () => {
             </button>
           </nav>
 
-          <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-red-400 mt-auto transition-all">
-            <ArrowLeft size={20} />
-            <span className="font-bold text-sm">Voltar à Loja</span>
-          </Link>
+          <div className="mt-auto space-y-1">
+            <button 
+              onClick={handleLogout} 
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-400 transition-all text-left"
+            >
+              <LogOut size={20} />
+              <span className="font-bold text-sm">Sair do Painel</span>
+            </button>
+            <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all">
+              <ArrowLeft size={20} />
+              <span className="font-bold text-sm">Voltar à Loja</span>
+            </Link>
+          </div>
         </aside>
 
         {/* Mobile Header Navigation */}
@@ -342,9 +390,14 @@ export const Admin: React.FC = () => {
               Financeiro
             </button>
           </div>
-          <Link to="/" className="text-red-400 p-2">
-            <ArrowLeft size={20} />
-          </Link>
+          <div className="flex items-center gap-1">
+            <button onClick={handleLogout} className="text-red-400 p-2 hover:bg-white/5 rounded-full" title="Sair do Painel">
+              <LogOut size={20} />
+            </button>
+            <Link to="/" className="text-white/60 p-2 hover:bg-white/5 rounded-full" title="Voltar à Loja">
+              <ArrowLeft size={20} />
+            </Link>
+          </div>
         </div>
 
         {/* Main Content */}

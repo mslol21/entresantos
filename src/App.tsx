@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -5,11 +6,12 @@ import { PrayerGuide } from './components/PrayerGuide';
 import { ProductGrid } from './components/ProductGrid';
 import { CartDrawer } from './components/CartDrawer';
 import { FixedFooter } from './components/FixedFooter';
-import { Admin } from './pages/Admin';
 import { ProductDetails } from './pages/ProductDetails';
 import { useData } from './context/DataContext';
 import { useCart } from './context/CartContext';
 import { MapPin, Phone, Lock } from 'lucide-react';
+
+const Admin = React.lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 
 function Layout() {
   const { isCartOpen, setIsCartOpen } = useCart();
@@ -141,7 +143,18 @@ function App() {
         <Route path="/" element={<Store />} />
         <Route path="/produto/:id" element={<ProductDetails />} />
       </Route>
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin" element={
+        <Suspense fallback={
+          <div className="min-h-screen bg-cream flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
+              <p className="text-navy font-serif animate-pulse">Carregando painel...</p>
+            </div>
+          </div>
+        }>
+          <Admin />
+        </Suspense>
+      } />
     </Routes>
   );
 }
