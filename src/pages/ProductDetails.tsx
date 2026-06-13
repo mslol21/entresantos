@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, Share2, Download, ShoppingBag, MessageCircle, Clock, 
-  Minus, Plus, ArrowLeft, Settings2, Check 
+  Minus, Plus, ArrowLeft, Settings2, Check, ChevronLeft, ChevronRight, Sparkles
 } from 'lucide-react';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import type { Product, Variation, GlobalOption } from '../types';
@@ -582,7 +583,199 @@ export const ProductDetails: React.FC = () => {
 
         </div>
 
+        {/* ===== Product Carousel ===== */}
+        <ProductCarousel currentProductId={product.id} products={products} />
+
       </div>
     </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────
+   ProductCarousel – draggable carousel of other products
+───────────────────────────────────────────────────────── */
+
+interface ProductCarouselProps {
+  currentProductId: string;
+  products: Product[];
+}
+
+const CARD_WIDTH = 280;
+const CARD_GAP = 20;
+const CARD_STEP = CARD_WIDTH + CARD_GAP;
+
+const ProductCarousel: React.FC<ProductCarouselProps> = ({ currentProductId, products }) => {
+  const navigate = useNavigate();
+  const others = products.filter(p => p.id !== currentProductId && p.isActive !== false);
+
+  const [index, setIndex] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const x = useMotionValue(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const maxIndex = Math.max(0, others.length - 1);
+
+  const goTo = (i: number) => {
+    const clamped = Math.max(0, Math.min(i, maxIndex));
+    setIndex(clamped);
+    animate(x, -(clamped * CARD_STEP), { type: 'spring', stiffness: 300, damping: 35 });
+  };
+
+  const handleDragEnd = (_: any, info: any) => {
+    setDragging(false);
+    const threshold = CARD_STEP / 3;
+    if (info.offset.x < -threshold) goTo(index + 1);
+    else if (info.offset.x > threshold) goTo(index - 1);
+    else goTo(index);
+  };
+
+  if (others.length === 0) return null;
+
+  return (
+    <section className="mt-20 mb-4">
+      {/* Section Header */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gold-dark mb-2">Ateliê Entre Santos</p>
+          <h2 className="font-serif font-bold text-2xl md:text-3xl text-navy leading-tight">
+            Outras Peças Exclusivas
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goTo(index - 1)}
+            disabled={index === 0}
+            aria-label="Anterior"
+            className="w-10 h-10 rounded-full border border-gold/25 flex items-center justify-center text-navy/60 hover:text-navy hover:border-gold/60 hover:bg-gold/5 disabled:opacity-25 disabled:cursor-not-allowed active:scale-95 transition-all"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => goTo(index + 1)}
+            disabled={index >= maxIndex}
+            aria-label="Próximo"
+            className="w-10 h-10 rounded-full border border-gold/25 flex items-center justify-center text-navy/60 hover:text-navy hover:border-gold/60 hover:bg-gold/5 disabled:opacity-25 disabled:cursor-not-allowed active:scale-95 transition-all"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Carousel Track */}
+      <div
+        ref={trackRef}
+        className="overflow-hidden"
+        style={{ cursor: dragging ? 'grabbing' : 'grab' }}
+      >
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: -(maxIndex * CARD_STEP), right: 0 }}
+          dragElastic={0.12}
+          style={{ x, display: 'flex', gap: CARD_GAP }}
+          onDragStart={() => setDragging(true)}
+          onDragEnd={handleDragEnd}
+        >
+          {others.map((p) => (
+            <CarouselCard key={p.id} product={p} dragging={dragging} onClick={() => navigate(`/produto/${p.id}`)} />
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Dot indicators */}
+      {others.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-6">
+          {others.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Ir para produto ${i + 1}`}
+              className={`rounded-full transition-all duration-300 ${
+                i === index
+                  ? 'w-6 h-2 bg-gold'
+                  : 'w-2 h-2 bg-navy/15 hover:bg-navy/30'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+interface CarouselCardProps {
+  product: Product;
+  dragging: boolean;
+  onClick: () => void;
+}
+
+const CarouselCard: React.FC<CarouselCardProps> = ({ product, dragging, onClick }) => {
+  const [hovered, setHovered] = useState(false);
+  const needsCustomizer = !!(product.isCustomizable || product.hasNameOption || product.hasColorOption ||
+    (product.variations && product.variations.length > 0) ||
+    (product.customizationLists && product.customizationLists.length > 0));
+
+  return (
+    <motion.div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      whileHover={{ y: -4 }}
+      onClick={() => { if (!dragging) onClick(); }}
+      className="flex-shrink-0 rounded-[24px] overflow-hidden bg-white border border-gold/15 hover:border-gold/40 shadow-premium hover:shadow-gold transition-all duration-300"
+      style={{ width: CARD_WIDTH, userSelect: 'none' }}
+    >
+      {/* Image */}
+      <div className="relative overflow-hidden bg-cream-light" style={{ height: 220 }}>
+        {product.image ? (
+          <motion.img
+            src={product.image}
+            alt={product.name}
+            animate={{ scale: hovered ? 1.07 : 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-navy/20">
+            <ShoppingBag size={40} />
+          </div>
+        )}
+
+        {/* Badge */}
+        {needsCustomizer && (
+          <div className="absolute top-3 left-3 bg-gold text-navy px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] flex items-center gap-1 shadow-md">
+            <Settings2 size={9} strokeWidth={3} />
+            Personalizável
+          </div>
+        )}
+
+        {/* Hover overlay */}
+        <motion.div
+          animate={{ opacity: hovered ? 1 : 0 }}
+          className="absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent"
+        />
+      </div>
+
+      {/* Info */}
+      <div className="p-5">
+        <span className="text-[9px] text-gold-dark uppercase tracking-[0.25em] font-black block mb-1">
+          {product.category}
+        </span>
+        <h3 className="font-serif font-bold text-base text-navy leading-snug line-clamp-2 mb-3">
+          {product.name}
+        </h3>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-bold text-navy tabular-nums">
+            {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </span>
+          <motion.span
+            animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 6 }}
+            className="text-[9px] font-black uppercase tracking-wider text-gold-dark flex items-center gap-1"
+          >
+            <Sparkles size={10} />
+            Ver peça
+          </motion.span>
+        </div>
+      </div>
+    </motion.div>
   );
 };
