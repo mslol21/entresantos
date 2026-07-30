@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product, CartItem, CartContextType } from '../types';
+import { useToast } from './ToastContext';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { showToast } = useToast();
   const [cart, setCart] = useState<CartItem[]>(() => {
     const savedCart = localStorage.getItem('pedido-zap-cart');
     return savedCart ? JSON.parse(savedCart) : [];
@@ -18,7 +20,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart((prevCart) => {
-      // Use name + id as a unique key for customized items
       const existingItem = prevCart.find((item) => item.id === product.id && item.name === product.name);
       if (existingItem) {
         return prevCart.map((item) =>
@@ -27,10 +28,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return [...prevCart, { ...product, quantity }];
     });
+    showToast(`"${product.name}" adicionado ao carrinho!`, 'success');
   };
 
   const removeFromCart = (productId: string, productName?: string) => {
     setCart((prevCart) => prevCart.filter((item) => !(item.id === productId && (!productName || item.name === productName))));
+    showToast(`Item removido do carrinho`, 'info');
   };
 
   const updateQuantity = (productId: string, quantity: number, productName?: string) => {

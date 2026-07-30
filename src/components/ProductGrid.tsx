@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const ProductGrid: React.FC = () => {
-  const { products, categories } = useData();
+  const { products, categories, loading } = useData();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -84,23 +84,37 @@ export const ProductGrid: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-10">
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {loading ? (
+            Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="bg-white rounded-[32px] p-5 border border-gold/15 animate-pulse space-y-4">
+                <div className="w-full h-64 bg-cream-light rounded-[20px]" />
+                <div className="h-4 bg-cream-light rounded w-3/4" />
+                <div className="h-3 bg-cream-light rounded w-1/2" />
+                <div className="flex justify-between items-center pt-4">
+                  <div className="h-6 bg-cream-light rounded w-1/3" />
+                  <div className="h-10 bg-cream-light rounded-full w-24" />
+                </div>
+              </div>
+            ))
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product) => (
+                <motion.div
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
         </div>
 
-        {filteredProducts.length === 0 && (
+        {!loading && filteredProducts.length === 0 && (
           <div className="text-center py-20">
             <p className="text-navy/40 italic">Nenhum produto encontrado nesta categoria no momento.</p>
           </div>

@@ -4,6 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import { CartProvider } from './context/CartContext.tsx'
 import { DataProvider } from './context/DataContext.tsx'
+import { ToastProvider } from './context/ToastContext.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 
@@ -19,11 +20,13 @@ const updateSW = registerSW({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <DataProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </DataProvider>
+      <ToastProvider>
+        <DataProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </DataProvider>
+      </ToastProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

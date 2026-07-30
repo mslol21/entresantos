@@ -43,8 +43,8 @@ const compressImage = (file: File, maxWidth = 1024, maxHeight = 1024, quality = 
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-                type: 'image/jpeg',
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                type: 'image/webp',
                 lastModified: Date.now(),
               });
               resolve(compressedFile);
@@ -52,7 +52,7 @@ const compressImage = (file: File, maxWidth = 1024, maxHeight = 1024, quality = 
               resolve(file);
             }
           },
-          'image/jpeg',
+          'image/webp',
           quality
         );
       };
@@ -108,6 +108,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchData();
+
+    // Inscrever para atualizações em tempo real das tabelas no Supabase
+    const channel = supabase
+      .channel('db-realtime-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {

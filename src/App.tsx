@@ -126,11 +126,11 @@ function Store() {
       <div id="inicio">
         <Hero />
       </div>
-      <div id="como-rezar">
-        <PrayerGuide />
-      </div>
       <div id="produtos">
         <ProductGrid />
+      </div>
+      <div id="como-rezar">
+        <PrayerGuide />
       </div>
     </>
   );

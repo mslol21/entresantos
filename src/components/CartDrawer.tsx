@@ -29,9 +29,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
         const res = await fetch(`https://viacep.com.br/ws/${value}/json/`);
         const data = await res.json();
         if (!data.erro) {
-          setCidadeUf(`${data.localidade}/${data.uf}`);
-        } else {
-          setCidadeUf('');
+          const endereco = data.logradouro ? `${data.logradouro}, ${data.bairro} — ${data.localidade}/${data.uf}` : `${data.localidade}/${data.uf}`;
+          setCidadeUf(endereco);
         }
       } catch (err) {
         console.error(err);
@@ -44,27 +43,26 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const handleCheckout = async () => {
     const formattedItems = cart.map(item => {
       const formattedName = item.name.includes('(')
-        ? item.name.replace(/\s*\(([^)]+)\)/, ' — $1')
+        ? item.name.replace(/\s*\(([^)]+)\)/, '\n   └─ Customização: $1')
         : item.name;
       const itemSubtotal = (item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      return `${item.quantity}x ${formattedName}\n💲 ${itemSubtotal}`;
+      return `• *${item.quantity}x ${formattedName}*\n  Subtotal: ${itemSubtotal}`;
     }).join('\n\n');
 
     const totalFormatted = totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const message = `Olá, Ateliê Entre Santos! 🙏\n\n` +
-      `Gostaria de fazer um pedido:\n\n` +
-      `📦 *ITENS DO PEDIDO*\n` +
+    const message = `✨ *NOVO PEDIDO - ATELIÊ ENTRE SANTOS* ✨\n\n` +
+      `👤 *DADOS DO CLIENTE*\n` +
+      `• *Nome:* ${nome.trim()}\n` +
+      `• *CEP:* ${cep.trim()}\n` +
+      `• *Endereço/Cidade:* ${cidadeUf.trim()}\n` +
+      `• *Forma de Pagamento:* ${pagamento} (Chave Pix no Atendimento)\n\n` +
+      `📦 *ITENS SOLICITADOS*\n` +
       `${formattedItems}\n\n` +
-      `━━━━━━━━━━━━━━━\n` +
-      `💰 *Total: ${totalFormatted}*\n` +
-      `━━━━━━━━━━━━━━━\n\n` +
-      `👤 *MEUS DADOS*\n` +
-      `Nome: ${nome.trim()}\n` +
-      `CEP: ${cep.trim()}\n` +
-      `Cidade/UF: ${cidadeUf.trim()}\n\n` +
-      `💳 *Pagamento:* ${pagamento}\n\n` +
-      `🙌 Juntos a caminho da santidade!`;
+      `━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `💰 *VALOR TOTAL: ${totalFormatted}*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🙏 *Muito obrigado pela preferência! Juntos a caminho da santidade.*`;
     
     // Prepare items JSON list for Supabase
     const itemsJson = cart.map(item => ({

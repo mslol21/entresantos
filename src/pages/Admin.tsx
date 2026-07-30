@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import type { Product, GlobalOption, Category } from '../types';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut, ClipboardList } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut, ClipboardList, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
@@ -50,6 +50,30 @@ export const Admin: React.FC = () => {
   const [error, setError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'cancelled' | 'all'>('pending');
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+
+  const exportOrdersToCSV = () => {
+    if (!orders || orders.length === 0) return;
+    const headers = ['ID', 'Data', 'Cliente', 'CEP', 'Cidade/UF', 'Pagamento', 'Status', 'Total (BRL)'];
+    const rows = orders.map(o => [
+      o.id,
+      o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '',
+      `"${(o.client_name || '').replace(/"/g, '""')}"`,
+      o.cep,
+      `"${(o.cidade_uf || '').replace(/"/g, '""')}"`,
+      o.payment_method,
+      o.status,
+      o.total_price ? o.total_price.toFixed(2) : '0.00'
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `pedidos_entre_santos_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
     // Check current session
@@ -464,39 +488,74 @@ export const Admin: React.FC = () => {
           <div className="max-w-5xl mx-auto">
             {activeTab === 'orders' ? (
               <div className="space-y-8 text-left">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+                <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                   <div>
                     <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Pedidos</h1>
-                    <p className="text-gold/40 text-sm">Aprove, cancele ou filtre os pedidos enviados pelos clientes.</p>
+                    <p className="text-gold/40 text-sm">Aprove, cancele, pesquise ou exporte os pedidos enviados pelos clientes.</p>
                   </div>
                   
-                  {/* Status Filters */}
-                  <div className="flex bg-cream-light p-1 rounded-xl border border-gold/15 self-start sm:self-auto overflow-x-auto max-w-full">
-                    {(['pending', 'approved', 'cancelled', 'all'] as const).map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => setStatusFilter(status)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                          statusFilter === status
-                            ? 'bg-gold text-navy shadow-md'
-                            : 'text-navy/85 hover:text-navy hover:bg-navy/10'
-                        }`}
-                      >
-                        {status === 'pending' ? 'Pendentes' : status === 'approved' ? 'Aprovados' : status === 'cancelled' ? 'Cancelados' : 'Todos'}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={exportOrdersToCSV}
+                      disabled={orders.length === 0}
+                      className="px-4 py-2 bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-navy rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer disabled:opacity-40"
+                    >
+                      <Download size={14} /> Exportar CSV
+                    </button>
+                    
+                    {/* Status Filters */}
+                    <div className="flex bg-cream-light p-1 rounded-xl border border-gold/15 overflow-x-auto max-w-full">
+                      {(['pending', 'approved', 'cancelled', 'all'] as const).map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => setStatusFilter(status)}
+                          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                            statusFilter === status
+                              ? 'bg-gold text-navy shadow-md'
+                              : 'text-navy/85 hover:text-navy hover:bg-navy/10'
+                          }`}
+                        >
+                          {status === 'pending' ? 'Pendentes' : status === 'approved' ? 'Aprovados' : status === 'cancelled' ? 'Cancelados' : 'Todos'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                </div>
+
+                {/* Search Bar for Orders */}
+                <div className="bg-white p-2 rounded-2xl border border-gold/15 shadow-sm">
+                  <input
+                    type="text"
+                    placeholder="Pesquisar pedido por nome do cliente, CEP ou ID..."
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className="w-full bg-transparent px-4 py-2 text-sm text-navy placeholder:text-navy/40 outline-none"
+                  />
                 </div>
 
                 {/* Orders Grid */}
                 <div className="grid grid-cols-1 gap-6">
-                  {orders.filter(o => statusFilter === 'all' || o.status === statusFilter).length === 0 ? (
+                  {orders.filter(o => {
+                    const matchStatus = statusFilter === 'all' || o.status === statusFilter;
+                    const matchSearch = !orderSearchQuery || 
+                      o.client_name?.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+                      o.cep?.includes(orderSearchQuery) ||
+                      o.id?.toLowerCase().includes(orderSearchQuery.toLowerCase());
+                    return matchStatus && matchSearch;
+                  }).length === 0 ? (
                     <div className="text-center py-20 bg-navy-light rounded-3xl border border-gold/10">
-                      <p className="text-gold/40 text-sm">Nenhum pedido encontrado nesta categoria.</p>
+                      <p className="text-gold/40 text-sm">Nenhum pedido encontrado com os filtros selecionados.</p>
                     </div>
                   ) : (
                     orders
-                      .filter(o => statusFilter === 'all' || o.status === statusFilter)
+                      .filter(o => {
+                        const matchStatus = statusFilter === 'all' || o.status === statusFilter;
+                        const matchSearch = !orderSearchQuery || 
+                          o.client_name?.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+                          o.cep?.includes(orderSearchQuery) ||
+                          o.id?.toLowerCase().includes(orderSearchQuery.toLowerCase());
+                        return matchStatus && matchSearch;
+                      })
                       .map((order) => (
                         <div key={order.id} className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium space-y-6 flex flex-col md:flex-row justify-between md:items-start gap-6">
                           <div className="flex-grow space-y-4">

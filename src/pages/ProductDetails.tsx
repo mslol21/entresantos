@@ -49,6 +49,38 @@ export const ProductDetails: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (product) {
+      const schemaData = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        image: product.image,
+        description: product.description,
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'BRL',
+          price: product.price,
+          availability: 'https://schema.org/InStock',
+        },
+      };
+
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = 'product-jsonld';
+      script.text = JSON.stringify(schemaData);
+      
+      const existing = document.getElementById('product-jsonld');
+      if (existing) existing.remove();
+      document.head.appendChild(script);
+
+      return () => {
+        const el = document.getElementById('product-jsonld');
+        if (el) el.remove();
+      };
+    }
+  }, [product]);
+
   const toggleFavorite = () => {
     if (!id) return;
     const favorites = JSON.parse(localStorage.getItem('es_favorites') || '[]');
