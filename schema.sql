@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   subcategory TEXT,
   is_customizable BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT true,
+  is_featured BOOLEAN DEFAULT false,
   available_colors TEXT,
   has_name_option BOOLEAN DEFAULT false,
   name_price NUMERIC,
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- Garantir adição das novas colunas em bancos existentes
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS categories JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
 
 -- 2. Tabela de Configurações da Loja
 CREATE TABLE IF NOT EXISTS public.settings (

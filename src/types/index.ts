@@ -40,6 +40,7 @@ export type Product = {
   hasAssemblyOption?: boolean;
   hasColorOption?: boolean;
   isActive?: boolean;
+  isFeatured?: boolean; // Produto em Destaque na Home
   availableColors?: string;
   hasNameOption?: boolean;
   namePrice?: number;

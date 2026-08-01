@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
+import { FeaturedProducts } from './components/FeaturedProducts';
 import { PrayerGuide } from './components/PrayerGuide';
 import { ProductGrid } from './components/ProductGrid';
 import { CartDrawer } from './components/CartDrawer';
@@ -125,6 +126,9 @@ function Store() {
     <>
       <div id="inicio">
         <Hero />
+      </div>
+      <div id="destaques">
+        <FeaturedProducts />
       </div>
       <div id="produtos">
         <ProductGrid />

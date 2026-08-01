@@ -1237,6 +1237,15 @@ export const Admin: React.FC = () => {
                     />
                     <span className="text-sm font-medium">Ativo na Loja</span>
                   </label>
+                  <label className="flex items-center gap-3 cursor-pointer bg-gold/10 px-3 py-1.5 rounded-xl border border-gold/30">
+                    <input 
+                      type="checkbox" 
+                      checked={!!formProduct.isFeatured}
+                      onChange={(e) => setFormProduct({...formProduct, isFeatured: e.target.checked})}
+                      className="w-4 h-4 rounded border-gold/30 bg-navy text-gold"
+                    />
+                    <span className="text-sm font-bold text-gold">⭐ Destaque na Home</span>
+                  </label>
                 </div>
 
                 <div className="flex gap-4 pt-4">
