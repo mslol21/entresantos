@@ -144,8 +144,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mappedProducts = (productsData || []).map(p => {
         const hasColorOption = p.available_colors?.includes('[HAS_COLOR_OPTION]') || false;
         const availableColors = p.available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '';
+        const imagesList = p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
+        const categoriesList = p.categories && Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : (p.category ? [p.category] : []);
         return {
           ...p,
+          image: p.image || imagesList[0] || '',
+          images: imagesList.slice(0, 5),
+          category: p.category || categoriesList[0] || '',
+          categories: categoriesList,
           isCustomizable: p.is_customizable,
           isActive: p.is_active,
           availableColors,
@@ -223,14 +229,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
     const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
 
+    const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
+    const mainImage = imagesList[0] || product.image || '';
+
+    const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
+    const mainCategory = categoriesList[0] || product.category || '';
+
     const { error } = await supabase
       .from('products')
       .insert([{
         name: product.name,
         description: product.description,
         price: product.price,
-        image: product.image,
-        category: product.category,
+        image: mainImage,
+        images: imagesList,
+        category: mainCategory,
+        categories: categoriesList,
         subcategory: product.subcategory,
         is_customizable: !!isCustomizable,
         is_active: isActive !== false,
@@ -253,14 +267,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
     const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
 
+    const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
+    const mainImage = imagesList[0] || product.image || '';
+
+    const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
+    const mainCategory = categoriesList[0] || product.category || '';
+
     const { error } = await supabase
       .from('products')
       .update({
         name: product.name,
         description: product.description,
         price: product.price,
-        image: product.image,
-        category: product.category,
+        image: mainImage,
+        images: imagesList,
+        category: mainCategory,
+        categories: categoriesList,
         subcategory: product.subcategory,
         is_customizable: !!isCustomizable,
         is_active: isActive !== false,

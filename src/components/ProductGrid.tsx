@@ -11,7 +11,9 @@ export const ProductGrid: React.FC = () => {
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchStatus = product.isActive !== false;
-      const matchCategory = !selectedCategory || product.category === selectedCategory;
+      const matchCategory = !selectedCategory || 
+                            product.category === selectedCategory || 
+                            (product.categories && product.categories.includes(selectedCategory));
       const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           product.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchStatus && matchCategory && matchSearch;

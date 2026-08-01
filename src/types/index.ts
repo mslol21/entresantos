@@ -32,7 +32,9 @@ export type Product = {
   description: string;
   price: number;
   image: string;
-  category?: string;
+  images?: string[]; // Até 5 imagens por produto
+  category?: string; // Legado / categoria principal
+  categories?: string[]; // Múltiplas categorias
   subcategory?: string;
   isCustomizable?: boolean; // Legacy/Montagem
   hasAssemblyOption?: boolean;

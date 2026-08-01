@@ -326,8 +326,16 @@ export const Admin: React.FC = () => {
   };
 
   const startEditProduct = (product: Product) => {
+    const imagesList = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
+    const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     setEditingProduct(product);
-    setFormProduct(product);
+    setFormProduct({
+      ...product,
+      images: imagesList.slice(0, 5),
+      image: imagesList[0] || product.image || '',
+      categories: categoriesList,
+      category: categoriesList[0] || product.category || ''
+    });
     setIsAddingProduct(true);
   };
 
@@ -1011,101 +1019,168 @@ export const Admin: React.FC = () => {
                       className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold h-24"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Categoria</label>
-                    <select 
-                      value={formProduct.category}
-                      onChange={(e) => setFormProduct({...formProduct, category: e.target.value})}
-                      className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                    >
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
+                  {/* Multi-Category Selection */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia do Produto (Imagem ou Vídeo)</label>
-                    <div className="flex flex-col md:flex-row gap-4 items-start">
-                      {/* Preview Area */}
-                      <div className="w-full md:w-40 h-40 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
-                        {formProduct.image ? (
-                          <>
-                            {formProduct.image.match(/\.(mp4|webm|ogg)$/i) ? (
-                              <video src={formProduct.image} className="w-full h-full object-cover" />
-                            ) : (
-                              <img src={formProduct.image} className="w-full h-full object-cover" />
-                            )}
-                            <div className="absolute inset-0 bg-navy/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <button 
-                                type="button"
-                                onClick={() => setFormProduct({...formProduct, image: ''})}
-                                className="bg-red-500 text-white p-2 rounded-full hover:scale-110 transition-transform"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 text-gold/20">
-                            <ShoppingBag size={32} strokeWidth={1} />
-                            <span className="text-[10px] font-bold uppercase">Sem Mídia</span>
-                          </div>
-                        )}
-                      </div>
+                    <label className="text-[10px] uppercase font-bold text-gold/40 block">Categorias do Produto (Selecione uma ou mais)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map(c => {
+                        const selectedCategories = formProduct.categories && formProduct.categories.length > 0
+                          ? formProduct.categories
+                          : (formProduct.category ? [formProduct.category] : []);
+                        const isChecked = selectedCategories.includes(c.id);
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              let updated;
+                              if (isChecked) {
+                                updated = selectedCategories.filter(catId => catId !== c.id);
+                              } else {
+                                updated = [...selectedCategories, c.id];
+                              }
+                              setFormProduct({
+                                ...formProduct,
+                                categories: updated,
+                                category: updated[0] || ''
+                              });
+                            }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                              isChecked
+                                ? 'bg-gold text-navy border-gold shadow-md'
+                                : 'bg-navy/80 text-gold/60 border-gold/20 hover:border-gold/40'
+                            }`}
+                          >
+                            {isChecked ? '✓ ' : '+ '} {c.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                      {/* Upload Controls */}
-                      <div className="flex-grow space-y-4 w-full">
-                        <div className="flex gap-2">
-                          <div className="relative flex-grow">
-                            <input 
-                              id="file-upload"
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*,video/*"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  try {
-                                    setIsUploading(true);
-                                    const url = await uploadFile(file);
-                                    setFormProduct({...formProduct, image: url});
-                                  } catch (err) {
-                                    alert('Erro ao fazer upload. Verifique se o bucket "products" foi criado na Supabase.');
-                                    console.error(err);
-                                  } finally {
-                                    setIsUploading(false);
-                                  }
-                                }
-                              }}
-                            />
-                            <button 
+                  {/* Multi-Image Upload (Up to 5 Photos) */}
+                  <div className="space-y-3 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">
+                        Fotos do Produto (Até 5 fotos)
+                      </label>
+                      <span className="text-[10px] text-gold/60 font-bold">
+                        {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).length} / 5 anexadas
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                      {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).slice(0, 5).map((imgUrl, idx) => (
+                        <div key={idx} className="relative aspect-square bg-navy border border-gold/20 rounded-xl overflow-hidden group shadow-sm">
+                          <img src={imgUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                          {idx === 0 && (
+                            <span className="absolute top-1.5 left-1.5 bg-gold text-navy text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
+                              Capa
+                            </span>
+                          )}
+                          <div className="absolute inset-0 bg-navy/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
                               type="button"
-                              onClick={() => document.getElementById('file-upload')?.click()}
-                              disabled={isUploading}
-                              className={`w-full gold-bg-gradient text-navy py-4 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => {
+                                const current = formProduct.images || (formProduct.image ? [formProduct.image] : []);
+                                const updated = current.filter((_, i) => i !== idx);
+                                setFormProduct({
+                                  ...formProduct,
+                                  images: updated,
+                                  image: updated[0] || ''
+                                });
+                              }}
+                              className="bg-red-500 text-white p-1.5 rounded-full hover:scale-110 transition-transform cursor-pointer"
+                              title="Remover foto"
                             >
-                              {isUploading ? (
-                                <div className="w-5 h-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
-                              ) : (
-                                <Plus size={18} strokeWidth={2.5} />
-                              )}
-                              {isUploading ? 'Enviando...' : 'Carregar do Dispositivo'}
+                              <X size={14} />
                             </button>
                           </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-[9px] uppercase font-bold text-gold/20 block">Ou insira um link manual:</label>
-                          <input 
-                            type="text" 
-                            placeholder="https://exemplo.com/imagem.jpg"
-                            value={formProduct.image}
-                            onChange={(e) => setFormProduct({...formProduct, image: e.target.value})}
-                            className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px] outline-none focus:border-gold/40 transition-all font-mono"
+                      ))}
+
+                      {/* Upload Slot if < 5 */}
+                      {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).length < 5 && (
+                        <div className="aspect-square bg-navy/50 border-2 border-dashed border-gold/20 hover:border-gold/50 rounded-xl flex flex-col items-center justify-center p-2 text-center transition-colors">
+                          <input
+                            id="multi-file-upload"
+                            type="file"
+                            multiple
+                            className="hidden"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const files = Array.from(e.target.files || []);
+                              if (files.length === 0) return;
+                              const currentImages = formProduct.images || (formProduct.image ? [formProduct.image] : []);
+                              const remainingSlots = 5 - currentImages.length;
+                              const filesToUpload = files.slice(0, remainingSlots);
+
+                              try {
+                                setIsUploading(true);
+                                const uploadedUrls: string[] = [];
+                                for (const file of filesToUpload) {
+                                  const url = await uploadFile(file);
+                                  uploadedUrls.push(url);
+                                }
+                                const newImages = [...currentImages, ...uploadedUrls].slice(0, 5);
+                                setFormProduct({
+                                  ...formProduct,
+                                  images: newImages,
+                                  image: newImages[0] || ''
+                                });
+                              } catch (err) {
+                                alert('Erro ao fazer upload da(s) imagem(ns).');
+                                console.error(err);
+                              } finally {
+                                setIsUploading(false);
+                              }
+                            }}
                           />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('multi-file-upload')?.click()}
+                            disabled={isUploading}
+                            className="w-full h-full flex flex-col items-center justify-center gap-1 text-gold/60 hover:text-gold transition-colors cursor-pointer"
+                          >
+                            {isUploading ? (
+                              <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <>
+                                <Plus size={20} />
+                                <span className="text-[10px] font-bold uppercase">Adicionar</span>
+                              </>
+                            )}
+                          </button>
                         </div>
-                        <p className="text-[9px] text-gold/30 italic leading-relaxed">
-                          Dica: Use vídeos curtos para dar mais vida ao catálogo. O sistema aceita links diretos ou arquivos locais.
-                        </p>
-                      </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <input
+                        type="text"
+                        placeholder="Ou cole o link de uma imagem e pressione Enter..."
+                        className="w-full bg-navy border border-gold/15 rounded-xl p-3 text-gold text-[10px] outline-none focus:border-gold/40 transition-all font-mono"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = e.currentTarget.value.trim();
+                            if (val) {
+                              const currentImages = formProduct.images || (formProduct.image ? [formProduct.image] : []);
+                              if (currentImages.length < 5) {
+                                const newImages = [...currentImages, val].slice(0, 5);
+                                setFormProduct({
+                                  ...formProduct,
+                                  images: newImages,
+                                  image: newImages[0] || ''
+                                });
+                                e.currentTarget.value = '';
+                              } else {
+                                alert('Limite máximo de 5 fotos atingido.');
+                              }
+                            }
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

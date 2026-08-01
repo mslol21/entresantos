@@ -38,8 +38,10 @@ export const ProductDetails: React.FC = () => {
   const [customOptions, setCustomOptions] = useState<Record<string, string>>({});
   const [isAdded, setIsAdded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const product = products.find(p => p.id === id);
+  const productImages = product?.images && product.images.length > 0 ? product.images.slice(0, 5) : (product?.image ? [product.image] : []);
 
   useEffect(() => {
     if (id) {
@@ -158,7 +160,7 @@ export const ProductDetails: React.FC = () => {
   };
 
   const displayPrice = getBasePrice() + getAddonsPrice();
-  const displayImage = selectedVariation ? selectedVariation.image : product.image;
+  const displayImage = selectedVariation ? selectedVariation.image : (productImages[selectedImageIndex] || product?.image || '');
 
   const handleAddToCart = () => {
     let customName = product.name;
@@ -328,6 +330,29 @@ export const ProductDetails: React.FC = () => {
                 </a>
               </div>
             </div>
+
+            {/* Gallery Thumbnails (Up to 5 photos) */}
+            {productImages.length > 1 && (
+              <div className="flex items-center justify-center gap-3 pt-2 overflow-x-auto pb-2 scrollbar-hide">
+                {productImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedImageIndex(idx);
+                      setSelectedVariation(null);
+                    }}
+                    className={`w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer flex-shrink-0 ${
+                      selectedImageIndex === idx && !selectedVariation
+                        ? 'border-gold shadow-md scale-105'
+                        : 'border-gold/20 opacity-70 hover:opacity-100 hover:border-gold/50'
+                    }`}
+                  >
+                    <img src={imgUrl} alt={`${product.name} - Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Title, Metadata, Customizer & CTAs */}
