@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
+import { useToast } from '../context/ToastContext';
 import type { Product, GlobalOption, Category } from '../types';
 import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut, ClipboardList, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ const getColorHex = (name: string): string => {
 };
 
 export const Admin: React.FC = () => {
+  const { showToast } = useToast();
   const { 
     products, settings, loading, categories, globalOptions, orders,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
@@ -239,14 +241,17 @@ export const Admin: React.FC = () => {
 
       if (editingProduct) {
         await updateProduct(payload as Product);
+        showToast('Produto atualizado com sucesso!', 'success');
       } else {
         await addProduct(payload as Product);
+        showToast('Novo produto cadastrado com sucesso!', 'success');
       }
       setEditingProduct(null);
       setIsAddingProduct(false);
       setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] });
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error('Erro ao salvar produto:', error);
+      showToast('Erro ao salvar produto: ' + (error.message || 'Falha no banco de dados'), 'error');
     }
   };
 

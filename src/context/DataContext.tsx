@@ -236,27 +236,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCategory = categoriesList[0] || product.category || '';
 
-    const { error } = await supabase
-      .from('products')
-      .insert([{
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        image: mainImage,
-        images: imagesList,
-        category: mainCategory,
-        categories: categoriesList,
-        subcategory: product.subcategory,
-        is_customizable: !!isCustomizable,
-        is_active: isActive !== false,
-        is_featured: !!product.isFeatured,
-        available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
-        has_name_option: !!hasNameOption,
-        variations: product.variations || [],
-        customization_lists: product.customizationLists || [],
-        name_price: product.namePrice || null
-      }])
-      .select();
+    const fullPayload = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: mainImage,
+      images: imagesList,
+      category: mainCategory,
+      categories: categoriesList,
+      subcategory: product.subcategory,
+      is_customizable: !!isCustomizable,
+      is_active: isActive !== false,
+      is_featured: !!product.isFeatured,
+      available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
+      has_name_option: !!hasNameOption,
+      variations: product.variations || [],
+      customization_lists: product.customizationLists || [],
+      name_price: product.namePrice || null
+    };
+
+    let { error } = await supabase.from('products').insert([fullPayload]).select();
+
+    if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
+      const fallbackPayload = { ...fullPayload };
+      delete (fallbackPayload as any).images;
+      delete (fallbackPayload as any).categories;
+      delete (fallbackPayload as any).is_featured;
+      const resFallback = await supabase.from('products').insert([fallbackPayload]).select();
+      error = resFallback.error;
+    }
 
     if (error) throw error;
     await fetchData();
@@ -275,27 +283,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCategory = categoriesList[0] || product.category || '';
 
-    const { error } = await supabase
-      .from('products')
-      .update({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        image: mainImage,
-        images: imagesList,
-        category: mainCategory,
-        categories: categoriesList,
-        subcategory: product.subcategory,
-        is_customizable: !!isCustomizable,
-        is_active: isActive !== false,
-        is_featured: !!product.isFeatured,
-        available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
-        has_name_option: !!hasNameOption,
-        variations: product.variations || [],
-        customization_lists: product.customizationLists || [],
-        name_price: product.namePrice || null
-      })
-      .eq('id', product.id);
+    const fullPayload = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: mainImage,
+      images: imagesList,
+      category: mainCategory,
+      categories: categoriesList,
+      subcategory: product.subcategory,
+      is_customizable: !!isCustomizable,
+      is_active: isActive !== false,
+      is_featured: !!product.isFeatured,
+      available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
+      has_name_option: !!hasNameOption,
+      variations: product.variations || [],
+      customization_lists: product.customizationLists || [],
+      name_price: product.namePrice || null
+    };
+
+    let { error } = await supabase.from('products').update(fullPayload).eq('id', product.id);
+
+    if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
+      const fallbackPayload = { ...fullPayload };
+      delete (fallbackPayload as any).images;
+      delete (fallbackPayload as any).categories;
+      delete (fallbackPayload as any).is_featured;
+      const resFallback = await supabase.from('products').update(fallbackPayload).eq('id', product.id);
+      error = resFallback.error;
+    }
 
     if (error) throw error;
     await fetchData();
