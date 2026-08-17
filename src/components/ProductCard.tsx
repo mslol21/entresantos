@@ -72,12 +72,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <Link to={`/produto/${product.id}`} className="card-premium group flex flex-col h-full relative overflow-hidden text-left bg-white border border-gold/15 hover:border-gold/35 rounded-3xl shadow-premium hover:shadow-gold text-navy transition-all duration-300">
       <div className="relative aspect-square overflow-hidden bg-cream-light">
         {renderMedia()}
-        {needsCustomizer && (
-          <div className="absolute top-4 left-4 bg-gold text-navy px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] flex items-center gap-1.5 shadow-md z-10">
-            <Settings2 size={10} strokeWidth={3} />
-            Personalizável
-          </div>
-        )}
+        <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
+          {needsCustomizer && (
+            <span className="bg-navy/85 backdrop-blur-xs text-gold px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.12em] flex items-center gap-1 shadow-sm border border-gold/20">
+              <Settings2 size={10} strokeWidth={2.5} />
+              Personalizável
+            </span>
+          )}
+          {product.availability === 'made_to_order' && (
+            <span className="bg-amber-500/85 backdrop-blur-xs text-white px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.12em] shadow-sm">
+              Sob encomenda
+            </span>
+          )}
+          {product.availability === 'limited_edition' && (
+            <span className="bg-purple-900/85 backdrop-blur-xs text-amber-200 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.12em] shadow-sm border border-amber-300/30">
+              Edição limitada
+            </span>
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-navy/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
       

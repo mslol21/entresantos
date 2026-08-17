@@ -26,27 +26,71 @@ export type CustomizationList = {
   options: string; // Comma separated
 }
 
+// Linha de negócio do Ateliê
+export type ProductLine =
+  | 'devocionais'
+  | 'leve-sua-fe'
+  | 'colecoes'
+  | 'personalizados'
+  | 'momentos'
+  | 'presentes';
+
+// Disponibilidade do produto
+export type ProductAvailability =
+  | 'ready'        // Pronta entrega
+  | 'made_to_order' // Sob encomenda
+  | 'limited_edition'; // Edição limitada
+
 export type Product = {
   id: string;
   name: string;
   description: string;
   price: number;
   image: string;
-  images?: string[]; // Até 5 imagens por produto
-  category?: string; // Legado / categoria principal
-  categories?: string[]; // Múltiplas categorias
+  images?: string[];          // Até 5 imagens por produto
+  category?: string;          // Categoria principal (legado)
+  categories?: string[];      // Múltiplas categorias
   subcategory?: string;
-  isCustomizable?: boolean; // Legacy/Montagem
+  slug?: string;              // URL amigável: terco-nossa-senhora-aparecida
+  sku?: string;               // SKU: TER-APA-001
+  line?: ProductLine;         // Linha de negócio
+  display_order?: number;
+
+  // Flags
+  isCustomizable?: boolean;
   hasAssemblyOption?: boolean;
   hasColorOption?: boolean;
   isActive?: boolean;
-  isFeatured?: boolean; // Produto em Destaque na Home
+  isFeatured?: boolean;
+
+  // Personalização
   availableColors?: string;
   hasNameOption?: boolean;
   namePrice?: number;
   variations?: Variation[];
   customizationLists?: CustomizationList[];
   selectedVariation?: any;
+
+  // Disponibilidade e estoque
+  availability?: ProductAvailability;
+  production_days?: number;
+  stock?: number;
+  min_stock?: number;
+  edition_quantity?: number;
+  edition_number?: number;
+
+  // Coleção
+  collection_id?: string;
+  collection_number?: number;
+  collection_subtitle?: string;
+  saint_id?: string;
+
+  // Informações da peça
+  promotional_price?: number;
+  materials?: string;
+  weight_grams?: number;
+  dimensions?: string;
+  care_instructions?: string;
 }
 
 export type CartItem = Product & {
@@ -75,6 +119,13 @@ export type ShopSettings = {
   instagram: string;
   tiktok: string;
   slogan: string;
+  facebook?: string;
+  address?: string;
+  about_text?: string;
+  about_image?: string;
+  og_image?: string;
+  domain?: string;
+  whatsapp_message?: string;
 }
 
 export type Transaction = {
@@ -86,6 +137,21 @@ export type Transaction = {
   date: string;
   created_at?: string;
 }
+
+// Status de pedido expandido para fluxo artesanal
+export type OrderStatus = 
+  | 'pending'
+  | 'approved'
+  | 'cancelled';
+
+export type ProductionStatus =
+  | 'pending'
+  | 'awaiting_production'
+  | 'in_production'
+  | 'finishing'
+  | 'ready'
+  | 'shipped'
+  | 'delivered';
 
 export type Order = {
   id: string;
@@ -101,9 +167,76 @@ export type Order = {
     quantity: number;
     image: string;
   }[];
-  status: 'pending' | 'approved' | 'cancelled';
+  status: OrderStatus;
+  production_status?: ProductionStatus;
+  tracking_code?: string;
+  notes?: string;
+  priority?: number;
+  due_date?: string;
   created_at?: string;
 }
 
-// Dummy export to ensure this is treated as a module with values if needed
-export const TYPES_VERSION = "1.0.0";
+// === NOVAS ENTIDADES ===
+
+export type CollectionStatus = 'active' | 'coming_soon' | 'ended';
+
+export type Collection = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  image?: string;
+  banner?: string;
+  status: CollectionStatus;
+  launch_date?: string;
+  total_items?: number;
+  display_order?: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export type Saint = {
+  id: string;
+  slug: string;
+  name: string;
+  collection_id?: string;
+  collection_number?: number;
+  subtitle?: string;
+  keywords?: string;    // "Proteção • Fé • Perseverança"
+  history?: string;
+  meaning?: string;
+  curiosities?: string;
+  prayer?: string;
+  image?: string;
+  qr_code_url?: string;
+  digital_page_url?: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export type QuoteStatus =
+  | 'new'
+  | 'contacted'
+  | 'sent'
+  | 'waiting'
+  | 'approved'
+  | 'in_production'
+  | 'done'
+  | 'lost';
+
+export type Quote = {
+  id: string;
+  name: string;
+  whatsapp: string;
+  email?: string;
+  event_type?: string;
+  product?: string;
+  quantity?: number;
+  event_date?: string;
+  customization?: string;
+  notes?: string;
+  status: QuoteStatus;
+  created_at?: string;
+}
+
+export const TYPES_VERSION = "2.0.0";

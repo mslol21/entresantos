@@ -381,10 +381,37 @@ export const ProductDetails: React.FC = () => {
               )}
             </div>
 
-            {/* Delivery/Production Clock Info */}
-            <div className="flex items-center gap-2 text-xs font-bold text-navy/50">
-              <Clock size={16} className="text-gold-dark" />
-              <span>Prazo de produção: 5 dias úteis</span>
+            {/* Collection Banner Link if product belongs to collection */}
+            {product.collection_id && (
+              <div className="bg-gold/10 border border-gold/25 rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gold-dark block">Parte da Coleção</span>
+                  <span className="font-serif font-bold text-navy text-sm">{product.collection_subtitle || 'Coleções Entre Santos'}</span>
+                </div>
+                <Link to="/colecoes" className="text-xs font-bold text-gold-dark hover:underline">
+                  Ver Coleção →
+                </Link>
+              </div>
+            )}
+
+            {/* Availability and Production info */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-navy/70 py-1">
+              {product.availability === 'made_to_order' ? (
+                <div className="flex items-center gap-2 bg-amber-50 text-amber-800 border border-amber-200/60 px-3.5 py-1.5 rounded-full">
+                  <Clock size={14} className="text-amber-600" />
+                  <span>Produzido sob encomenda • Prazo: {product.production_days || 5} dias úteis</span>
+                </div>
+              ) : product.availability === 'limited_edition' ? (
+                <div className="flex items-center gap-2 bg-purple-50 text-purple-900 border border-purple-200/60 px-3.5 py-1.5 rounded-full">
+                  <Sparkles size={14} className="text-purple-600" />
+                  <span>Edição Limitada {product.edition_quantity ? `(Tiragem: ${product.edition_quantity} un.)` : ''}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-3.5 py-1.5 rounded-full">
+                  <Check size={14} className="text-emerald-600" />
+                  <span>Pronta entrega • Envio para todo o Brasil</span>
+                </div>
+              )}
             </div>
 
             {/* Customizer Panel */}

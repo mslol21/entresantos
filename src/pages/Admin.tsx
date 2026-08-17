@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
-import type { Product, GlobalOption, Category } from '../types';
-import { Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, Palette, Grid, Wrench, LineChart, LogOut, ClipboardList, Download } from 'lucide-react';
+import type { Product, GlobalOption, Category, Collection, Saint } from '../types';
+import { 
+  Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, 
+  Palette, Grid, LineChart, LogOut, Download, LayoutDashboard, 
+  FolderKanban, MessageSquareQuote, BookOpen, Layers, 
+  AlertTriangle, ExternalLink, QrCode, MessageCircle
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
@@ -26,22 +31,65 @@ const getColorHex = (name: string): string => {
   return '#666666';
 };
 
+const QUOTE_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  new: { label: 'Novo', color: 'bg-blue-100 text-blue-800' },
+  contacted: { label: 'Em contato', color: 'bg-yellow-100 text-yellow-800' },
+  sent: { label: 'Orçamento enviado', color: 'bg-purple-100 text-purple-800' },
+  waiting: { label: 'Aguardando cliente', color: 'bg-amber-100 text-amber-800' },
+  approved: { label: 'Aprovado', color: 'bg-emerald-100 text-emerald-800' },
+  in_production: { label: 'Em produção', color: 'bg-indigo-100 text-indigo-800' },
+  done: { label: 'Concluído', color: 'bg-green-100 text-green-800' },
+  lost: { label: 'Perdido', color: 'bg-gray-100 text-gray-700' },
+};
+
+const PRODUCTION_STATUS_LABELS: Record<string, { label: string; color: string; next?: string }> = {
+  pending: { label: 'Aguardando Pagamento', color: 'bg-yellow-100 text-yellow-800', next: 'awaiting_production' },
+  awaiting_production: { label: 'Aguardando Produção', color: 'bg-orange-100 text-orange-800', next: 'in_production' },
+  in_production: { label: 'Em Produção', color: 'bg-blue-100 text-blue-800', next: 'finishing' },
+  finishing: { label: 'Finalização', color: 'bg-purple-100 text-purple-800', next: 'ready' },
+  ready: { label: 'Pronto para Envio', color: 'bg-emerald-100 text-emerald-800', next: 'shipped' },
+  shipped: { label: 'Enviado', color: 'bg-indigo-100 text-indigo-800', next: 'delivered' },
+  delivered: { label: 'Entregue', color: 'bg-green-100 text-green-800' },
+};
+
 export const Admin: React.FC = () => {
   const { showToast } = useToast();
   const { 
-    products, settings, loading, categories, globalOptions, orders,
+    products, settings, categories, globalOptions, orders,
+    collections, saints, quotes,
     addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
     addCategory, updateCategory, deleteCategory,
     addGlobalOption, updateGlobalOption, deleteGlobalOption,
-    addTransaction, updateOrderStatus, deleteOrder
+    addTransaction, updateOrderStatus, updateOrderProductionStatus, deleteOrder,
+    addCollection, updateCollection, deleteCollection,
+    addSaint, updateSaint, deleteSaint,
+    updateQuoteStatus, deleteQuote
   } = useData();
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'colors' | 'options' | 'settings' | 'finance' | 'orders'>('products');
+
+  type AdminTab = 
+    | 'dashboard'
+    | 'products' 
+    | 'orders' 
+    | 'production'
+    | 'quotes'
+    | 'collections'
+    | 'saints'
+    | 'categories' 
+    | 'colors' 
+    | 'settings' 
+    | 'finance';
+
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingOption, setEditingOption] = useState<GlobalOption | null>(null);
   const [isAddingOption, setIsAddingOption] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
+  const [isAddingCollection, setIsAddingCollection] = useState(false);
+  const [editingSaint, setEditingSaint] = useState<Saint | null>(null);
+  const [isAddingSaint, setIsAddingSaint] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [subTab, setSubTab] = useState<'colors' | 'entremeio' | 'crucifixo' | 'outros'>('colors');
   
@@ -51,39 +99,12 @@ export const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'cancelled' | 'all'>('pending');
-  const [orderSearchQuery, setOrderSearchQuery] = useState('');
-
-  const exportOrdersToCSV = () => {
-    if (!orders || orders.length === 0) return;
-    const headers = ['ID', 'Data', 'Cliente', 'CEP', 'Cidade/UF', 'Pagamento', 'Status', 'Total (BRL)'];
-    const rows = orders.map(o => [
-      o.id,
-      o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '',
-      `"${(o.client_name || '').replace(/"/g, '""')}"`,
-      o.cep,
-      `"${(o.cidade_uf || '').replace(/"/g, '""')}"`,
-      o.payment_method,
-      o.status,
-      o.total_price ? o.total_price.toFixed(2) : '0.00'
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `pedidos_entre_santos_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -121,11 +142,26 @@ export const Admin: React.FC = () => {
     name: '',
     description: '',
     price: 0,
+    promotional_price: 0,
     image: '',
+    images: [],
     category: '',
+    categories: [],
     subcategory: 'Todos',
+    line: 'devocionais',
+    sku: '',
+    availability: 'ready',
+    production_days: 5,
+    stock: 10,
+    min_stock: 2,
+    edition_quantity: undefined,
+    collection_id: '',
+    collection_subtitle: '',
+    materials: '',
+    care_instructions: '',
     isCustomizable: false,
     isActive: true,
+    isFeatured: false,
     availableColors: '',
     hasNameOption: true,
     hasColorOption: false,
@@ -134,6 +170,39 @@ export const Admin: React.FC = () => {
   });
 
   const [formSettings, setFormSettings] = useState(settings);
+  useEffect(() => {
+    setFormSettings(settings);
+  }, [settings]);
+
+  const [formCollection, setFormCollection] = useState<Partial<Collection>>({
+    name: '',
+    slug: '',
+    description: '',
+    image: '',
+    banner: '',
+    status: 'active',
+    total_items: 3,
+    display_order: 1,
+    is_active: true,
+  });
+
+  const [formSaint, setFormSaint] = useState<Partial<Saint>>({
+    name: '',
+    slug: '',
+    collection_id: '',
+    collection_number: 1,
+    subtitle: '',
+    keywords: '',
+    history: '',
+    meaning: '',
+    curiosities: '',
+    prayer: '',
+    image: '',
+    qr_code_url: '',
+    digital_page_url: '',
+    is_active: true,
+  });
+
   const [formOption, setFormOption] = useState<Partial<GlobalOption>>({
     name: '',
     price: 0,
@@ -149,94 +218,15 @@ export const Admin: React.FC = () => {
     }
   }, [categories]);
 
-  useEffect(() => {
-    if (settings) {
-      setFormSettings(settings);
-    }
-  }, [settings]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
-          <p className="text-navy font-serif animate-pulse">Carregando painel...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-gold/15 p-8 rounded-3xl w-full max-w-md shadow-premium text-navy"
-        >
-          <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="w-16 h-16 bg-gold/15 rounded-full flex items-center justify-center text-gold-dark">
-              <Lock size={32} />
-            </div>
-            <h1 className="text-2xl font-serif font-bold text-navy">Acesso Restrito</h1>
-            <p className="text-navy/55 text-sm text-center">Digite a senha administrativa para continuar.</p>
-          </div>
-
-            <form onSubmit={handleLogin} className="space-y-4 text-left">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs uppercase tracking-wider font-bold text-navy/60 block mb-1">E-mail</label>
-                  <input 
-                    type="email" 
-                    placeholder="admin@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy outline-none focus:border-gold transition-all"
-                    required
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-wider font-bold text-navy/60 block mb-1">Senha</label>
-                  <input 
-                    type="password" 
-                    placeholder="Sua senha secreta"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white border border-gold/25 rounded-xl p-4 text-navy outline-none focus:border-gold transition-all"
-                    required
-                  />
-                </div>
-                {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-              </div>
-              <button 
-                type="submit"
-                disabled={loginLoading}
-                className="w-full gold-bg-gradient text-white py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gold/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loginLoading ? 'Carregando...' : 'Entrar no Painel'}
-              </button>
-              <Link to="/" className="block text-center text-navy/40 text-xs hover:text-navy transition-colors mt-4">
-                Voltar para a loja
-              </Link>
-            </form>
-        </motion.div>
-      </div>
-    );
-  }
-
+  // Product submission
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formProduct.name || formProduct.price === undefined) return;
     try {
-      const payload = {
-        ...editingProduct,
-        ...formProduct
-      };
-
-      // Garantir propriedades camelCase consistentes
-      payload.isCustomizable = !!payload.isCustomizable;
-      payload.hasNameOption = !!payload.hasNameOption;
-      payload.hasColorOption = !!payload.hasColorOption;
+      const payload: any = { ...formProduct };
+      if (!payload.category && categories.length > 0) {
+        payload.category = categories[0].id;
+      }
       payload.isActive = payload.isActive !== false;
 
       if (editingProduct) {
@@ -248,86 +238,22 @@ export const Admin: React.FC = () => {
       }
       setEditingProduct(null);
       setIsAddingProduct(false);
-      setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] });
+      resetProductForm();
     } catch (error: any) {
       console.error('Erro ao salvar produto:', error);
       showToast('Erro ao salvar produto: ' + (error.message || 'Falha no banco de dados'), 'error');
     }
   };
 
-  const handleAcceptOrder = async (order: any) => {
-    try {
-      await updateOrderStatus(order.id, 'approved');
-      await addTransaction({
-        description: `Pedido de ${order.client_name}`,
-        amount: order.total_price,
-        type: 'income',
-        category: 'Vendas',
-        date: new Date().toISOString().split('T')[0]
-      });
-    } catch (err: any) {
-      alert('Erro ao aceitar pedido: ' + (err.message || err));
-    }
-  };
-
-  const handleCancelOrder = async (order: any) => {
-    try {
-      await updateOrderStatus(order.id, 'cancelled');
-    } catch (err: any) {
-      alert('Erro ao cancelar pedido: ' + (err.message || err));
-    }
-  };
-
-  const handleDeleteOrder = async (orderId: string) => {
-    if (confirm('Deseja realmente excluir permanentemente o registro deste pedido do banco de dados?')) {
-      try {
-        await deleteOrder(orderId);
-      } catch (err: any) {
-        alert('Erro ao excluir pedido: ' + (err.message || err));
-      }
-    }
-  };
-
-  const handleCategorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoryName) return;
-    try {
-      if (editingCategory) {
-        await updateCategory({ ...editingCategory, name: categoryName });
-      } else {
-        await addCategory(categoryName);
-      }
-      setEditingCategory(null);
-      setIsAddingCategory(false);
-      setCategoryName('');
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleOptionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formOption.name) return;
-    try {
-      if (editingOption) {
-        await updateGlobalOption({
-          ...editingOption,
-          ...formOption,
-          type: activeTab === 'colors' ? 'color' : 'assembly'
-        });
-      } else {
-        await addGlobalOption({ 
-          ...formOption,
-          id: Math.random().toString(36).substr(2, 9),
-          type: activeTab === 'colors' ? 'color' : 'assembly' 
-        });
-      }
-      setEditingOption(null);
-      setIsAddingOption(false);
-      setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
-    } catch (err) {
-      console.error(err);
-    }
+  const resetProductForm = () => {
+    setFormProduct({
+      name: '', description: '', price: 0, promotional_price: 0, image: '', images: [],
+      category: categories[0]?.id || '', categories: [], subcategory: 'Todos',
+      line: 'devocionais', sku: '', availability: 'ready', production_days: 5,
+      stock: 10, min_stock: 2, isCustomizable: false, isActive: true, isFeatured: false,
+      availableColors: '', hasNameOption: true, hasColorOption: false,
+      variations: [], customizationLists: []
+    });
   };
 
   const startEditProduct = (product: Product) => {
@@ -338,389 +264,576 @@ export const Admin: React.FC = () => {
       ...product,
       images: imagesList.slice(0, 5),
       image: imagesList[0] || product.image || '',
+      category: product.category || categoriesList[0] || '',
       categories: categoriesList,
-      category: categoriesList[0] || product.category || ''
+      line: product.line || 'devocionais',
+      availability: product.availability || 'ready',
+      stock: product.stock ?? 10,
+      min_stock: product.min_stock ?? 2,
+      production_days: product.production_days ?? 5,
     });
     setIsAddingProduct(true);
   };
 
-  const startEditCategory = (category: Category) => {
-    setEditingCategory(category);
-    setCategoryName(category.name);
-    setIsAddingCategory(true);
+  // Collection submission
+  const handleCollectionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formCollection.name) return;
+    try {
+      const slug = formCollection.slug || formCollection.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+      const payload = { ...formCollection, slug } as any;
+      if (editingCollection) {
+        await updateCollection(payload);
+        showToast('Coleção atualizada!', 'success');
+      } else {
+        await addCollection(payload);
+        showToast('Coleção criada com sucesso!', 'success');
+      }
+      setEditingCollection(null);
+      setIsAddingCollection(false);
+      setFormCollection({ name: '', slug: '', description: '', image: '', banner: '', status: 'active', total_items: 3, display_order: 1, is_active: true });
+    } catch (err: any) {
+      showToast('Erro ao salvar coleção: ' + err.message, 'error');
+    }
   };
 
-  const startEditOption = (option: GlobalOption) => {
-    setEditingOption(option);
-    setFormOption({
-      name: option.name,
-      price: option.price || 0,
-      image: option.image || '',
-      categoryIds: option.categoryIds || [],
-      group: option.group
-    });
-    setIsAddingOption(true);
+  // Saint submission
+  const handleSaintSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formSaint.name) return;
+    try {
+      const slug = formSaint.slug || formSaint.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+      const digitalPage = `/santos/${slug}`;
+      const payload = { 
+        ...formSaint, 
+        slug, 
+        digital_page_url: digitalPage,
+        qr_code_url: formSaint.qr_code_url || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`https://${settings.domain || 'atelieentresantos.vercel.app'}${digitalPage}`)}`
+      } as any;
+      if (editingSaint) {
+        await updateSaint(payload);
+        showToast('Santo atualizado!', 'success');
+      } else {
+        await addSaint(payload);
+        showToast('Santo cadastrado com sucesso!', 'success');
+      }
+      setEditingSaint(null);
+      setIsAddingSaint(false);
+      setFormSaint({ name: '', slug: '', collection_id: '', collection_number: 1, subtitle: '', keywords: '', history: '', meaning: '', curiosities: '', prayer: '', image: '', qr_code_url: '', is_active: true });
+    } catch (err: any) {
+      showToast('Erro ao salvar santo: ' + err.message, 'error');
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-cream text-navy flex">
-      {/* Admin Sidebar */}
-      <div className="flex w-full h-screen overflow-hidden">
-        <aside className="w-64 bg-navy border-r border-gold/15 p-6 hidden md:flex flex-col text-white">
-          <div className="flex items-center justify-between gap-3 mb-10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-white/20 rounded-full flex items-center justify-center text-xs text-white">ES</div>
-              <span className="font-serif font-bold text-sm text-white tracking-widest uppercase">Admin</span>
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryName.trim()) return;
+    try {
+      if (editingCategory) {
+        await updateCategory({ ...editingCategory, name: categoryName.trim() });
+        showToast('Categoria atualizada!', 'success');
+      } else {
+        await addCategory(categoryName.trim());
+        showToast('Categoria adicionada!', 'success');
+      }
+      setEditingCategory(null);
+      setIsAddingCategory(false);
+      setCategoryName('');
+    } catch (err: any) {
+      showToast('Erro ao salvar categoria: ' + err.message, 'error');
+    }
+  };
+
+  const handleOptionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formOption.name?.trim()) return;
+    try {
+      if (editingOption) {
+        await updateGlobalOption({
+          ...editingOption,
+          ...formOption,
+          type: subTab === 'colors' ? 'color' : 'assembly'
+        } as GlobalOption);
+        showToast('Opção atualizada!', 'success');
+      } else {
+        await addGlobalOption({
+          ...formOption,
+          type: subTab === 'colors' ? 'color' : 'assembly'
+        });
+        showToast('Opção adicionada!', 'success');
+      }
+      setEditingOption(null);
+      setIsAddingOption(false);
+      setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' });
+    } catch (err: any) {
+      showToast('Erro ao salvar opção: ' + err.message, 'error');
+    }
+  };
+
+  const handleAcceptOrder = async (order: any) => {
+    try {
+      await updateOrderStatus(order.id, 'approved');
+      await updateOrderProductionStatus(order.id, 'in_production');
+      await addTransaction({
+        description: `Pedido de ${order.client_name}`,
+        amount: order.total_price,
+        type: 'income',
+        category: 'Vendas',
+        date: new Date().toISOString().split('T')[0]
+      });
+      showToast('Pedido aprovado e enviado para produção!', 'success');
+    } catch (err: any) {
+      showToast('Erro ao aceitar pedido: ' + err.message, 'error');
+    }
+  };
+
+  const exportOrdersToCSV = () => {
+    if (!orders || orders.length === 0) return;
+    const headers = ['ID', 'Data', 'Cliente', 'CEP', 'Cidade/UF', 'Pagamento', 'Status', 'Produção', 'Total (BRL)'];
+    const rows = orders.map(o => [
+      o.id,
+      o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '',
+      `"${(o.client_name || '').replace(/"/g, '""')}"`,
+      o.cep,
+      `"${(o.cidade_uf || '').replace(/"/g, '""')}"`,
+      o.payment_method,
+      o.status,
+      o.production_status || 'pending',
+      o.total_price ? o.total_price.toFixed(2) : '0.00'
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `pedidos_entre_santos_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Metrics for dashboard
+  const totalRevenue = orders.filter(o => o.status === 'approved').reduce((sum, o) => sum + (o.total_price || 0), 0);
+  const totalOrdersCount = orders.length;
+  const inProductionCount = orders.filter(o => o.production_status === 'in_production' || o.production_status === 'awaiting_production').length;
+  const lowStockProducts = products.filter(p => p.stock !== undefined && p.stock <= (p.min_stock || 1));
+  const newQuotesCount = quotes.filter(q => q.status === 'new').length;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white border border-gold/20 p-8 rounded-3xl max-w-md w-full shadow-premium">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 rounded-full bg-navy text-gold flex items-center justify-center border border-gold/20 shadow-md">
+              <Lock size={28} />
             </div>
           </div>
+          <h2 className="text-2xl font-serif font-bold text-center text-navy mb-2">Área Administrativa</h2>
+          <p className="text-xs text-center text-navy/50 mb-6 uppercase tracking-widest font-bold">Ateliê Entre Santos</p>
+          {error && <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl mb-4 text-center font-bold">{error}</div>}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="label-base">E-mail</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@atelieentresantos.com" className="input-base" />
+            </div>
+            <div>
+              <label className="label-base">Senha</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="input-base" />
+            </div>
+            <button type="submit" disabled={loginLoading} className="btn-primary w-full justify-center mt-2">
+              {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
+            </button>
+            <div className="text-center pt-2">
+              <Link to="/" className="text-xs text-navy/40 hover:text-navy transition-colors">Voltar ao site</Link>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
-          <nav className="space-y-2 flex-grow">
-            <button 
-              onClick={() => setActiveTab('products')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'products' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <ShoppingBag size={20} />
-              <span className="text-sm">Produtos</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('orders')}
-              className={`w-full flex items-center justify-between p-3 rounded-full transition-all ${activeTab === 'orders' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <div className="flex items-center gap-3">
-                <ClipboardList size={20} />
-                <span className="text-sm">Pedidos</span>
-              </div>
-              {orders.filter(o => o.status === 'pending').length > 0 && (
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full mr-2">
-                  {orders.filter(o => o.status === 'pending').length}
-                </span>
-              )}
-            </button>
-            <button 
-              onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'colors' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <Settings size={20} />
-              <span className="text-sm">Opções Globais</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('categories')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'categories' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <Grid size={20} />
-              <span className="text-sm">Categorias</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'settings' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <Settings size={20} />
-              <span className="text-sm">Configurações</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('finance')}
-              className={`w-full flex items-center gap-3 p-3 rounded-full transition-all ${activeTab === 'finance' ? 'bg-gold text-navy font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <LineChart size={20} />
-              <span className="text-sm">Financeiro</span>
-            </button>
-          </nav>
-
-          <div className="mt-auto space-y-1">
-            <button 
-              onClick={handleLogout} 
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-400 transition-all text-left"
-            >
-              <LogOut size={20} />
-              <span className="font-bold text-sm">Sair do Painel</span>
-            </button>
-            <Link to="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all">
-              <ArrowLeft size={20} />
-              <span className="font-bold text-sm">Voltar à Loja</span>
-            </Link>
-          </div>
-        </aside>
-
-        {/* Mobile Header Navigation */}
-        <div className="md:hidden fixed top-0 left-0 right-0 bg-navy border-b border-gold/15 z-40 p-4 flex items-center justify-between text-white">
-          <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1 pr-4">
-            <button 
-              onClick={() => setActiveTab('products')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              Produtos
-            </button>
-            <button 
-              onClick={() => setActiveTab('orders')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all relative ${activeTab === 'orders' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              <span>Pedidos</span>
-              {orders.filter(o => o.status === 'pending').length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full">
-                  {orders.filter(o => o.status === 'pending').length}
-                </span>
-              )}
-            </button>
-            <button 
-              onClick={() => { setActiveTab('colors'); setSubTab('colors'); }}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'colors' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              Opções Globais
-            </button>
-            <button 
-              onClick={() => setActiveTab('categories')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              Categorias
-            </button>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'settings' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              Ajustes
-            </button>
-            <button 
-              onClick={() => setActiveTab('finance')}
-              className={`px-3.5 py-2 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${activeTab === 'finance' ? 'bg-gold text-navy' : 'text-white/60'}`}
-            >
-              Financeiro
-            </button>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={handleLogout} className="text-red-400 p-2 hover:bg-white/5 rounded-full" title="Sair do Painel">
-              <LogOut size={20} />
-            </button>
-            <Link to="/" className="text-white/60 p-2 hover:bg-white/5 rounded-full" title="Voltar à Loja">
-              <ArrowLeft size={20} />
-            </Link>
+  return (
+    <div className="min-h-screen bg-cream text-navy flex flex-col md:flex-row">
+      {/* Sidebar Desktop */}
+      <aside className="hidden md:flex flex-col w-64 bg-navy text-white p-6 border-r border-gold/15 flex-shrink-0 min-h-screen">
+        <div className="flex items-center gap-3 mb-8">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold/30 bg-white" />
+          <div>
+            <h2 className="font-serif font-bold text-base text-gold uppercase tracking-wider leading-none">Painel Admin</h2>
+            <p className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-medium mt-1">Entre Santos</p>
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-grow overflow-y-auto p-6 md:p-10 bg-cream text-navy admin-light-content">
-          <div className="max-w-5xl mx-auto">
-            {activeTab === 'orders' ? (
-              <div className="space-y-8 text-left">
-                <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
-                  <div>
-                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Pedidos</h1>
-                    <p className="text-gold/40 text-sm">Aprove, cancele, pesquise ou exporte os pedidos enviados pelos clientes.</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      onClick={exportOrdersToCSV}
-                      disabled={orders.length === 0}
-                      className="px-4 py-2 bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-navy rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer disabled:opacity-40"
-                    >
-                      <Download size={14} /> Exportar CSV
-                    </button>
-                    
-                    {/* Status Filters */}
-                    <div className="flex bg-cream-light p-1 rounded-xl border border-gold/15 overflow-x-auto max-w-full">
-                      {(['pending', 'approved', 'cancelled', 'all'] as const).map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => setStatusFilter(status)}
-                          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                            statusFilter === status
-                              ? 'bg-gold text-navy shadow-md'
-                              : 'text-navy/85 hover:text-navy hover:bg-navy/10'
-                          }`}
-                        >
-                          {status === 'pending' ? 'Pendentes' : status === 'approved' ? 'Aprovados' : status === 'cancelled' ? 'Cancelados' : 'Todos'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Search Bar for Orders */}
-                <div className="bg-white p-2 rounded-2xl border border-gold/15 shadow-sm">
-                  <input
-                    type="text"
-                    placeholder="Pesquisar pedido por nome do cliente, CEP ou ID..."
-                    value={orderSearchQuery}
-                    onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    className="w-full bg-transparent px-4 py-2 text-sm text-navy placeholder:text-navy/40 outline-none"
-                  />
-                </div>
-
-                {/* Orders Grid */}
-                <div className="grid grid-cols-1 gap-6">
-                  {orders.filter(o => {
-                    const matchStatus = statusFilter === 'all' || o.status === statusFilter;
-                    const matchSearch = !orderSearchQuery || 
-                      o.client_name?.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
-                      o.cep?.includes(orderSearchQuery) ||
-                      o.id?.toLowerCase().includes(orderSearchQuery.toLowerCase());
-                    return matchStatus && matchSearch;
-                  }).length === 0 ? (
-                    <div className="text-center py-20 bg-navy-light rounded-3xl border border-gold/10">
-                      <p className="text-gold/40 text-sm">Nenhum pedido encontrado com os filtros selecionados.</p>
-                    </div>
-                  ) : (
-                    orders
-                      .filter(o => {
-                        const matchStatus = statusFilter === 'all' || o.status === statusFilter;
-                        const matchSearch = !orderSearchQuery || 
-                          o.client_name?.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
-                          o.cep?.includes(orderSearchQuery) ||
-                          o.id?.toLowerCase().includes(orderSearchQuery.toLowerCase());
-                        return matchStatus && matchSearch;
-                      })
-                      .map((order) => (
-                        <div key={order.id} className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium space-y-6 flex flex-col md:flex-row justify-between md:items-start gap-6">
-                          <div className="flex-grow space-y-4">
-                            {/* Order Header */}
-                            <div className="flex flex-wrap items-center gap-3 border-b border-gold/10 pb-3">
-                              <span className="text-xs font-bold uppercase tracking-widest bg-gold/10 text-gold-dark px-3 py-1 rounded-full border border-gold/25">
-                                Pedido #{order.id.slice(0, 8)}
-                              </span>
-                              <span className="text-xs text-navy/40">
-                                {order.created_at ? new Date(order.created_at).toLocaleString('pt-BR') : ''}
-                              </span>
-                              <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
-                                order.status === 'pending'
-                                  ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
-                                  : order.status === 'approved'
-                                  ? 'bg-green-500/10 text-green-600 border-green-500/20'
-                                  : 'bg-red-500/10 text-red-600 border-red-500/20'
-                              }`}>
-                                {order.status === 'pending' ? 'Pendente' : order.status === 'approved' ? 'Aprovado' : 'Cancelado'}
-                              </span>
-                            </div>
-
-                            {/* Client Details */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm bg-cream-light p-4 rounded-2xl border border-gold/10">
-                              <div>
-                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Cliente</p>
-                                <p className="font-bold text-navy">{order.client_name}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Pagamento</p>
-                                <p className="font-bold text-navy">{order.payment_method}</p>
-                              </div>
-                              <div className="sm:col-span-2">
-                                <p className="text-[10px] text-navy/40 font-black uppercase tracking-wider mb-0.5">Endereço de Entrega</p>
-                                <p className="font-bold text-navy">{order.cidade_uf} (CEP: {order.cep})</p>
-                              </div>
-                            </div>
-
-                            {/* Items List */}
-                            <div className="space-y-3">
-                              <p className="text-[10px] text-navy/40 font-black uppercase tracking-widest">Itens Selecionados</p>
-                              <div className="divide-y divide-gold/10 bg-cream-light/40 border border-gold/10 rounded-2xl p-4">
-                                {order.items.map((item) => (
-                                  <div key={item.id + item.name} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                                    <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-xl border border-gold/15" />
-                                    <div className="flex-grow">
-                                      <p className="text-sm font-bold text-navy leading-tight">{item.name}</p>
-                                      <p className="text-xs text-navy/40">{item.quantity}x de {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                    </div>
-                                    <span className="text-sm font-bold text-navy tabular-nums">
-                                      {(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Order Total & Actions */}
-                          <div className="flex flex-col justify-between items-stretch md:items-end w-full md:w-64 border-t md:border-t-0 md:border-l border-gold/10 pt-6 md:pt-0 md:pl-6 min-h-[180px]">
-                            <div className="text-left md:text-right mb-4">
-                              <p className="text-[10px] text-navy/40 uppercase tracking-[0.2em] font-black mb-1">Valor Total</p>
-                              <p className="text-3xl font-black text-navy tabular-nums">
-                                {order.total_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                              </p>
-                            </div>
-
-                            <div className="space-y-2 w-full">
-                              {order.status === 'pending' && (
-                                <>
-                                  <button
-                                    onClick={() => handleAcceptOrder(order)}
-                                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-green-500/10 cursor-pointer"
-                                  >
-                                    Aceitar e Lançar no Financeiro
-                                  </button>
-                                  <button
-                                    onClick={() => handleCancelOrder(order)}
-                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                                  >
-                                    Recusar / Cancelar
-                                  </button>
-                                </>
-                              )}
-                              {(order.status === 'approved' || order.status === 'cancelled') && (
-                                <button
-                                  onClick={() => handleDeleteOrder(order.id)}
-                                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                                >
-                                  Excluir Registro
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                  )}
-                </div>
+        <nav className="space-y-1 flex-grow">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+            { id: 'products', label: 'Produtos', icon: <ShoppingBag size={18} /> },
+            { id: 'orders', label: 'Pedidos', icon: <Download size={18} />, badge: orders.filter(o => o.status === 'pending').length },
+            { id: 'production', label: 'Produção (Kanban)', icon: <FolderKanban size={18} />, badge: inProductionCount },
+            { id: 'quotes', label: 'Orçamentos (Leads)', icon: <MessageSquareQuote size={18} />, badge: newQuotesCount },
+            { id: 'collections', label: 'Coleções', icon: <Layers size={18} /> },
+            { id: 'saints', label: 'Santos / QR Code', icon: <BookOpen size={18} /> },
+            { id: 'categories', label: 'Categorias', icon: <Grid size={18} /> },
+            { id: 'colors', label: 'Opções Globais', icon: <Palette size={18} /> },
+            { id: 'finance', label: 'Financeiro', icon: <LineChart size={18} /> },
+            { id: 'settings', label: 'Configurações', icon: <Settings size={18} /> },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as AdminTab)}
+              className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === item.id ? 'bg-gold text-navy font-black shadow-md' : 'text-white/65 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {item.icon}
+                <span>{item.label}</span>
               </div>
-            ) : activeTab === 'products' ? (
-              <div className="space-y-8">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Produtos</h1>
-                    <p className="text-gold/40 text-sm">Adicione, edite ou remova peças do seu catálogo.</p>
+              {item.badge ? (
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${activeTab === item.id ? 'bg-navy text-white' : 'bg-gold text-navy'}`}>
+                  {item.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+
+        <div className="pt-6 border-t border-white/10 space-y-2">
+          <Link to="/" className="flex items-center gap-2 p-2 text-white/50 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+            <ArrowLeft size={16} /> Ver Loja
+          </Link>
+          <button onClick={handleLogout} className="flex items-center gap-2 p-2 text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider transition-colors w-full text-left">
+            <LogOut size={16} /> Sair
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Top Navigation */}
+      <div className="md:hidden bg-navy text-white p-4 border-b border-gold/15 sticky top-0 z-30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
+          <span className="font-serif font-bold text-gold text-sm uppercase">Admin</span>
+        </div>
+        <select
+          value={activeTab}
+          onChange={e => setActiveTab(e.target.value as AdminTab)}
+          className="bg-navy-light text-gold text-xs font-bold border border-gold/30 rounded-xl px-3 py-2 outline-none"
+        >
+          <option value="dashboard">Dashboard</option>
+          <option value="products">Produtos</option>
+          <option value="orders">Pedidos ({orders.filter(o => o.status === 'pending').length})</option>
+          <option value="production">Produção ({inProductionCount})</option>
+          <option value="quotes">Orçamentos ({newQuotesCount})</option>
+          <option value="collections">Coleções</option>
+          <option value="saints">Santos / QR Code</option>
+          <option value="categories">Categorias</option>
+          <option value="colors">Opções Globais</option>
+          <option value="finance">Financeiro</option>
+          <option value="settings">Configurações</option>
+        </select>
+        <button onClick={handleLogout} className="p-2 text-red-400">
+          <LogOut size={18} />
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto max-w-7xl">
+        {/* TAB: DASHBOARD */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            <div>
+              <h1 className="font-serif font-bold text-3xl text-navy mb-1">Visão Geral</h1>
+              <p className="text-navy/50 text-sm">Acompanhe métricas reais de vendas, pedidos e produção.</p>
+            </div>
+
+            {/* Metrics cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <p className="text-[10px] text-navy/40 uppercase font-black tracking-widest mb-1">Faturamento Aprovado</p>
+                <p className="text-3xl font-serif font-bold text-navy">
+                  {totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                <span className="text-[11px] text-emerald-600 font-bold mt-2 block">Vendas confirmadas</span>
+              </div>
+
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <p className="text-[10px] text-navy/40 uppercase font-black tracking-widest mb-1">Pedidos no Total</p>
+                <p className="text-3xl font-serif font-bold text-navy">{totalOrdersCount}</p>
+                <span className="text-[11px] text-amber-600 font-bold mt-2 block">
+                  {orders.filter(o => o.status === 'pending').length} aguardando aprovação
+                </span>
+              </div>
+
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <p className="text-[10px] text-navy/40 uppercase font-black tracking-widest mb-1">Em Produção Artesanal</p>
+                <p className="text-3xl font-serif font-bold text-navy">{inProductionCount}</p>
+                <span className="text-[11px] text-indigo-600 font-bold mt-2 block">Peças na bancada</span>
+              </div>
+
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <p className="text-[10px] text-navy/40 uppercase font-black tracking-widest mb-1">Novos Orçamentos</p>
+                <p className="text-3xl font-serif font-bold text-navy">{newQuotesCount}</p>
+                <span className="text-[11px] text-blue-600 font-bold mt-2 block">Leads de eventos</span>
+              </div>
+            </div>
+
+            {/* Alerts & Highlights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Low stock alert */}
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle size={18} className="text-amber-500" />
+                  <h3 className="font-serif font-bold text-lg text-navy">Alerta de Estoque Baixo</h3>
+                </div>
+                {lowStockProducts.length > 0 ? (
+                  <div className="space-y-3">
+                    {lowStockProducts.map(p => (
+                      <div key={p.id} className="flex items-center justify-between p-3 bg-amber-50/60 rounded-2xl border border-amber-200/50">
+                        <div>
+                          <p className="font-bold text-navy text-sm">{p.name}</p>
+                          <p className="text-[10px] text-navy/40 uppercase">{p.sku || p.category}</p>
+                        </div>
+                        <span className="bg-amber-500 text-white font-black text-xs px-2.5 py-1 rounded-full">
+                          {p.stock} un.
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <button 
-                    onClick={() => { setIsAddingProduct(true); setEditingProduct(null); setFormProduct({ name: '', description: '', price: 0, image: '', category: categories[0]?.id || '', subcategory: 'Todos', isCustomizable: false, isActive: true, availableColors: '', hasNameOption: true, hasColorOption: false, variations: [], customizationLists: [] }); }}
-                    className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
-                  >
-                    <Plus size={20} />
-                    Novo Produto
+                ) : (
+                  <p className="text-xs text-navy/40">Todos os produtos com estoque regular.</p>
+                )}
+              </div>
+
+              {/* Quick links / shortcuts */}
+              <div className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium">
+                <h3 className="font-serif font-bold text-lg text-navy mb-4">Ações Rápidas</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => { resetProductForm(); setEditingProduct(null); setIsAddingProduct(true); setActiveTab('products'); }} className="p-4 bg-cream/70 hover:bg-gold/10 border border-gold/15 rounded-2xl text-left transition-all">
+                    <ShoppingBag size={20} className="text-gold-dark mb-2" />
+                    <p className="font-bold text-xs text-navy">Novo Produto</p>
+                  </button>
+                  <button onClick={() => { setIsAddingCollection(true); setActiveTab('collections'); }} className="p-4 bg-cream/70 hover:bg-gold/10 border border-gold/15 rounded-2xl text-left transition-all">
+                    <Layers size={20} className="text-gold-dark mb-2" />
+                    <p className="font-bold text-xs text-navy">Nova Coleção</p>
+                  </button>
+                  <button onClick={() => { setIsAddingSaint(true); setActiveTab('saints'); }} className="p-4 bg-cream/70 hover:bg-gold/10 border border-gold/15 rounded-2xl text-left transition-all">
+                    <BookOpen size={20} className="text-gold-dark mb-2" />
+                    <p className="font-bold text-xs text-navy">Novo Santo/QR</p>
+                  </button>
+                  <button onClick={() => setActiveTab('production')} className="p-4 bg-cream/70 hover:bg-gold/10 border border-gold/15 rounded-2xl text-left transition-all">
+                    <FolderKanban size={20} className="text-gold-dark mb-2" />
+                    <p className="font-bold text-xs text-navy">Ver Produção</p>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {/* Product List - Desktop Table */}
-                <div className="hidden md:block bg-navy-light rounded-3xl border border-gold/10 overflow-hidden shadow-2xl">
+        {/* TAB: PRODUCTS */}
+        {activeTab === 'products' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Produtos ({products.length})</h1>
+                <p className="text-navy/50 text-sm">Catálogo com controle de SKU, linhas e disponibilidade.</p>
+              </div>
+              <button 
+                onClick={() => { resetProductForm(); setEditingProduct(null); setIsAddingProduct(true); }}
+                className="btn-primary"
+              >
+                <Plus size={16} /> Novo Produto
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-cream/80 text-navy/40 text-[10px] uppercase font-black tracking-widest border-b border-gold/10">
+                    <tr>
+                      <th className="p-4">Produto</th>
+                      <th className="p-4">SKU / Linha</th>
+                      <th className="p-4">Preço</th>
+                      <th className="p-4">Disponibilidade</th>
+                      <th className="p-4">Estoque</th>
+                      <th className="p-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gold/10 text-sm">
+                    {products.map(p => (
+                      <tr key={p.id} className="hover:bg-cream/30 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <img src={p.image || '/logo.png'} alt={p.name} className="w-12 h-12 rounded-xl object-cover border border-gold/15 bg-cream" />
+                            <div>
+                              <p className="font-bold text-navy">{p.name}</p>
+                              <span className="text-[10px] text-navy/40 uppercase">{p.category}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <p className="font-mono text-xs font-bold text-navy/70">{p.sku || '—'}</p>
+                          <span className="text-[10px] font-bold text-gold-dark uppercase">{p.line || 'devocionais'}</span>
+                        </td>
+                        <td className="p-4 font-bold text-navy">
+                          {p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </td>
+                        <td className="p-4">
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                            p.availability === 'made_to_order' ? 'bg-amber-100 text-amber-800' :
+                            p.availability === 'limited_edition' ? 'bg-purple-100 text-purple-800' :
+                            'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {p.availability === 'made_to_order' ? 'Sob encomenda' :
+                             p.availability === 'limited_edition' ? 'Edição limitada' : 'Pronta entrega'}
+                          </span>
+                        </td>
+                        <td className="p-4 font-bold">
+                          <span className={p.stock !== undefined && p.stock <= (p.min_stock || 1) ? 'text-red-500' : 'text-navy'}>
+                            {p.stock ?? '—'} un.
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-xl text-gold-dark transition-colors">
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 rounded-xl text-red-500 transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: PRODUCTION KANBAN */}
+        {activeTab === 'production' && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="font-serif font-bold text-3xl text-navy">Produção Artesanal</h1>
+              <p className="text-navy/50 text-sm">Acompanhe o fluxo de confecção das peças na bancada.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              {[
+                { id: 'awaiting_production', title: '1. Aguardando Produção', color: 'border-orange-200 bg-orange-50/40' },
+                { id: 'in_production', title: '2. Em Produção', color: 'border-blue-200 bg-blue-50/40' },
+                { id: 'finishing', title: '3. Finalização', color: 'border-purple-200 bg-purple-50/40' },
+                { id: 'ready', title: '4. Pronto para Envio', color: 'border-emerald-200 bg-emerald-50/40' },
+              ].map(column => {
+                const columnOrders = orders.filter(o => (o.production_status || 'pending') === column.id);
+                return (
+                  <div key={column.id} className={`rounded-3xl border ${column.color} p-4 flex flex-col min-h-[450px]`}>
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-navy/10">
+                      <h3 className="font-bold text-xs uppercase tracking-wider text-navy">{column.title}</h3>
+                      <span className="bg-navy text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        {columnOrders.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 flex-1 overflow-y-auto">
+                      {columnOrders.map(order => (
+                        <div key={order.id} className="bg-white border border-gold/15 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-bold text-navy text-sm">{order.client_name}</span>
+                            <span className="font-mono text-[10px] text-navy/40">#{order.id.slice(0, 6)}</span>
+                          </div>
+                          <div className="text-xs text-navy/60 space-y-1 mb-3">
+                            {order.items.map((it, idx) => (
+                              <p key={idx} className="line-clamp-1">📿 {it.quantity}x {it.name}</p>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-gold/10">
+                            <span className="font-bold text-xs text-navy">
+                              {order.total_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                            {PRODUCTION_STATUS_LABELS[column.id]?.next && (
+                              <button
+                                onClick={() => updateOrderProductionStatus(order.id, PRODUCTION_STATUS_LABELS[column.id].next!)}
+                                className="text-[10px] font-black bg-navy text-gold px-3 py-1 rounded-full uppercase tracking-wider hover:bg-navy-light transition-all cursor-pointer"
+                              >
+                                Avançar →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {columnOrders.length === 0 && (
+                        <div className="flex items-center justify-center h-32 text-navy/30 text-xs font-bold uppercase">
+                          Nenhum pedido
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: QUOTES (ORÇAMENTOS) */}
+        {activeTab === 'quotes' && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="font-serif font-bold text-3xl text-navy">Orçamentos & Leads ({quotes.length})</h1>
+              <p className="text-navy/50 text-sm">Pedidos em quantidade e solicitações para eventos especiais.</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
+              {quotes.length > 0 ? (
+                <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-gold/5 text-gold/40 text-[10px] uppercase font-bold tracking-widest">
+                    <thead className="bg-cream/80 text-navy/40 text-[10px] uppercase font-black tracking-widest border-b border-gold/10">
                       <tr>
-                        <th className="p-4">Produto</th>
-                        <th className="p-4">Categoria</th>
-                        <th className="p-4">Preço</th>
+                        <th className="p-4">Cliente</th>
+                        <th className="p-4">Evento / Produto</th>
+                        <th className="p-4">Qtd. / Data</th>
                         <th className="p-4">Status</th>
                         <th className="p-4 text-right">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gold/5">
-                      {products.map((p) => (
-                        <tr key={p.id} className="hover:bg-gold/5 transition-colors group">
+                    <tbody className="divide-y divide-gold/10 text-sm">
+                      {quotes.map(q => (
+                        <tr key={q.id} className="hover:bg-cream/30 transition-colors">
                           <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <img src={p.image} className="w-10 h-10 rounded-lg object-cover border border-gold/10" />
-                              <div>
-                                <div className="font-bold text-sm text-gold/90">{p.name}</div>
-                                <div className="text-[10px] text-gold/40">{p.subcategory}</div>
-                              </div>
-                            </div>
+                            <p className="font-bold text-navy">{q.name}</p>
+                            <p className="text-xs text-navy/50">{q.whatsapp}</p>
                           </td>
-                          <td className="p-4 text-sm text-gold/60">{p.category}</td>
-                          <td className="p-4 font-bold text-sm">R$ {p.price.toFixed(2)}</td>
                           <td className="p-4">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${p.isActive !== false ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                              {p.isActive !== false ? 'Ativo' : 'Inativo'}
-                            </span>
+                            <p className="font-bold text-navy">{q.product}</p>
+                            <span className="text-[10px] text-gold-dark font-bold uppercase">{q.event_type}</span>
+                          </td>
+                          <td className="p-4">
+                            <p className="font-bold text-navy">{q.quantity ? `${q.quantity} un.` : '—'}</p>
+                            <p className="text-xs text-navy/40">{q.event_date ? new Date(q.event_date).toLocaleDateString('pt-BR') : 'Data a definir'}</p>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={q.status}
+                              onChange={e => updateQuoteStatus(q.id, e.target.value as any)}
+                              className={`text-xs font-bold px-3 py-1.5 rounded-full border-0 outline-none cursor-pointer ${QUOTE_STATUS_LABELS[q.status]?.color || 'bg-gray-100'}`}
+                            >
+                              {Object.entries(QUOTE_STATUS_LABELS).map(([k, v]) => (
+                                <option key={k} value={k}>{v.label}</option>
+                              ))}
+                            </select>
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-lg text-gold/60 hover:text-gold transition-all">
-                                <Edit2 size={16} />
-                              </button>
-                              <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500/60 hover:text-red-500 transition-all">
+                              <a
+                                href={`https://wa.me/${q.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${q.name}! Aqui é do Ateliê Entre Santos referente ao seu orçamento de ${q.product}.`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-[#25D366]/10 text-[#25D366] rounded-xl hover:bg-[#25D366]/20 transition-colors"
+                                title="Conversar no WhatsApp"
+                              >
+                                <MessageCircle size={16} />
+                              </a>
+                              <button onClick={() => deleteQuote(q.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors">
                                 <Trash2 size={16} />
                               </button>
                             </div>
@@ -730,754 +843,586 @@ export const Admin: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+              ) : (
+                <div className="p-12 text-center text-navy/40 text-sm">
+                  Nenhum orçamento registrado ainda. Novos leads aparecerão automaticamente aqui.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-                {/* Product List - Mobile Cards */}
-                <div className="md:hidden space-y-4 pb-10 pt-16">
-                  {products.map((p) => (
-                    <div key={p.id} className="bg-navy-light rounded-2xl border border-gold/10 p-4 flex gap-4 items-center">
-                      <img src={p.image} className="w-16 h-16 rounded-xl object-cover border border-gold/10" />
-                      <div className="flex-grow">
-                        <div className="font-bold text-gold text-sm">{p.name}</div>
-                        <div className="text-xs text-gold/40 mb-1">R$ {p.price.toFixed(2)}</div>
-                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${p.isActive !== false ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                          {p.isActive !== false ? 'Ativo' : 'Inativo'}
+        {/* TAB: COLLECTIONS */}
+        {activeTab === 'collections' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Coleções ({collections.length})</h1>
+                <p className="text-navy/50 text-sm">Gerencie as linhas temáticas e peças colecionáveis.</p>
+              </div>
+              <button 
+                onClick={() => { setEditingCollection(null); setFormCollection({ name: '', slug: '', description: '', image: '', banner: '', status: 'active', total_items: 3, display_order: 1, is_active: true }); setIsAddingCollection(true); }}
+                className="btn-primary"
+              >
+                <Plus size={16} /> Nova Coleção
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {collections.map(col => (
+                <div key={col.id} className="bg-white border border-gold/15 rounded-3xl overflow-hidden shadow-premium flex flex-col">
+                  <div className="aspect-video bg-cream relative overflow-hidden">
+                    {col.image ? (
+                      <img src={col.image} alt={col.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-4xl">⚔️</div>
+                    )}
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full">
+                          {col.status}
+                        </span>
+                        <span className="text-xs text-navy/40 font-bold">{col.total_items || 0} peças</span>
+                      </div>
+                      <h3 className="font-serif font-bold text-xl text-navy mb-2">{col.name}</h3>
+                      <p className="text-xs text-navy/60 line-clamp-2 mb-4">{col.description}</p>
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-gold/10">
+                      <Link to={`/colecoes/${col.slug}`} target="_blank" className="text-xs font-bold text-gold-dark flex items-center gap-1 hover:underline">
+                        Ver página <ExternalLink size={12} />
+                      </Link>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setEditingCollection(col); setFormCollection(col); setIsAddingCollection(true); }} className="p-2 text-gold-dark hover:bg-gold/10 rounded-xl">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => deleteCollection(col.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: SAINTS / DIGITAL CONTENT */}
+        {activeTab === 'saints' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Santos & Conteúdo Digital ({saints.length})</h1>
+                <p className="text-navy/50 text-sm">Páginas de oração e histórias vinculadas aos QR Codes dos produtos.</p>
+              </div>
+              <button 
+                onClick={() => { setEditingSaint(null); setFormSaint({ name: '', slug: '', collection_id: '', collection_number: 1, subtitle: '', keywords: '', history: '', meaning: '', curiosities: '', prayer: '', image: '', is_active: true }); setIsAddingSaint(true); }}
+                className="btn-primary"
+              >
+                <Plus size={16} /> Novo Santo
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {saints.map(saint => (
+                <div key={saint.id} className="bg-white border border-gold/15 rounded-3xl p-6 shadow-premium flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/25 flex items-center justify-center font-serif font-bold text-gold-dark">
+                        Nº{saint.collection_number || 1}
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-navy">{saint.name}</h3>
+                        <p className="text-[10px] text-navy/40 uppercase font-bold">{saint.keywords || 'Devoção'}</p>
+                      </div>
+                    </div>
+                    {saint.history && <p className="text-xs text-navy/60 line-clamp-3 mb-4">{saint.history}</p>}
+                  </div>
+
+                  <div className="pt-4 border-t border-gold/10 flex items-center justify-between">
+                    <Link to={`/santos/${saint.slug}`} target="_blank" className="text-xs font-bold text-gold-dark flex items-center gap-1 hover:underline">
+                      <QrCode size={14} /> /santos/{saint.slug}
+                    </Link>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditingSaint(saint); setFormSaint(saint); setIsAddingSaint(true); }} className="p-2 text-gold-dark hover:bg-gold/10 rounded-xl">
+                        <Edit2 size={16} />
+                      </button>
+                      <button onClick={() => deleteSaint(saint.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: CATEGORIES */}
+        {activeTab === 'categories' && (
+          <div className="space-y-6 max-w-4xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Categorias ({categories.length})</h1>
+                <p className="text-navy/50 text-sm">Organize as categorias da loja.</p>
+              </div>
+              <button
+                onClick={() => { setEditingCategory(null); setCategoryName(''); setIsAddingCategory(true); }}
+                className="btn-primary"
+              >
+                <Plus size={16} /> Nova Categoria
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
+              <div className="divide-y divide-gold/10">
+                {categories.map(c => (
+                  <div key={c.id} className="p-4 flex items-center justify-between hover:bg-cream/30 transition-colors">
+                    <div>
+                      <p className="font-bold text-navy">{c.name}</p>
+                      <p className="font-mono text-xs text-navy/40">{c.id}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditingCategory(c); setCategoryName(c.name); setIsAddingCategory(true); }} className="p-2 text-gold-dark hover:bg-gold/10 rounded-xl">
+                        <Edit2 size={16} />
+                      </button>
+                      <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: GLOBAL OPTIONS */}
+        {activeTab === 'colors' && (
+          <div className="space-y-6 max-w-4xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Opções Globais & Cores ({globalOptions.length})</h1>
+                <p className="text-navy/50 text-sm">Cores, entremeios e crucifixos para personalização.</p>
+              </div>
+              <button
+                onClick={() => { setEditingOption(null); setFormOption({ name: '', price: 0, image: '', categoryIds: [], group: 'Entremeio' }); setIsAddingOption(true); }}
+                className="btn-primary"
+              >
+                <Plus size={16} /> Nova Opção
+              </button>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              {(['colors', 'entremeio', 'crucifixo', 'outros'] as const).map(tabKey => (
+                <button
+                  key={tabKey}
+                  onClick={() => setSubTab(tabKey)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                    subTab === tabKey ? 'bg-navy text-white' : 'bg-white border border-gold/15 text-navy/60'
+                  }`}
+                >
+                  {tabKey === 'colors' ? 'Cores' : tabKey.charAt(0).toUpperCase() + tabKey.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {globalOptions
+                .filter(o => subTab === 'colors' ? o.type === 'color' : o.type === 'assembly' && (o.group?.toLowerCase() === subTab || (subTab === 'outros' && o.group !== 'Entremeio' && o.group !== 'Crucifixo')))
+                .map(opt => (
+                  <div key={opt.id} className="bg-white border border-gold/15 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div>
+                      {opt.type === 'color' ? (
+                        <div className="w-10 h-10 rounded-full border border-gold/25 mb-3" style={{ backgroundColor: getColorHex(opt.name) }} />
+                      ) : opt.image ? (
+                        <img src={opt.image} alt={opt.name} className="w-12 h-12 rounded-xl object-cover mb-3" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center text-gold-dark mb-3">✦</div>
+                      )}
+                      <p className="font-bold text-navy text-sm">{opt.name}</p>
+                      {opt.price ? <p className="text-xs text-gold-dark font-bold">+ {opt.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> : null}
+                    </div>
+                    <div className="flex justify-end gap-1 pt-3 border-t border-gold/10 mt-3">
+                      <button onClick={() => { setEditingOption(opt); setFormOption(opt); setIsAddingOption(true); }} className="p-1.5 text-gold-dark hover:bg-gold/10 rounded-lg">
+                        <Edit2 size={14} />
+                      </button>
+                      <button onClick={() => deleteGlobalOption(opt.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: ORDERS (PEDIDOS) */}
+        {activeTab === 'orders' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="font-serif font-bold text-3xl text-navy">Histórico de Pedidos ({orders.length})</h1>
+                <p className="text-navy/50 text-sm">Gerencie o status e exporte relatórios em CSV.</p>
+              </div>
+              <button onClick={exportOrdersToCSV} className="btn-primary flex items-center gap-2">
+                <Download size={16} /> Exportar CSV
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium p-6">
+              <div className="space-y-4">
+                {orders.map(order => (
+                  <div key={order.id} className="border border-gold/15 rounded-2xl p-5 hover:border-gold/30 transition-all flex flex-col md:flex-row justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-serif font-bold text-navy text-base">{order.client_name}</span>
+                        <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                          order.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.status === 'approved' ? 'Aprovado' : order.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                         </span>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button onClick={() => startEditProduct(p)} className="p-3 bg-gold/10 rounded-xl text-gold">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => deleteProduct(p.id)} className="p-3 bg-red-500/10 rounded-xl text-red-500">
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : activeTab === 'categories' ? (
-              <div className="space-y-8">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Gerenciar Categorias</h1>
-                    <p className="text-gold/40 text-sm">Organize seu catálogo em seções.</p>
-                  </div>
-                  <button 
-                    onClick={() => { setIsAddingCategory(true); setEditingCategory(null); setCategoryName(''); }}
-                    className="gold-bg-gradient text-navy px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
-                  >
-                    <Plus size={20} />
-                    Nova Categoria
-                  </button>
-                </div>
-
-                <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 max-w-xl shadow-2xl">
-                  <div className="space-y-4">
-                    <div className="divide-y divide-gold/5">
-                      {categories.map(c => (
-                        <div key={c.id} className="py-4 flex justify-between items-center group">
-                          <span className="text-gold/80 font-bold">{c.name}</span>
-                          <div className="flex gap-2">
-                            <button onClick={() => startEditCategory(c)} className="p-2 text-gold/40 hover:text-gold transition-colors">
-                              <Edit2 size={16} />
-                            </button>
-                            <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-colors">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : activeTab === 'colors' ? (
-              <div className="space-y-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Opções Globais</h1>
-                    <p className="text-gold/40 text-sm">Biblioteca de cores, tecidos, acabamentos e tamanhos.</p>
-                  </div>
-                  <button 
-                    onClick={() => { 
-                      setIsAddingOption(true); 
-                      setEditingOption(null); 
-                      setFormOption({ 
-                        name: '', 
-                        price: 0, 
-                        image: '', 
-                        categoryIds: [], 
-                        group: subTab === 'colors' ? 'Cores' : (subTab === 'entremeio' ? 'Entremeio' : (subTab === 'crucifixo' ? 'Crucifixo' : 'Outros'))
-                      }); 
-                    }}
-                    className="gold-bg-gradient text-navy px-6 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg shadow-gold/20 hover:scale-105 transition-all"
-                  >
-                    <Plus size={20} />
-                    Nova Opção
-                  </button>
-                </div>
-
-                {/* Pills Tab Menu */}
-                <div className="flex flex-wrap gap-2.5 bg-cream-light p-2 rounded-full w-fit border border-gold/15 shadow-inner">
-                  <button
-                    onClick={() => setSubTab('colors')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'colors' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
-                  >
-                    <Palette size={14} />
-                    Cores
-                  </button>
-                  <button
-                    onClick={() => setSubTab('entremeio')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'entremeio' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
-                  >
-                    <Grid size={14} />
-                    Entremeios
-                  </button>
-                  <button
-                    onClick={() => setSubTab('crucifixo')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'crucifixo' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
-                  >
-                    <Wrench size={14} />
-                    Crucifixos
-                  </button>
-                  <button
-                    onClick={() => setSubTab('outros')}
-                    className={`px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${subTab === 'outros' ? 'bg-gold text-navy shadow-lg font-black' : 'text-navy/85 hover:text-navy hover:bg-navy/10'}`}
-                  >
-                    <Settings size={14} />
-                    Outras Opções
-                  </button>
-                </div>
-
-                <div className="bg-navy-light rounded-[32px] border border-gold/10 p-8 shadow-2xl">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {globalOptions.filter(o => {
-                      if (subTab === 'colors') return o.type === 'color';
-                      if (subTab === 'entremeio') return o.type === 'assembly' && o.group === 'Entremeio';
-                      if (subTab === 'crucifixo') return o.type === 'assembly' && o.group === 'Crucifixo';
-                      return o.type === 'assembly' && o.group === 'Outros';
-                    }).map(o => (
-                      <div key={o.id} className="bg-navy p-4.5 rounded-[24px] border border-gold/10 flex flex-col gap-3 group hover:border-gold/30 transition-all shadow-lg text-left">
-                        <div className="w-full aspect-square bg-navy-light rounded-2xl overflow-hidden border border-gold/10 flex items-center justify-center">
-                          {o.image ? (
-                            o.image.match(/\.(mp4|webm|ogg)$/i) ? (
-                              <video src={o.image} className="w-full h-full object-cover" />
-                            ) : (
-                              <img src={o.image} className="w-full h-full object-cover" />
-                            )
-                          ) : (
-                            subTab === 'colors' ? (
-                              <div className="w-12 h-12 rounded-full border border-gold/25 shadow-lg shadow-gold/10" style={{ backgroundColor: getColorHex(o.name) }} />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gold/10"><Palette size={24} /></div>
-                            )
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[9px] text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full font-bold">Ativo</span>
-                            <div className="flex gap-2">
-                              <button 
-                                onClick={() => startEditOption(o)}
-                                className="text-gold/40 hover:text-gold p-1 transition-all"
-                              >
-                                <Edit2 size={13} />
-                              </button>
-                              <button 
-                                onClick={() => deleteGlobalOption(o.id)} 
-                                className="text-red-500/40 hover:text-red-500 p-1 transition-all"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex-grow text-left">
-                            <div className="text-gold font-bold text-sm line-clamp-1">{o.name}</div>
-                            <div className="text-[10px] text-gold/40 mt-0.5">
-                              {o.price && o.price > 0 ? `+ R$ ${o.price.toFixed(2)}` : 'Preço padrão'}
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {o.categoryIds?.map(cid => (
-                                <span key={cid} className="text-[8px] bg-gold/10 px-1.5 py-0.5 rounded text-gold/45 font-medium">{categories.find(c => c.id === cid)?.name}</span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : activeTab === 'finance' ? (
-              <FinancePanel />
-            ) : (
-              <div className="space-y-8">
-                <div className="pt-16 md:pt-0">
-                  <h1 className="text-3xl font-serif font-bold mb-1 text-gold">Configurações da Loja</h1>
-                  <p className="text-gold/40 text-sm">Personalize os dados e links do seu Ateliê.</p>
-                </div>
-
-                <div className="bg-navy-light rounded-3xl border border-gold/10 p-8 max-w-2xl shadow-2xl">
-                  <form onSubmit={(e) => { e.preventDefault(); updateSettings(formSettings); }} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Loja</label>
-                        <input 
-                          type="text" 
-                          value={formSettings.name}
-                          onChange={(e) => setFormSettings({...formSettings, name: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm focus:border-gold outline-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">WhatsApp (DDD + Número)</label>
-                        <input 
-                          type="text" 
-                          value={formSettings.whatsapp}
-                          onChange={(e) => setFormSettings({...formSettings, whatsapp: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm focus:border-gold outline-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">Slogan</label>
-                        <input 
-                          type="text" 
-                          value={formSettings.slogan}
-                          onChange={(e) => setFormSettings({...formSettings, slogan: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm focus:border-gold outline-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">Instagram Handle</label>
-                        <input 
-                          type="text" 
-                          value={formSettings.instagram}
-                          onChange={(e) => setFormSettings({...formSettings, instagram: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm focus:border-gold outline-none"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">Nicho / Descrição Curta</label>
-                        <input 
-                          type="text" 
-                          value={formSettings.niche}
-                          onChange={(e) => setFormSettings({...formSettings, niche: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm focus:border-gold outline-none"
-                        />
-                      </div>
-                    </div>
-                    
-                    <button type="submit" className="gold-bg-gradient text-navy px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-gold/20">
-                      <Save size={20} />
-                      Salvar Alterações
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Product Form Modal */}
-      <AnimatePresence>
-        {isAddingProduct && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-gold/15 rounded-3xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar text-navy admin-light-content"
-            >
-              <div className="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 py-2">
-                <h2 className="text-2xl font-serif font-bold text-navy">
-                  {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-                </h2>
-                <button onClick={() => setIsAddingProduct(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
-              </div>
-
-              <form onSubmit={handleProductSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Nome</label>
-                    <input 
-                      type="text" required
-                      value={formProduct.name}
-                      onChange={(e) => setFormProduct({...formProduct, name: e.target.value})}
-                      className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Preço (R$)</label>
-                    <input 
-                      type="number" step="0.01" required
-                      value={formProduct.price}
-                      onChange={(e) => setFormProduct({...formProduct, price: parseFloat(e.target.value)})}
-                      className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40">Descrição</label>
-                    <textarea 
-                      value={formProduct.description}
-                      onChange={(e) => setFormProduct({...formProduct, description: e.target.value})}
-                      className="w-full bg-navy border border-gold/20 rounded-xl p-3 text-gold text-sm outline-none focus:border-gold h-24"
-                    />
-                  </div>
-                  {/* Multi-Category Selection */}
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-gold/40 block">Categorias do Produto (Selecione uma ou mais)</label>
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map(c => {
-                        const selectedCategories = formProduct.categories && formProduct.categories.length > 0
-                          ? formProduct.categories
-                          : (formProduct.category ? [formProduct.category] : []);
-                        const isChecked = selectedCategories.includes(c.id);
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => {
-                              let updated;
-                              if (isChecked) {
-                                updated = selectedCategories.filter(catId => catId !== c.id);
-                              } else {
-                                updated = [...selectedCategories, c.id];
-                              }
-                              setFormProduct({
-                                ...formProduct,
-                                categories: updated,
-                                category: updated[0] || ''
-                              });
-                            }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                              isChecked
-                                ? 'bg-gold text-navy border-gold shadow-md'
-                                : 'bg-navy/80 text-gold/60 border-gold/20 hover:border-gold/40'
-                            }`}
-                          >
-                            {isChecked ? '✓ ' : '+ '} {c.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Multi-Image Upload (Up to 5 Photos) */}
-                  <div className="space-y-3 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">
-                        Fotos do Produto (Até 5 fotos)
-                      </label>
-                      <span className="text-[10px] text-gold/60 font-bold">
-                        {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).length} / 5 anexadas
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).slice(0, 5).map((imgUrl, idx) => (
-                        <div key={idx} className="relative aspect-square bg-navy border border-gold/20 rounded-xl overflow-hidden group shadow-sm">
-                          <img src={imgUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
-                          {idx === 0 && (
-                            <span className="absolute top-1.5 left-1.5 bg-gold text-navy text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
-                              Capa
-                            </span>
-                          )}
-                          <div className="absolute inset-0 bg-navy/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const current = formProduct.images || (formProduct.image ? [formProduct.image] : []);
-                                const updated = current.filter((_, i) => i !== idx);
-                                setFormProduct({
-                                  ...formProduct,
-                                  images: updated,
-                                  image: updated[0] || ''
-                                });
-                              }}
-                              className="bg-red-500 text-white p-1.5 rounded-full hover:scale-110 transition-transform cursor-pointer"
-                              title="Remover foto"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Upload Slot if < 5 */}
-                      {(formProduct.images || (formProduct.image ? [formProduct.image] : [])).length < 5 && (
-                        <div className="aspect-square bg-navy/50 border-2 border-dashed border-gold/20 hover:border-gold/50 rounded-xl flex flex-col items-center justify-center p-2 text-center transition-colors">
-                          <input
-                            id="multi-file-upload"
-                            type="file"
-                            multiple
-                            className="hidden"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const files = Array.from(e.target.files || []);
-                              if (files.length === 0) return;
-                              const currentImages = formProduct.images || (formProduct.image ? [formProduct.image] : []);
-                              const remainingSlots = 5 - currentImages.length;
-                              const filesToUpload = files.slice(0, remainingSlots);
-
-                              try {
-                                setIsUploading(true);
-                                const uploadedUrls: string[] = [];
-                                for (const file of filesToUpload) {
-                                  const url = await uploadFile(file);
-                                  uploadedUrls.push(url);
-                                }
-                                const newImages = [...currentImages, ...uploadedUrls].slice(0, 5);
-                                setFormProduct({
-                                  ...formProduct,
-                                  images: newImages,
-                                  image: newImages[0] || ''
-                                });
-                              } catch (err) {
-                                alert('Erro ao fazer upload da(s) imagem(ns).');
-                                console.error(err);
-                              } finally {
-                                setIsUploading(false);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById('multi-file-upload')?.click()}
-                            disabled={isUploading}
-                            className="w-full h-full flex flex-col items-center justify-center gap-1 text-gold/60 hover:text-gold transition-colors cursor-pointer"
-                          >
-                            {isUploading ? (
-                              <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <>
-                                <Plus size={20} />
-                                <span className="text-[10px] font-bold uppercase">Adicionar</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <input
-                        type="text"
-                        placeholder="Ou cole o link de uma imagem e pressione Enter..."
-                        className="w-full bg-navy border border-gold/15 rounded-xl p-3 text-gold text-[10px] outline-none focus:border-gold/40 transition-all font-mono"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = e.currentTarget.value.trim();
-                            if (val) {
-                              const currentImages = formProduct.images || (formProduct.image ? [formProduct.image] : []);
-                              if (currentImages.length < 5) {
-                                const newImages = [...currentImages, val].slice(0, 5);
-                                setFormProduct({
-                                  ...formProduct,
-                                  images: newImages,
-                                  image: newImages[0] || ''
-                                });
-                                e.currentTarget.value = '';
-                              } else {
-                                alert('Limite máximo de 5 fotos atingido.');
-                              }
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-
-                <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gold/10">
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={!!formProduct.hasNameOption}
-                        onChange={(e) => setFormProduct({...formProduct, hasNameOption: e.target.checked})}
-                        className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                      />
-                      <span className="text-sm font-medium">Personalizar Nome</span>
-                    </label>
-                    {formProduct.hasNameOption && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-[9px] uppercase font-bold text-gold/40">Custo:</label>
-                        <input 
-                          type="number" step="0.01"
-                          placeholder="0.00"
-                          value={formProduct.namePrice}
-                          onChange={(e) => setFormProduct({...formProduct, namePrice: parseFloat(e.target.value)})}
-                          className="w-20 bg-navy border border-gold/20 rounded-lg p-1.5 text-gold text-xs outline-none"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={!!formProduct.hasColorOption}
-                      onChange={(e) => setFormProduct({...formProduct, hasColorOption: e.target.checked})}
-                      className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                    />
-                    <span className="text-sm font-medium">Personalizar Cor</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={!!formProduct.isCustomizable}
-                      onChange={(e) => setFormProduct({...formProduct, isCustomizable: e.target.checked})}
-                      className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                    />
-                    <span className="text-sm font-medium">Personalizar Montagem Terço</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={!!formProduct.isActive}
-                      onChange={(e) => setFormProduct({...formProduct, isActive: e.target.checked})}
-                      className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                    />
-                    <span className="text-sm font-medium">Ativo na Loja</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer bg-gold/10 px-3 py-1.5 rounded-xl border border-gold/30">
-                    <input 
-                      type="checkbox" 
-                      checked={!!formProduct.isFeatured}
-                      onChange={(e) => setFormProduct({...formProduct, isFeatured: e.target.checked})}
-                      className="w-4 h-4 rounded border-gold/30 bg-navy text-gold"
-                    />
-                    <span className="text-sm font-bold text-gold">⭐ Destaque na Home</span>
-                  </label>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button 
-                    type="button"
-                    onClick={() => setIsAddingProduct(false)}
-                    className="w-1/2 bg-navy border border-gold/20 hover:border-gold/50 text-gold py-4 rounded-full font-bold transition-all text-center text-sm"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={isUploading}
-                    className={`w-1/2 gold-bg-gradient text-navy py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-xl shadow-gold/20 hover:scale-[1.02] transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <Save size={18} />
-                    {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Category Form Modal */}
-      <AnimatePresence>
-        {isAddingCategory && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-gold/15 rounded-3xl w-full max-w-md p-8 shadow-2xl text-navy admin-light-content"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-serif font-bold text-navy">
-                  {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-                </h2>
-                <button onClick={() => setIsAddingCategory(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
-              </div>
-
-              <form onSubmit={handleCategorySubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Categoria</label>
-                  <input 
-                    type="text" required
-                    value={categoryName}
-                    onChange={(e) => setCategoryName(e.target.value)}
-                    className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
-                    autoFocus
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  className="w-full gold-bg-gradient text-navy py-4 rounded-xl font-bold hover:scale-105 transition-all shadow-lg shadow-gold/20"
-                >
-                  {editingCategory ? 'Salvar Alterações' : 'Criar Categoria'}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Global Option Form Modal */}
-      <AnimatePresence>
-        {isAddingOption && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-gold/15 rounded-3xl w-full max-w-xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl no-scrollbar text-navy admin-light-content"
-            >
-              <div className="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 py-2">
-                <h2 className="text-2xl font-serif font-bold text-navy">
-                  {editingOption ? 'Editar Opção' : 'Nova Opção'}
-                </h2>
-                <button onClick={() => setIsAddingOption(false)} className="text-navy/40 hover:text-navy p-2"><X size={24} /></button>
-              </div>
-
-              <form onSubmit={handleOptionSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Media Upload Area */}
-                  <div className="space-y-4">
-                    <label className="text-[10px] uppercase font-black text-gold/40 block tracking-widest">Mídia da Opção (Imagem ou Vídeo)</label>
-                    <div className="flex flex-col gap-4 items-center">
-                      <div className="w-48 h-48 bg-navy border-2 border-dashed border-gold/10 rounded-2xl overflow-hidden flex items-center justify-center relative group">
-                        {formOption.image ? (
-                          <>
-                            {formOption.image.match(/\.(mp4|webm|ogg)$/i) ? (
-                              <video src={formOption.image} className="w-full h-full object-cover" />
-                            ) : (
-                              <img src={formOption.image} className="w-full h-full object-cover" />
-                            )}
-                            <div className="absolute inset-0 bg-navy/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <button 
-                                type="button"
-                                onClick={() => setFormOption({...formOption, image: ''})}
-                                className="bg-red-500 text-white p-2 rounded-full"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <Palette size={48} className="text-gold/10" />
-                        )}
-                      </div>
-                      <div className="w-full space-y-2">
-                        <input 
-                          id="opt-file-upload-modal" type="file" className="hidden" accept="image/*,video/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              try {
-                                setIsUploading(true);
-                                const url = await uploadFile(file);
-                                setFormOption({...formOption, image: url});
-                              } catch (err) {
-                                console.error(err);
-                                alert('Erro ao fazer upload da mídia.');
-                              } finally {
-                                setIsUploading(false);
-                              }
-                            }
-                          }}
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => document.getElementById('opt-file-upload-modal')?.click()}
-                          disabled={isUploading}
-                          className={`w-full gold-bg-gradient text-navy py-3 rounded-xl font-black uppercase text-[10px] tracking-widest ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          {isUploading ? 'Enviando...' : 'Anexar Arquivo'}
-                        </button>
-                        <input 
-                          type="text" 
-                          placeholder="Link manual (opcional)"
-                          value={formOption.image}
-                          onChange={(e) => setFormOption({...formOption, image: e.target.value})}
-                          className="w-full bg-navy border border-gold/10 rounded-xl p-3 text-gold text-[10px]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Data Fields Area */}
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-gold/40">Nome da Opção</label>
-                      <input 
-                        type="text" required
-                        placeholder="Ex: Cristal Azul"
-                        value={formOption.name}
-                        onChange={(e) => setFormOption({...formOption, name: e.target.value})}
-                        className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-gold/40">Preço Adicional (R$)</label>
-                      <input 
-                        type="number" step="0.01"
-                        value={formOption.price}
-                        onChange={(e) => setFormOption({...formOption, price: parseFloat(e.target.value)})}
-                        className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
-                      />
-                    </div>
-
-                    {activeTab === 'options' && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gold/40">Grupo / Tipo de Peça</label>
-                        <select 
-                          value={formOption.group}
-                          onChange={(e) => setFormOption({...formOption, group: e.target.value})}
-                          className="w-full bg-navy border border-gold/20 rounded-xl p-4 text-gold text-sm outline-none focus:border-gold"
-                        >
-                          <option value="Entremeio">Entremeio</option>
-                          <option value="Crucifixo">Crucifixo</option>
-                          <option value="Outros">Outros</option>
-                        </select>
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <label className="text-[10px] uppercase font-bold text-gold/40 block">Vincular às Categorias:</label>
-                      <div className="flex flex-wrap gap-2">
-                        {categories.map(cat => (
-                          <label key={cat.id} className="flex items-center gap-2 bg-navy border border-gold/10 px-3 py-2 rounded-lg cursor-pointer hover:border-gold/30 transition-all">
-                            <input 
-                              type="checkbox"
-                              checked={formOption.categoryIds?.includes(cat.id)}
-                              onChange={(e) => {
-                                const ids = [...(formOption.categoryIds || [])];
-                                if (e.target.checked) ids.push(cat.id);
-                                else {
-                                  const idx = ids.indexOf(cat.id);
-                                  if (idx > -1) ids.splice(idx, 1);
-                                }
-                                setFormOption({...formOption, categoryIds: ids});
-                              }}
-                              className="w-4 h-4 rounded border-gold/20 bg-navy text-gold"
-                            />
-                            <span className="text-[10px] font-bold text-gold/60">{cat.name}</span>
-                          </label>
+                      <p className="text-xs text-navy/50 mb-3">{order.cidade_uf || order.cep} • {order.payment_method}</p>
+                      <div className="space-y-1">
+                        {order.items.map((it, idx) => (
+                          <span key={idx} className="inline-block bg-cream text-navy/70 text-xs px-2.5 py-1 rounded-lg mr-2 mb-1">
+                            {it.quantity}x {it.name}
+                          </span>
                         ))}
                       </div>
                     </div>
+
+                    <div className="flex md:flex-col justify-between items-end gap-3 border-t md:border-t-0 md:border-l border-gold/10 pt-3 md:pt-0 md:pl-6">
+                      <span className="font-serif font-bold text-2xl text-navy">
+                        {order.total_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                      <div className="flex gap-2">
+                        {order.status === 'pending' && (
+                          <button onClick={() => handleAcceptOrder(order)} className="btn-primary text-xs py-2 px-4">
+                            Aprovar Pedido
+                          </button>
+                        )}
+                        <button onClick={() => deleteOrder(order.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl" title="Excluir">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: FINANCEIRO */}
+        {activeTab === 'finance' && <FinancePanel />}
+
+        {/* TAB: SETTINGS */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 max-w-3xl">
+            <div>
+              <h1 className="font-serif font-bold text-3xl text-navy mb-1">Configurações da Loja</h1>
+              <p className="text-navy/50 text-sm">Personalize os dados institucionais e canais de contato.</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await updateSettings(formSettings);
+                showToast('Configurações atualizadas com sucesso!', 'success');
+              } catch (err: any) {
+                showToast('Erro ao atualizar: ' + err.message, 'error');
+              }
+            }} className="bg-white rounded-3xl border border-gold/15 p-8 shadow-premium space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-base">Nome da Loja</label>
+                  <input type="text" value={formSettings.name} onChange={e => setFormSettings({...formSettings, name: e.target.value})} className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">WhatsApp (com DDD)</label>
+                  <input type="text" value={formSettings.whatsapp} onChange={e => setFormSettings({...formSettings, whatsapp: e.target.value})} className="input-base" />
+                </div>
+              </div>
+
+              <div>
+                <label className="label-base">Slogan Institucional</label>
+                <input type="text" value={formSettings.slogan} onChange={e => setFormSettings({...formSettings, slogan: e.target.value})} className="input-base" />
+              </div>
+
+              <div>
+                <label className="label-base">História do Ateliê (/nossa-historia)</label>
+                <textarea rows={6} value={formSettings.about_text || ''} onChange={e => setFormSettings({...formSettings, about_text: e.target.value})} placeholder="Conte a história do Ateliê, processo artesanal e propósito..." className="input-base resize-none" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-base">Instagram (@)</label>
+                  <input type="text" value={formSettings.instagram} onChange={e => setFormSettings({...formSettings, instagram: e.target.value})} className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">Domínio Oficial</label>
+                  <input type="text" value={formSettings.domain || ''} onChange={e => setFormSettings({...formSettings, domain: e.target.value})} placeholder="atelieentresantos.com.br" className="input-base" />
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary w-full justify-center">
+                <Save size={16} /> Salvar Configurações
+              </button>
+            </form>
+          </div>
+        )}
+      </main>
+
+      {/* MODAL: ADD / EDIT PRODUCT */}
+      <AnimatePresence>
+        {isAddingProduct && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-8 max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-gold/15">
+                <h2 className="font-serif font-bold text-2xl text-navy">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
+                <button onClick={() => setIsAddingProduct(false)} className="p-2 text-navy/40 hover:text-navy rounded-full">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleProductSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-base">Nome do Produto *</label>
+                    <input required type="text" value={formProduct.name} onChange={e => setFormProduct({...formProduct, name: e.target.value})} className="input-base" />
+                  </div>
+                  <div>
+                    <label className="label-base">SKU (Ex: TER-APA-001)</label>
+                    <input type="text" value={formProduct.sku || ''} onChange={e => setFormProduct({...formProduct, sku: e.target.value})} className="input-base" />
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button 
-                    type="button"
-                    onClick={() => setIsAddingOption(false)}
-                    className="w-1/2 bg-navy border border-gold/20 hover:border-gold/50 text-gold py-4 rounded-full font-bold transition-all text-center text-sm"
-                  >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="label-base">Preço de Venda (R$) *</label>
+                    <input required type="number" step="0.01" value={formProduct.price} onChange={e => setFormProduct({...formProduct, price: parseFloat(e.target.value) || 0})} className="input-base" />
+                  </div>
+                  <div>
+                    <label className="label-base">Preço Promocional</label>
+                    <input type="number" step="0.01" value={formProduct.promotional_price || ''} onChange={e => setFormProduct({...formProduct, promotional_price: parseFloat(e.target.value) || undefined})} className="input-base" />
+                  </div>
+                  <div>
+                    <label className="label-base">Linha de Negócio</label>
+                    <select value={formProduct.line} onChange={e => setFormProduct({...formProduct, line: e.target.value as any})} className="input-base">
+                      <option value="devocionais">Devocionais</option>
+                      <option value="leve-sua-fe">Leve Sua Fé</option>
+                      <option value="colecoes">Coleções</option>
+                      <option value="personalizados">Personalizados</option>
+                      <option value="momentos">Momentos de Fé</option>
+                      <option value="presentes">Presentes</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="label-base">Disponibilidade</label>
+                    <select value={formProduct.availability} onChange={e => setFormProduct({...formProduct, availability: e.target.value as any})} className="input-base">
+                      <option value="ready">Pronta entrega</option>
+                      <option value="made_to_order">Sob encomenda</option>
+                      <option value="limited_edition">Edição limitada</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-base">Estoque Atual</label>
+                    <input type="number" value={formProduct.stock ?? 10} onChange={e => setFormProduct({...formProduct, stock: parseInt(e.target.value) || 0})} className="input-base" />
+                  </div>
+                  <div>
+                    <label className="label-base">Prazo de Produção (dias)</label>
+                    <input type="number" value={formProduct.production_days ?? 5} onChange={e => setFormProduct({...formProduct, production_days: parseInt(e.target.value) || 5})} className="input-base" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label-base">Descrição</label>
+                  <textarea rows={3} value={formProduct.description} onChange={e => setFormProduct({...formProduct, description: e.target.value})} className="input-base resize-none" />
+                </div>
+
+                <div>
+                  <label className="label-base">Foto Principal (URL ou Upload)</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={formProduct.image} onChange={e => setFormProduct({...formProduct, image: e.target.value})} placeholder="https://..." className="input-base" />
+                    <input id="prod-file-upload" type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          setIsUploading(true);
+                          const url = await uploadFile(file);
+                          setFormProduct(prev => ({ ...prev, image: url, images: [url, ...(prev.images || [])] }));
+                        } catch (err: any) {
+                          alert('Erro no upload: ' + err.message);
+                        } finally {
+                          setIsUploading(false);
+                        }
+                      }
+                    }} />
+                    <button type="button" onClick={() => document.getElementById('prod-file-upload')?.click()} disabled={isUploading} className="btn-primary whitespace-nowrap">
+                      {isUploading ? 'Enviando...' : 'Anexar'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formProduct.isFeatured} onChange={e => setFormProduct({...formProduct, isFeatured: e.target.checked})} className="w-4 h-4 rounded text-navy" />
+                    <span className="text-xs font-bold text-navy">Destacar na Home (Mais Amados)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formProduct.isCustomizable} onChange={e => setFormProduct({...formProduct, isCustomizable: e.target.checked})} className="w-4 h-4 rounded text-navy" />
+                    <span className="text-xs font-bold text-navy">Permite Personalização</span>
+                  </label>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-gold/15">
+                  <button type="button" onClick={() => setIsAddingProduct(false)} className="px-6 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 hover:text-navy w-1/2">
                     Cancelar
                   </button>
-                  <button 
-                    type="submit"
-                    className="w-1/2 gold-bg-gradient text-navy py-4 rounded-full font-bold hover:scale-[1.02] transition-all shadow-lg shadow-gold/20 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Save size={18} />
-                    {editingOption ? 'Salvar Alterações' : 'Criar Opção'}
+                  <button type="submit" className="btn-primary w-1/2 justify-center">
+                    <Save size={16} /> Salvar Produto
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: ADD / EDIT COLLECTION */}
+      <AnimatePresence>
+        {isAddingCollection && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-8 max-w-lg w-full shadow-2xl">
+              <h2 className="font-serif font-bold text-2xl text-navy mb-6">{editingCollection ? 'Editar Coleção' : 'Nova Coleção'}</h2>
+              <form onSubmit={handleCollectionSubmit} className="space-y-4">
+                <div>
+                  <label className="label-base">Nome da Coleção *</label>
+                  <input required type="text" value={formCollection.name} onChange={e => setFormCollection({...formCollection, name: e.target.value})} className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">Descrição</label>
+                  <textarea rows={3} value={formCollection.description || ''} onChange={e => setFormCollection({...formCollection, description: e.target.value})} className="input-base resize-none" />
+                </div>
+                <div>
+                  <label className="label-base">URL da Imagem de Capa</label>
+                  <input type="text" value={formCollection.image || ''} onChange={e => setFormCollection({...formCollection, image: e.target.value})} className="input-base" />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsAddingCollection(false)} className="px-6 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/2">
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary w-1/2 justify-center">
+                    Salvar Coleção
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: ADD / EDIT SAINT */}
+      <AnimatePresence>
+        {isAddingSaint && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <h2 className="font-serif font-bold text-2xl text-navy mb-6">{editingSaint ? 'Editar Santo' : 'Novo Santo / Conteúdo Digital'}</h2>
+              <form onSubmit={handleSaintSubmit} className="space-y-4">
+                <div>
+                  <label className="label-base">Nome do Santo *</label>
+                  <input required type="text" value={formSaint.name} onChange={e => setFormSaint({...formSaint, name: e.target.value})} className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">Palavras-chave (Ex: Proteção • Fé • Perseverança)</label>
+                  <input type="text" value={formSaint.keywords || ''} onChange={e => setFormSaint({...formSaint, keywords: e.target.value})} className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">História</label>
+                  <textarea rows={3} value={formSaint.history || ''} onChange={e => setFormSaint({...formSaint, history: e.target.value})} className="input-base resize-none" />
+                </div>
+                <div>
+                  <label className="label-base">Oração</label>
+                  <textarea rows={3} value={formSaint.prayer || ''} onChange={e => setFormSaint({...formSaint, prayer: e.target.value})} className="input-base resize-none" />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsAddingSaint(false)} className="px-6 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/2">
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary w-1/2 justify-center">
+                    Salvar Santo
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: ADD / EDIT CATEGORY */}
+      <AnimatePresence>
+        {isAddingCategory && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-8 max-w-md w-full shadow-2xl">
+              <h2 className="font-serif font-bold text-2xl text-navy mb-6">{editingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h2>
+              <form onSubmit={handleCategorySubmit} className="space-y-4">
+                <div>
+                  <label className="label-base">Nome da Categoria *</label>
+                  <input required type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="Ex: Terços de Noiva" className="input-base" />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsAddingCategory(false)} className="px-6 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/2">
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary w-1/2 justify-center">
+                    Salvar Categoria
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: ADD / EDIT GLOBAL OPTION */}
+      <AnimatePresence>
+        {isAddingOption && (
+          <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-8 max-w-md w-full shadow-2xl">
+              <h2 className="font-serif font-bold text-2xl text-navy mb-6">{editingOption ? 'Editar Opção' : 'Nova Opção Global'}</h2>
+              <form onSubmit={handleOptionSubmit} className="space-y-4">
+                <div>
+                  <label className="label-base">Nome da Opção *</label>
+                  <input required type="text" value={formOption.name || ''} onChange={e => setFormOption({...formOption, name: e.target.value})} placeholder="Ex: Pérola Branca" className="input-base" />
+                </div>
+                <div>
+                  <label className="label-base">Preço Adicional (R$)</label>
+                  <input type="number" step="0.01" value={formOption.price || 0} onChange={e => setFormOption({...formOption, price: parseFloat(e.target.value) || 0})} className="input-base" />
+                </div>
+                {subTab !== 'colors' && (
+                  <div>
+                    <label className="label-base">Grupo</label>
+                    <select value={formOption.group || 'Entremeio'} onChange={e => setFormOption({...formOption, group: e.target.value})} className="input-base">
+                      <option value="Entremeio">Entremeio</option>
+                      <option value="Crucifixo">Crucifixo</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+                )}
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsAddingOption(false)} className="px-6 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/2">
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary w-1/2 justify-center">
+                    Salvar Opção
                   </button>
                 </div>
               </form>

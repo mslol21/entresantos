@@ -1,105 +1,175 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Menu, X, Home, ShoppingBag, Compass, Camera } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   onCartClick: () => void;
 }
 
+const WHATSAPP_ICON = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.828L.057 23.805a.5.5 0 0 0 .609.637l6.183-1.621A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.806 9.806 0 0 1-5.002-1.368l-.358-.214-3.713.974.99-3.617-.234-.372A9.785 9.785 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+  </svg>
+);
+
 export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { totalItems } = useCart();
   const { settings } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLojaOpen, setIsLojaOpen] = useState(false);
+  const [isColOpen, setIsColOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
-  const menuItems = [
-    { label: 'Início', icon: <Home size={20} />, href: '/#inicio' },
-    { label: 'Como Rezar', icon: <Compass size={20} />, href: '/#como-rezar' },
-    { label: 'Produtos', icon: <ShoppingBag size={20} />, href: '/#produtos' },
-  ];
-
-  const handleMenuClick = (e: React.MouseEvent, href: string) => {
-    e.preventDefault();
-    const hash = href.replace('/', '');
-    const id = hash.replace('#', '');
-
-    if (location.pathname === '/') {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    } else {
-      navigate('/' + hash);
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
+  const handleNavClose = () => {
     setIsMenuOpen(false);
+    setIsLojaOpen(false);
+    setIsColOpen(false);
   };
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const lojaLinks = [
+    { label: 'Todos os produtos', to: '/loja' },
+    { label: 'Terços', to: '/loja?categoria=tercos' },
+    { label: 'Pulseiras', to: '/loja?categoria=pulseiras' },
+    { label: 'Para o celular', to: '/loja?categoria=strap-phone' },
+    { label: 'Presentes', to: '/loja?linha=presentes' },
+  ];
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 glass-morphism z-40 border-b border-gold/10">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleMenu}
-              className="md:hidden p-2 text-navy hover:bg-navy/5 rounded-full transition-all active:scale-90"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-cream-light/95 backdrop-blur-md border-b border-gold/10">
+        <div className="max-w-7xl mx-auto px-4 h-18 flex items-center justify-between gap-4" style={{ height: '4.5rem' }}>
+          
+          {/* Mobile: Hamburger */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 text-navy/70 hover:text-navy rounded-full hover:bg-navy/5 transition-all"
+            aria-label="Menu"
+          >
+            {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
 
-            <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold-dark/20 bg-white" />
-              <div className="flex flex-col">
-                <span className="font-serif font-bold text-lg leading-none text-navy uppercase tracking-wider">
-                  {settings.name}
-                </span>
-                <span className="text-[8px] text-navy/60 uppercase tracking-[0.2em] font-medium">
+          {/* Logo */}
+          <Link to="/" onClick={handleNavClose} className="flex items-center gap-3 flex-shrink-0">
+            <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain rounded-full border border-gold/20 bg-white" />
+            <div className="hidden sm:flex flex-col">
+              <span className="font-serif font-bold text-base leading-none text-navy uppercase tracking-wider">
+                {settings.name || 'Ateliê Entre Santos'}
+              </span>
+              {settings.slogan && (
+                <span className="text-[9px] text-navy/50 uppercase tracking-[0.2em] font-medium leading-tight mt-0.5">
                   {settings.slogan}
                 </span>
-              </div>
+              )}
             </div>
+          </Link>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link to="/" className={`nav-link ${location.pathname === '/' ? 'nav-link-active' : ''}`}>
+              Início
+            </Link>
+
+            {/* Loja dropdown */}
+            <div className="relative" onMouseEnter={() => setIsLojaOpen(true)} onMouseLeave={() => setIsLojaOpen(false)}>
+              <Link to="/loja" className={`nav-link flex items-center gap-1 ${location.pathname.startsWith('/loja') ? 'nav-link-active' : ''}`}>
+                Loja <ChevronDown size={13} className={`transition-transform ${isLojaOpen ? 'rotate-180' : ''}`} />
+              </Link>
+              <AnimatePresence>
+                {isLojaOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 mt-1 w-52 bg-white border border-gold/15 rounded-2xl shadow-premium py-2 z-50"
+                  >
+                    {lojaLinks.map(l => (
+                      <Link key={l.label} to={l.to} onClick={handleNavClose}
+                        className="block px-4 py-2.5 text-xs font-semibold text-navy/70 hover:text-navy hover:bg-cream/60 transition-colors uppercase tracking-wider">
+                        {l.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Coleções dropdown */}
+            <div className="relative" onMouseEnter={() => setIsColOpen(true)} onMouseLeave={() => setIsColOpen(false)}>
+              <Link to="/colecoes" className={`nav-link flex items-center gap-1 ${location.pathname.startsWith('/colecoes') ? 'nav-link-active' : ''}`}>
+                Coleções <ChevronDown size={13} className={`transition-transform ${isColOpen ? 'rotate-180' : ''}`} />
+              </Link>
+              <AnimatePresence>
+                {isColOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 mt-1 w-52 bg-white border border-gold/15 rounded-2xl shadow-premium py-2 z-50"
+                  >
+                    <Link to="/colecoes" onClick={handleNavClose}
+                      className="block px-4 py-2.5 text-xs font-semibold text-navy/70 hover:text-navy hover:bg-cream/60 transition-colors uppercase tracking-wider">
+                      Todas as coleções
+                    </Link>
+                    <Link to="/colecoes/guardioes-da-fe" onClick={handleNavClose}
+                      className="block px-4 py-2.5 text-xs font-semibold text-navy/70 hover:text-navy hover:bg-cream/60 transition-colors uppercase tracking-wider">
+                      Guardiões da Fé
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <Link to="/personalize" className={`nav-link ${location.pathname === '/personalize' ? 'nav-link-active' : ''}`}>
+              Personalize
+            </Link>
+            <Link to="/momentos-de-fe" className={`nav-link ${location.pathname === '/momentos-de-fe' ? 'nav-link-active' : ''}`}>
+              Momentos de Fé
+            </Link>
+            <Link to="/nossa-historia" className={`nav-link ${location.pathname === '/nossa-historia' ? 'nav-link-active' : ''}`}>
+              Nossa História
+            </Link>
           </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            {menuItems.map((item) => (
-              <a 
-                key={item.label}
-                href={item.href}
-                onClick={(e) => handleMenuClick(e, item.href)}
-                className="text-navy/60 hover:text-navy text-xs uppercase tracking-[0.2em] font-bold transition-all hover:translate-y-[-2px]"
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            {/* WhatsApp */}
+            {settings.whatsapp && (
+              <a
+                href={`https://wa.me/${settings.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 text-[#25D366] hover:bg-[#25D366]/10 rounded-full transition-all text-xs font-bold uppercase tracking-wider"
+                aria-label="WhatsApp"
               >
-                {item.label}
+                <WHATSAPP_ICON />
+                <span className="hidden lg:inline">Falar conosco</span>
               </a>
-            ))}
-          </div>
-
-          <button
-            onClick={onCartClick}
-            className="relative p-3 text-navy hover:bg-navy/5 rounded-full transition-all active:scale-90 group"
-          >
-            <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
-            {totalItems > 0 && (
-              <span className="absolute top-1 right-1 bg-navy text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-cream-light">
-                {totalItems}
-              </span>
             )}
-          </button>
+
+            {/* Cart */}
+            <button
+              onClick={onCartClick}
+              className="relative p-2.5 text-navy hover:bg-navy/5 rounded-full transition-all active:scale-90 group"
+              aria-label="Carrinho"
+            >
+              <ShoppingCart size={22} className="group-hover:rotate-12 transition-transform" />
+              {totalItems > 0 && (
+                <span className="absolute top-0.5 right-0.5 bg-navy text-white text-[9px] font-black flex items-center justify-center rounded-full border border-cream-light min-w-[18px] min-h-[18px] px-1">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -107,57 +177,89 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={toggleMenu}
-              className="fixed inset-0 bg-navy/90 backdrop-blur-sm z-[45] md:hidden"
+              onClick={handleNavClose}
+              className="fixed inset-0 bg-navy/70 backdrop-blur-sm z-[45] md:hidden"
             />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-[80%] max-w-sm bg-cream-light z-[50] md:hidden border-r border-gold/15 p-8 flex flex-col"
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed left-0 top-0 bottom-0 w-[82%] max-w-[320px] bg-cream-light z-[50] md:hidden flex flex-col overflow-y-auto"
             >
-              <div className="flex items-center gap-3 mb-12">
-                <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gold-dark/20 bg-white" />
-                <div className="flex flex-col">
-                  <span className="font-serif font-bold text-xl text-navy uppercase tracking-wider">
-                    {settings.name}
-                  </span>
-                  <span className="text-[10px] text-navy/60 uppercase tracking-[0.2em] font-medium">
-                    {settings.slogan}
-                  </span>
-                </div>
+              {/* Mobile Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gold/10">
+                <Link to="/" onClick={handleNavClose} className="flex items-center gap-3">
+                  <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold/20 bg-white" />
+                  <div className="flex flex-col">
+                    <span className="font-serif font-bold text-base text-navy uppercase tracking-wider leading-none">
+                      {settings.name || 'Ateliê Entre Santos'}
+                    </span>
+                    <span className="text-[9px] text-navy/40 uppercase tracking-[0.2em] font-medium mt-0.5">
+                      {settings.slogan}
+                    </span>
+                  </div>
+                </Link>
+                <button onClick={handleNavClose} className="p-2 text-navy/40 hover:text-navy rounded-full hover:bg-navy/5">
+                  <X size={20} />
+                </button>
               </div>
 
-              <div className="flex-grow space-y-2">
-                {menuItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    onClick={(e) => handleMenuClick(e, item.href)}
-                    className="flex items-center gap-4 p-4 rounded-full text-navy/70 hover:text-navy hover:bg-gold/5 transition-all group"
+              {/* Mobile Links */}
+              <nav className="flex-1 p-4 space-y-1">
+                {[
+                  { label: 'Início', to: '/' },
+                  { label: 'Loja', to: '/loja' },
+                  { label: 'Coleções', to: '/colecoes' },
+                  { label: 'Personalize', to: '/personalize' },
+                  { label: 'Momentos de Fé', to: '/momentos-de-fe' },
+                  { label: 'Nossa História', to: '/nossa-historia' },
+                ].map(item => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={handleNavClose}
+                    className={`flex items-center p-4 rounded-2xl text-sm font-bold uppercase tracking-widest transition-all ${
+                      location.pathname === item.to
+                        ? 'bg-navy text-white'
+                        : 'text-navy/70 hover:text-navy hover:bg-gold/5'
+                    }`}
                   >
-                    <div className="p-2 bg-white rounded-full border border-gold/15 group-hover:border-gold/45 text-gold-dark group-hover:text-gold transition-all">
-                      {item.icon}
-                    </div>
-                    <span className="text-sm font-bold uppercase tracking-[0.2em]">{item.label}</span>
-                  </a>
+                    {item.label}
+                  </Link>
                 ))}
-              </div>
+              </nav>
 
-              <div className="pt-8 border-t border-gold/15 space-y-4">
-                <a 
-                  href={`https://instagram.com/${settings.instagram}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-4 rounded-full text-navy/55 hover:text-navy transition-all"
-                >
-                  <Camera size={20} className="text-gold-dark" />
-                  <span className="text-xs font-bold uppercase tracking-widest">Siga no Instagram</span>
-                </a>
-                <p className="text-[10px] text-navy/30 text-center uppercase tracking-[0.3em] font-medium">
-                  Juntos a caminho da santidade
-                </p>
+              {/* Mobile Footer */}
+              <div className="p-6 border-t border-gold/10 space-y-3">
+                {settings.whatsapp && (
+                  <a
+                    href={`https://wa.me/${settings.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleNavClose}
+                    className="flex items-center gap-3 p-4 bg-[#25D366]/10 text-[#25D366] rounded-2xl font-bold text-sm"
+                  >
+                    <WHATSAPP_ICON />
+                    <span>Falar pelo WhatsApp</span>
+                  </a>
+                )}
+                {settings.instagram && (
+                  <a
+                    href={`https://instagram.com/${settings.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleNavClose}
+                    className="flex items-center gap-3 p-4 text-navy/50 hover:text-navy rounded-2xl hover:bg-navy/5 transition-all font-medium text-sm"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                    </svg>
+                    <span>Siga no Instagram</span>
+                  </a>
+                )}
               </div>
             </motion.div>
           </>

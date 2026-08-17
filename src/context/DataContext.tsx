@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product, Category, GlobalOption, ShopSettings, Transaction, Order } from '../types';
+import type { 
+  Product, Category, GlobalOption, ShopSettings, Transaction, Order,
+  Collection, Saint, Quote
+} from '../types';
 import { supabase } from '../lib/supabase';
 import { CATEGORIES as INITIAL_CATEGORIES } from '../data';
 
@@ -68,24 +71,57 @@ interface DataContextType {
   globalOptions: GlobalOption[];
   settings: ShopSettings;
   transactions: Transaction[];
+  orders: Order[];
+  collections: Collection[];
+  saints: Saint[];
+  quotes: Quote[];
   loading: boolean;
+
+  // Products
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+
+  // Settings
   updateSettings: (settings: ShopSettings) => Promise<void>;
+
+  // Files
   uploadFile: (file: File) => Promise<string>;
+
+  // Categories
   addCategory: (name: string) => Promise<void>;
   updateCategory: (category: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+
+  // Global Options
   addGlobalOption: (option: Partial<GlobalOption>) => Promise<void>;
   updateGlobalOption: (option: GlobalOption) => Promise<void>;
   deleteGlobalOption: (id: string) => Promise<void>;
+
+  // Transactions
   addTransaction: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  orders: Order[];
+
+  // Orders
   addOrder: (order: Omit<Order, 'id' | 'status' | 'created_at'>) => Promise<string>;
   updateOrderStatus: (id: string, status: 'approved' | 'cancelled') => Promise<void>;
+  updateOrderProductionStatus: (id: string, productionStatus: string) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
+
+  // Collections
+  addCollection: (collection: Omit<Collection, 'id' | 'created_at'>) => Promise<void>;
+  updateCollection: (collection: Collection) => Promise<void>;
+  deleteCollection: (id: string) => Promise<void>;
+
+  // Saints
+  addSaint: (saint: Omit<Saint, 'id' | 'created_at'>) => Promise<void>;
+  updateSaint: (saint: Saint) => Promise<void>;
+  deleteSaint: (id: string) => Promise<void>;
+
+  // Quotes
+  addQuote: (quote: Omit<Quote, 'id' | 'status' | 'created_at'>) => Promise<void>;
+  updateQuoteStatus: (id: string, status: Quote['status']) => Promise<void>;
+  deleteQuote: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -96,31 +132,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [globalOptions, setGlobalOptions] = useState<GlobalOption[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [saints, setSaints] = useState<Saint[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [settings, setSettings] = useState<ShopSettings>({
     name: 'Ateliê Entre Santos',
     whatsapp: '',
     niche: '',
     instagram: '',
     tiktok: '',
-    slogan: ''
+    slogan: 'Fé feita à mão'
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
 
-    // Inscrever para atualizações em tempo real das tabelas no Supabase
     const channel = supabase
       .channel('db-realtime-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => {
-        fetchData();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'collections' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'saints' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, () => fetchData())
       .subscribe();
 
     return () => {
@@ -131,16 +166,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch Products
       const { data: productsData, error: pError } = await supabase
         .from('products')
         .select('*')
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (pError) throw pError;
-      
-      // Map Supabase snake_case to camelCase if necessary, or just use as is if types match
+
       const mappedProducts = (productsData || []).map(p => {
         const hasColorOption = p.available_colors?.includes('[HAS_COLOR_OPTION]') || false;
         const availableColors = p.available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '';
@@ -160,7 +195,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasNameOption: p.has_name_option,
           namePrice: p.name_price,
           variations: p.variations || [],
-          customizationLists: p.customization_lists || []
+          customizationLists: p.customization_lists || [],
+          line: p.line || 'devocionais',
+          availability: p.availability || 'ready',
         };
       });
       setProducts(mappedProducts);
@@ -171,8 +208,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('*')
         .single();
 
-      if (sError && sError.code !== 'PGRST116') throw sError; // PGRST116 is 'no rows'
-      
+      if (sError && sError.code !== 'PGRST116') throw sError;
       if (settingsData) {
         setSettings(settingsData);
       }
@@ -198,9 +234,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fetch Transactions
       try {
         const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-        if (!txError && txData) {
-          setTransactions(txData);
-        }
+        if (!txError && txData) setTransactions(txData);
       } catch (e) {
         console.warn("Transactions table might not exist yet.", e);
       }
@@ -211,17 +245,49 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false });
-
-        if (!oError && ordersData) {
-          setOrders(ordersData);
-        }
+        if (!oError && ordersData) setOrders(ordersData);
       } catch (error) {
         console.warn('Orders table might not exist yet.', error);
+      }
+
+      // Fetch Collections
+      try {
+        const { data: colData } = await supabase
+          .from('collections')
+          .select('*')
+          .order('display_order', { ascending: true });
+        if (colData) setCollections(colData);
+      } catch (e) {
+        console.warn('Collections table might not exist yet.', e);
+      }
+
+      // Fetch Saints
+      try {
+        const { data: saintsData } = await supabase
+          .from('saints')
+          .select('*')
+          .order('collection_number', { ascending: true });
+        if (saintsData) setSaints(saintsData);
+      } catch (e) {
+        console.warn('Saints table might not exist yet.', e);
+      }
+
+      // Fetch Quotes (only for authenticated users — will return empty for anon)
+      try {
+        const { data: quotesData } = await supabase
+          .from('quotes')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (quotesData) setQuotes(quotesData);
+      } catch (e) {
+        console.warn('Quotes table might not exist yet.', e);
       }
 
       setLoading(false);
     }
   };
+
+  // ==================== PRODUCTS ====================
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
     const isCustomizable = product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable;
@@ -232,7 +298,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
     const mainImage = imagesList[0] || product.image || '';
-
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCategory = categoriesList[0] || product.category || '';
 
@@ -245,6 +310,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       category: mainCategory,
       categories: categoriesList,
       subcategory: product.subcategory,
+      slug: product.slug || product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
+      sku: product.sku || null,
+      line: product.line || 'devocionais',
       is_customizable: !!isCustomizable,
       is_active: isActive !== false,
       is_featured: !!product.isFeatured,
@@ -252,16 +320,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       has_name_option: !!hasNameOption,
       variations: product.variations || [],
       customization_lists: product.customizationLists || [],
-      name_price: product.namePrice || null
+      name_price: product.namePrice || null,
+      availability: product.availability || 'ready',
+      production_days: product.production_days || null,
+      stock: product.stock || 0,
+      min_stock: product.min_stock || 1,
+      edition_quantity: product.edition_quantity || null,
+      collection_id: product.collection_id || null,
+      collection_number: product.collection_number || null,
+      collection_subtitle: product.collection_subtitle || null,
+      saint_id: product.saint_id || null,
+      promotional_price: product.promotional_price || null,
+      materials: product.materials || null,
+      care_instructions: product.care_instructions || null,
+      display_order: product.display_order || 0,
     };
 
     let { error } = await supabase.from('products').insert([fullPayload]).select();
 
     if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
-      const fallbackPayload = { ...fullPayload };
-      delete (fallbackPayload as any).images;
-      delete (fallbackPayload as any).categories;
-      delete (fallbackPayload as any).is_featured;
+      // Fallback to basic payload if new columns don't exist yet
+      const fallbackPayload: any = {
+        name: fullPayload.name,
+        description: fullPayload.description,
+        price: fullPayload.price,
+        image: fullPayload.image,
+        images: fullPayload.images,
+        category: fullPayload.category,
+        categories: fullPayload.categories,
+        subcategory: fullPayload.subcategory,
+        is_customizable: fullPayload.is_customizable,
+        is_active: fullPayload.is_active,
+        is_featured: fullPayload.is_featured,
+        available_colors: fullPayload.available_colors,
+        has_name_option: fullPayload.has_name_option,
+        variations: fullPayload.variations,
+        customization_lists: fullPayload.customization_lists,
+        name_price: fullPayload.name_price,
+      };
       const resFallback = await supabase.from('products').insert([fallbackPayload]).select();
       error = resFallback.error;
     }
@@ -279,11 +375,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
     const mainImage = imagesList[0] || product.image || '';
-
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCategory = categoriesList[0] || product.category || '';
 
-    const fullPayload = {
+    const fullPayload: any = {
       name: product.name,
       description: product.description,
       price: product.price,
@@ -292,6 +387,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       category: mainCategory,
       categories: categoriesList,
       subcategory: product.subcategory,
+      slug: product.slug,
+      sku: product.sku,
+      line: product.line || 'devocionais',
       is_customizable: !!isCustomizable,
       is_active: isActive !== false,
       is_featured: !!product.isFeatured,
@@ -299,16 +397,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       has_name_option: !!hasNameOption,
       variations: product.variations || [],
       customization_lists: product.customizationLists || [],
-      name_price: product.namePrice || null
+      name_price: product.namePrice || null,
+      availability: product.availability || 'ready',
+      production_days: product.production_days || null,
+      stock: product.stock ?? 0,
+      min_stock: product.min_stock ?? 1,
+      edition_quantity: product.edition_quantity || null,
+      collection_id: product.collection_id || null,
+      collection_number: product.collection_number || null,
+      collection_subtitle: product.collection_subtitle || null,
+      saint_id: product.saint_id || null,
+      promotional_price: product.promotional_price || null,
+      materials: product.materials || null,
+      care_instructions: product.care_instructions || null,
+      display_order: product.display_order ?? 0,
     };
 
     let { error } = await supabase.from('products').update(fullPayload).eq('id', product.id);
 
     if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
-      const fallbackPayload = { ...fullPayload };
-      delete (fallbackPayload as any).images;
-      delete (fallbackPayload as any).categories;
-      delete (fallbackPayload as any).is_featured;
+      const fallbackPayload: any = {
+        name: fullPayload.name, description: fullPayload.description, price: fullPayload.price,
+        image: fullPayload.image, images: fullPayload.images, category: fullPayload.category,
+        categories: fullPayload.categories, subcategory: fullPayload.subcategory,
+        is_customizable: fullPayload.is_customizable, is_active: fullPayload.is_active,
+        is_featured: fullPayload.is_featured, available_colors: fullPayload.available_colors,
+        has_name_option: fullPayload.has_name_option, variations: fullPayload.variations,
+        customization_lists: fullPayload.customization_lists, name_price: fullPayload.name_price,
+      };
       const resFallback = await supabase.from('products').update(fallbackPayload).eq('id', product.id);
       error = resFallback.error;
     }
@@ -318,23 +434,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteProduct = async (id: string) => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) throw error;
     await fetchData();
   };
 
-  const updateSettings = async (newSettings: ShopSettings) => {
-    const { error } = await supabase
-      .from('settings')
-      .upsert({ id: 1, ...newSettings });
+  // ==================== SETTINGS ====================
 
+  const updateSettings = async (newSettings: ShopSettings) => {
+    const { error } = await supabase.from('settings').upsert({ id: 1, ...newSettings });
     if (error) throw error;
     setSettings(newSettings);
   };
+
+  // ==================== FILES ====================
 
   const uploadFile = async (file: File) => {
     let fileToUpload = file;
@@ -348,20 +461,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fileExt = fileToUpload.name.split('.').pop() || 'jpg';
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('products')
-      .upload(filePath, fileToUpload);
+      .upload(fileName, fileToUpload);
 
     if (uploadError) throw uploadError;
 
-    const { data } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
-
+    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
     return data.publicUrl;
   };
+
+  // ==================== CATEGORIES ====================
 
   const addCategory = async (name: string) => {
     const { data, error } = await supabase
@@ -373,10 +484,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateCategory = async (category: Category) => {
-    const { error } = await supabase
-      .from('categories')
-      .update({ name: category.name })
-      .eq('id', category.id);
+    const { error } = await supabase.from('categories').update({ name: category.name }).eq('id', category.id);
     if (error) console.error(error);
     setCategories(categories.map(c => c.id === category.id ? category : c));
   };
@@ -387,18 +495,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCategories(categories.filter(c => c.id !== id));
   };
 
-  const addGlobalOption = async (option: Partial<GlobalOption>) => {
-    const dbOption = {
-      ...option,
-      category_ids: option.categoryIds
-    };
-    delete (dbOption as any).categoryIds;
+  // ==================== GLOBAL OPTIONS ====================
 
-    const { data, error } = await supabase
-      .from('global_options')
-      .insert([dbOption])
-      .select();
-    
+  const addGlobalOption = async (option: Partial<GlobalOption>) => {
+    const dbOption = { ...option, category_ids: option.categoryIds };
+    delete (dbOption as any).categoryIds;
+    const { data, error } = await supabase.from('global_options').insert([dbOption]).select();
     if (error) console.error(error);
     if (data) {
       const mapped = { ...data[0], categoryIds: data[0].category_ids };
@@ -407,17 +509,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateGlobalOption = async (option: GlobalOption) => {
-    const dbOption = {
-      ...option,
-      category_ids: option.categoryIds
-    };
+    const dbOption = { ...option, category_ids: option.categoryIds };
     delete (dbOption as any).categoryIds;
-
-    const { error } = await supabase
-      .from('global_options')
-      .update(dbOption)
-      .eq('id', option.id);
-    
+    const { error } = await supabase.from('global_options').update(dbOption).eq('id', option.id);
     if (error) console.error(error);
     setGlobalOptions(globalOptions.map(o => o.id === option.id ? option : o));
   };
@@ -428,12 +522,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setGlobalOptions(globalOptions.filter(o => o.id !== id));
   };
 
+  // ==================== TRANSACTIONS ====================
+
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([transaction])
-      .select();
-    
+    const { data, error } = await supabase.from('transactions').insert([transaction]).select();
     if (error) throw error;
     if (data) {
       setTransactions([data[0], ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -446,12 +538,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTransactions(transactions.filter(t => t.id !== id));
   };
 
+  // ==================== ORDERS ====================
+
   const addOrder = async (order: Omit<Order, 'id' | 'status' | 'created_at'>) => {
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([order])
-      .select();
-    
+    const { data, error } = await supabase.from('orders').insert([order]).select();
     if (error) throw error;
     if (data) {
       setOrders(prev => [data[0], ...prev]);
@@ -461,33 +551,94 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateOrderStatus = async (id: string, status: 'approved' | 'cancelled') => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', id);
-    
+    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
     if (error) throw error;
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
   };
 
+  const updateOrderProductionStatus = async (id: string, productionStatus: string) => {
+    const { error } = await supabase.from('orders').update({ production_status: productionStatus }).eq('id', id);
+    if (error) throw error;
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, production_status: productionStatus as any } : o));
+  };
+
   const deleteOrder = async (id: string) => {
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', id);
-    
+    const { error } = await supabase.from('orders').delete().eq('id', id);
     if (error) throw error;
     setOrders(prev => prev.filter(o => o.id !== id));
   };
 
+  // ==================== COLLECTIONS ====================
+
+  const addCollection = async (collection: Omit<Collection, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase.from('collections').insert([collection]).select();
+    if (error) throw error;
+    if (data) setCollections(prev => [...prev, data[0]]);
+  };
+
+  const updateCollection = async (collection: Collection) => {
+    const { error } = await supabase.from('collections').update(collection).eq('id', collection.id);
+    if (error) throw error;
+    setCollections(prev => prev.map(c => c.id === collection.id ? collection : c));
+  };
+
+  const deleteCollection = async (id: string) => {
+    const { error } = await supabase.from('collections').delete().eq('id', id);
+    if (error) throw error;
+    setCollections(prev => prev.filter(c => c.id !== id));
+  };
+
+  // ==================== SAINTS ====================
+
+  const addSaint = async (saint: Omit<Saint, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase.from('saints').insert([saint]).select();
+    if (error) throw error;
+    if (data) setSaints(prev => [...prev, data[0]]);
+  };
+
+  const updateSaint = async (saint: Saint) => {
+    const { error } = await supabase.from('saints').update(saint).eq('id', saint.id);
+    if (error) throw error;
+    setSaints(prev => prev.map(s => s.id === saint.id ? saint : s));
+  };
+
+  const deleteSaint = async (id: string) => {
+    const { error } = await supabase.from('saints').delete().eq('id', id);
+    if (error) throw error;
+    setSaints(prev => prev.filter(s => s.id !== id));
+  };
+
+  // ==================== QUOTES ====================
+
+  const addQuote = async (quote: Omit<Quote, 'id' | 'status' | 'created_at'>) => {
+    const { error } = await supabase.from('quotes').insert([{ ...quote, status: 'new' }]);
+    if (error) throw error;
+  };
+
+  const updateQuoteStatus = async (id: string, status: Quote['status']) => {
+    const { error } = await supabase.from('quotes').update({ status }).eq('id', id);
+    if (error) throw error;
+    setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+  };
+
+  const deleteQuote = async (id: string) => {
+    const { error } = await supabase.from('quotes').delete().eq('id', id);
+    if (error) throw error;
+    setQuotes(prev => prev.filter(q => q.id !== id));
+  };
+
   return (
-    <DataContext.Provider value={{ 
+    <DataContext.Provider value={{
       products, settings, loading, categories, globalOptions, transactions, orders,
+      collections, saints, quotes,
       addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
       addCategory, updateCategory, deleteCategory,
       addGlobalOption, updateGlobalOption, deleteGlobalOption,
       addTransaction, deleteTransaction,
-      addOrder, updateOrderStatus, deleteOrder
+      addOrder, updateOrderStatus, updateOrderProductionStatus, deleteOrder,
+      addCollection, updateCollection, deleteCollection,
+      addSaint, updateSaint, deleteSaint,
+      addQuote, updateQuoteStatus, deleteQuote,
     }}>
       {children}
     </DataContext.Provider>
