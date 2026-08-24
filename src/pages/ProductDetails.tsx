@@ -102,7 +102,7 @@ export const ProductDetails: React.FC = () => {
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
-          <p className="text-navy font-serif animate-pulse">Carregando produto...</p>
+          <p className="text-navy font-serif animate-pulse">Preparando tudo com carinho...</p>
         </div>
       </div>
     );

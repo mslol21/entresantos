@@ -93,9 +93,28 @@ export type Product = {
   care_instructions?: string;
 }
 
+export type CustomizationDetails = {
+  buildId?: string;
+  code: string;
+  model: string;
+  selections: {
+    model?: RosaryModel;
+    bead?: CustomizationComponent;
+    ourFather?: CustomizationComponent;
+    centerpiece?: CustomizationComponent;
+    crucifix?: CustomizationComponent;
+    extras?: CustomizationComponent[];
+    customName?: string;
+    customMessage?: string;
+    notes?: string;
+    [key: string]: any;
+  };
+}
+
 export type CartItem = Product & {
   quantity: number;
   selectedVariation?: any;
+  customization?: CustomizationDetails;
 }
 
 export type CartContextType = {
@@ -166,6 +185,7 @@ export type Order = {
     price: number;
     quantity: number;
     image: string;
+    customization?: CustomizationDetails;
   }[];
   status: OrderStatus;
   production_status?: ProductionStatus;
@@ -176,7 +196,7 @@ export type Order = {
   created_at?: string;
 }
 
-// === NOVAS ENTIDADES ===
+// === ENTIDADES DE COLEÇÃO & SANTOS ===
 
 export type CollectionStatus = 'active' | 'coming_soon' | 'ended';
 
@@ -239,4 +259,81 @@ export type Quote = {
   created_at?: string;
 }
 
-export const TYPES_VERSION = "2.0.0";
+// === ENTIDADES DO CONSTRUTOR VISUAL DE TERÇOS (ROSARY BUILDER) ===
+
+export type RosaryModel = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  base_price: number;
+  layout?: Record<string, any>;
+  is_active: boolean;
+  display_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type ComponentType = 
+  | 'bead'
+  | 'our_father_bead'
+  | 'centerpiece'
+  | 'crucifix'
+  | 'medal'
+  | 'letter'
+  | 'packaging';
+
+export type CustomizationComponent = {
+  id: string;
+  product_type?: string;
+  component_type: ComponentType;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  color?: string;
+  material?: string;
+  size?: string;
+  additional_price: number;
+  cost?: number;
+  stock?: number;
+  min_stock?: number;
+  units_per_product?: number;
+  display_order?: number;
+  compatibility?: {
+    models?: string[];
+    colors?: string[];
+    [key: string]: any;
+  };
+  metadata?: Record<string, any>;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type RosaryConfiguration = {
+  model?: RosaryModel;
+  bead?: CustomizationComponent;
+  ourFather?: CustomizationComponent;
+  centerpiece?: CustomizationComponent;
+  crucifix?: CustomizationComponent;
+  extras: CustomizationComponent[];
+  customName?: string;
+  customMessage?: string;
+  notes?: string;
+}
+
+export type CustomBuild = {
+  id: string;
+  public_code: string;
+  product_type: string;
+  model_id?: string;
+  configuration: RosaryConfiguration;
+  base_price: number;
+  additional_price: number;
+  total_price: number;
+  created_at?: string;
+}
+
+export const TYPES_VERSION = "3.0.0";

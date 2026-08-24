@@ -13,17 +13,23 @@ const Store = React.lazy(() => import('./pages/Store'));
 const Collections = React.lazy(() => import('./pages/Collections'));
 const CollectionDetail = React.lazy(() => import('./pages/CollectionDetail'));
 const Personalize = React.lazy(() => import('./pages/Personalize'));
+const RosaryBuilderPage = React.lazy(() => import('./pages/RosaryBuilderPage'));
 const MomentsFaith = React.lazy(() => import('./pages/MomentsFaith'));
 const OurStory = React.lazy(() => import('./pages/OurStory'));
 const SaintPage = React.lazy(() => import('./pages/SaintPage'));
 const ProductDetails = React.lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
 const Admin = React.lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 
-const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Carregando...' }) => (
-  <div className="min-h-screen bg-cream flex items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin" />
-      <p className="text-navy font-serif animate-pulse">{message}</p>
+const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Preparando tudo com carinho...' }) => (
+  <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div className="flex flex-col items-center gap-5 text-center">
+      <div className="relative">
+        <div className="w-14 h-14 border-3 border-gold/20 border-t-gold-dark rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center text-xs text-gold-dark">
+          ✦
+        </div>
+      </div>
+      <p className="text-navy font-serif text-sm tracking-wide animate-pulse font-medium">{message}</p>
     </div>
   </div>
 );
@@ -33,7 +39,7 @@ function Layout() {
   const { loading } = useData();
 
   if (loading) {
-    return <LoadingScreen message="Invocando a fé..." />;
+    return <LoadingScreen message="Preparando tudo com carinho..." />;
   }
 
   return (
@@ -64,6 +70,7 @@ function App() {
         <Route path="/colecoes" element={pageSuspense(<Collections />)} />
         <Route path="/colecoes/:slug" element={pageSuspense(<CollectionDetail />)} />
         <Route path="/personalize" element={pageSuspense(<Personalize />)} />
+        <Route path="/monte-seu-terco" element={pageSuspense(<RosaryBuilderPage />)} />
         <Route path="/momentos-de-fe" element={pageSuspense(<MomentsFaith />)} />
         <Route path="/nossa-historia" element={pageSuspense(<OurStory />)} />
         <Route path="/santos/:slug" element={pageSuspense(<SaintPage />)} />

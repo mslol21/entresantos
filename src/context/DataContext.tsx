@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { 
   Product, Category, GlobalOption, ShopSettings, Transaction, Order,
-  Collection, Saint, Quote
+  Collection, Saint, Quote, RosaryModel, CustomizationComponent, CustomBuild
 } from '../types';
 import { supabase } from '../lib/supabase';
-import { CATEGORIES as INITIAL_CATEGORIES } from '../data';
+import { 
+  CATEGORIES as INITIAL_CATEGORIES,
+  DEFAULT_ROSARY_MODELS,
+  DEFAULT_CUSTOMIZATION_COMPONENTS
+} from '../data';
 
 const compressImage = (file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.75): Promise<File> => {
   return new Promise((resolve, reject) => {
@@ -75,6 +79,9 @@ interface DataContextType {
   collections: Collection[];
   saints: Saint[];
   quotes: Quote[];
+  rosaryModels: RosaryModel[];
+  customizationComponents: CustomizationComponent[];
+  customBuilds: CustomBuild[];
   loading: boolean;
 
   // Products
@@ -122,6 +129,19 @@ interface DataContextType {
   addQuote: (quote: Omit<Quote, 'id' | 'status' | 'created_at'>) => Promise<void>;
   updateQuoteStatus: (id: string, status: Quote['status']) => Promise<void>;
   deleteQuote: (id: string) => Promise<void>;
+
+  // Rosary Builder: Models
+  addRosaryModel: (model: Omit<RosaryModel, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateRosaryModel: (model: RosaryModel) => Promise<void>;
+  deleteRosaryModel: (id: string) => Promise<void>;
+
+  // Rosary Builder: Components
+  addCustomizationComponent: (component: Omit<CustomizationComponent, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateCustomizationComponent: (component: CustomizationComponent) => Promise<void>;
+  deleteCustomizationComponent: (id: string) => Promise<void>;
+
+  // Rosary Builder: Save Custom Build
+  saveCustomBuild: (build: Omit<CustomBuild, 'id' | 'public_code' | 'created_at'>) => Promise<{ id: string; public_code: string }>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -135,10 +155,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [collections, setCollections] = useState<Collection[]>([]);
   const [saints, setSaints] = useState<Saint[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [rosaryModels, setRosaryModels] = useState<RosaryModel[]>(DEFAULT_ROSARY_MODELS);
+  const [customizationComponents, setCustomizationComponents] = useState<CustomizationComponent[]>(DEFAULT_CUSTOMIZATION_COMPONENTS);
+  const [customBuilds, setCustomBuilds] = useState<CustomBuild[]>([]);
+
   const [settings, setSettings] = useState<ShopSettings>({
     name: 'Ateliê Entre Santos',
     whatsapp: '',
-    niche: '',
+    niche: 'Artesanato Católico',
     instagram: '',
     tiktok: '',
     slogan: 'Fé feita à mão'
@@ -156,6 +180,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .on('postgres_changes', { event: '*', schema: 'public', table: 'collections' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'saints' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rosary_models' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customization_components' }, () => fetchData())
       .subscribe();
 
     return () => {
@@ -256,7 +282,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('collections')
           .select('*')
           .order('display_order', { ascending: true });
-        if (colData) setCollections(colData);
+        if (colData && colData.length > 0) setCollections(colData);
       } catch (e) {
         console.warn('Collections table might not exist yet.', e);
       }
@@ -267,20 +293,64 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('saints')
           .select('*')
           .order('collection_number', { ascending: true });
-        if (saintsData) setSaints(saintsData);
+        if (saintsData && saintsData.length > 0) setSaints(saintsData);
       } catch (e) {
         console.warn('Saints table might not exist yet.', e);
       }
 
-      // Fetch Quotes (only for authenticated users — will return empty for anon)
+      // Fetch Quotes
       try {
         const { data: quotesData } = await supabase
           .from('quotes')
           .select('*')
           .order('created_at', { ascending: false });
-        if (quotesData) setQuotes(quotesData);
+        if (quotesData && quotesData.length > 0) setQuotes(quotesData);
       } catch (e) {
         console.warn('Quotes table might not exist yet.', e);
+      }
+
+      // Fetch Rosary Models
+      try {
+        const { data: modelsData } = await supabase
+          .from('rosary_models')
+          .select('*')
+          .order('display_order', { ascending: true });
+        if (modelsData && modelsData.length > 0) {
+          setRosaryModels(modelsData);
+        } else {
+          setRosaryModels(DEFAULT_ROSARY_MODELS);
+        }
+      } catch (e) {
+        console.warn('rosary_models table might not exist yet. Using defaults.', e);
+        setRosaryModels(DEFAULT_ROSARY_MODELS);
+      }
+
+      // Fetch Customization Components
+      try {
+        const { data: compData } = await supabase
+          .from('customization_components')
+          .select('*')
+          .order('display_order', { ascending: true });
+        if (compData && compData.length > 0) {
+          setCustomizationComponents(compData);
+        } else {
+          setCustomizationComponents(DEFAULT_CUSTOMIZATION_COMPONENTS);
+        }
+      } catch (e) {
+        console.warn('customization_components table might not exist yet. Using defaults.', e);
+        setCustomizationComponents(DEFAULT_CUSTOMIZATION_COMPONENTS);
+      }
+
+      // Fetch Custom Builds (if admin)
+      try {
+        const { data: buildsData } = await supabase
+          .from('custom_builds')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (buildsData) setCustomBuilds(buildsData);
+      } catch (e) {
+        console.warn('custom_builds table might not exist yet.', e);
       }
 
       setLoading(false);
@@ -338,32 +408,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let { error } = await supabase.from('products').insert([fullPayload]).select();
 
-    if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
-      // Fallback to basic payload if new columns don't exist yet
-      const fallbackPayload: any = {
-        name: fullPayload.name,
-        description: fullPayload.description,
-        price: fullPayload.price,
-        image: fullPayload.image,
-        images: fullPayload.images,
-        category: fullPayload.category,
-        categories: fullPayload.categories,
-        subcategory: fullPayload.subcategory,
-        is_customizable: fullPayload.is_customizable,
-        is_active: fullPayload.is_active,
-        is_featured: fullPayload.is_featured,
-        available_colors: fullPayload.available_colors,
-        has_name_option: fullPayload.has_name_option,
-        variations: fullPayload.variations,
-        customization_lists: fullPayload.customization_lists,
-        name_price: fullPayload.name_price,
-      };
-      const resFallback = await supabase.from('products').insert([fallbackPayload]).select();
-      error = resFallback.error;
-    }
-
     if (error) throw error;
-    await fetchData();
+    fetchData();
   };
 
   const updateProduct = async (product: Product) => {
@@ -378,7 +424,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCategory = categoriesList[0] || product.category || '';
 
-    const fullPayload: any = {
+    const fullPayload = {
       name: product.name,
       description: product.description,
       price: product.price,
@@ -387,8 +433,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       category: mainCategory,
       categories: categoriesList,
       subcategory: product.subcategory,
-      slug: product.slug,
-      sku: product.sku,
+      slug: product.slug || product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
+      sku: product.sku || null,
       line: product.line || 'devocionais',
       is_customizable: !!isCustomizable,
       is_active: isActive !== false,
@@ -400,8 +446,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name_price: product.namePrice || null,
       availability: product.availability || 'ready',
       production_days: product.production_days || null,
-      stock: product.stock ?? 0,
-      min_stock: product.min_stock ?? 1,
+      stock: product.stock || 0,
+      min_stock: product.min_stock || 1,
       edition_quantity: product.edition_quantity || null,
       collection_id: product.collection_id || null,
       collection_number: product.collection_number || null,
@@ -410,116 +456,120 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       promotional_price: product.promotional_price || null,
       materials: product.materials || null,
       care_instructions: product.care_instructions || null,
-      display_order: product.display_order ?? 0,
+      display_order: product.display_order || 0,
     };
 
-    let { error } = await supabase.from('products').update(fullPayload).eq('id', product.id);
-
-    if (error && (error.code === 'PGRST204' || error.message.includes('column'))) {
-      const fallbackPayload: any = {
-        name: fullPayload.name, description: fullPayload.description, price: fullPayload.price,
-        image: fullPayload.image, images: fullPayload.images, category: fullPayload.category,
-        categories: fullPayload.categories, subcategory: fullPayload.subcategory,
-        is_customizable: fullPayload.is_customizable, is_active: fullPayload.is_active,
-        is_featured: fullPayload.is_featured, available_colors: fullPayload.available_colors,
-        has_name_option: fullPayload.has_name_option, variations: fullPayload.variations,
-        customization_lists: fullPayload.customization_lists, name_price: fullPayload.name_price,
-      };
-      const resFallback = await supabase.from('products').update(fallbackPayload).eq('id', product.id);
-      error = resFallback.error;
-    }
-
+    const { error } = await supabase.from('products').update(fullPayload).eq('id', product.id);
     if (error) throw error;
-    await fetchData();
+    fetchData();
   };
 
   const deleteProduct = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) throw error;
-    await fetchData();
+    setProducts(prev => prev.filter(p => p.id !== id));
   };
 
   // ==================== SETTINGS ====================
 
   const updateSettings = async (newSettings: ShopSettings) => {
-    const { error } = await supabase.from('settings').upsert({ id: 1, ...newSettings });
+    const { error } = await supabase
+      .from('settings')
+      .update(newSettings)
+      .eq('id', 1);
+
     if (error) throw error;
     setSettings(newSettings);
   };
 
-  // ==================== FILES ====================
+  // ==================== FILE UPLOAD ====================
 
-  const uploadFile = async (file: File) => {
-    let fileToUpload = file;
-    if (file.type.startsWith('image/')) {
-      try {
-        fileToUpload = await compressImage(file);
-      } catch (err) {
-        console.warn('Image compression failed, uploading original:', err);
-      }
-    }
-
-    const fileExt = fileToUpload.name.split('.').pop() || 'jpg';
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const uploadFile = async (file: File): Promise<string> => {
+    const isImage = file.type.startsWith('image/');
+    const processedFile = isImage ? await compressImage(file) : file;
+    const fileExt = processedFile.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('products')
-      .upload(fileName, fileToUpload);
+      .upload(filePath, processedFile, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
     if (uploadError) throw uploadError;
 
-    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+    const { data } = supabase.storage
+      .from('products')
+      .getPublicUrl(filePath);
+
     return data.publicUrl;
   };
 
   // ==================== CATEGORIES ====================
 
   const addCategory = async (name: string) => {
-    const { data, error } = await supabase
-      .from('categories')
-      .insert([{ id: name.toLowerCase().replace(/\s+/g, '-'), name }])
-      .select();
-    if (error) console.error(error);
-    if (data) setCategories([...categories, data[0]]);
+    const newCategory: Category = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name
+    };
+    const { error } = await supabase.from('categories').insert([newCategory]);
+    if (error) throw error;
+    setCategories(prev => [...prev, newCategory]);
   };
 
   const updateCategory = async (category: Category) => {
-    const { error } = await supabase.from('categories').update({ name: category.name }).eq('id', category.id);
-    if (error) console.error(error);
-    setCategories(categories.map(c => c.id === category.id ? category : c));
+    const { error } = await supabase
+      .from('categories')
+      .update({ name: category.name })
+      .eq('id', category.id);
+    if (error) throw error;
+    setCategories(prev => prev.map(c => c.id === category.id ? category : c));
   };
 
   const deleteCategory = async (id: string) => {
     const { error } = await supabase.from('categories').delete().eq('id', id);
-    if (error) console.error(error);
-    setCategories(categories.filter(c => c.id !== id));
+    if (error) throw error;
+    setCategories(prev => prev.filter(c => c.id !== id));
   };
 
   // ==================== GLOBAL OPTIONS ====================
 
   const addGlobalOption = async (option: Partial<GlobalOption>) => {
-    const dbOption = { ...option, category_ids: option.categoryIds };
-    delete (dbOption as any).categoryIds;
-    const { data, error } = await supabase.from('global_options').insert([dbOption]).select();
-    if (error) console.error(error);
+    const newOpt = {
+      name: option.name || '',
+      type: option.type || 'color',
+      price: option.price || 0,
+      image: option.image || null,
+      category_ids: option.categoryIds || [],
+      group: option.group || 'Entremeio'
+    };
+    const { data, error } = await supabase.from('global_options').insert([newOpt]).select();
+    if (error) throw error;
     if (data) {
-      const mapped = { ...data[0], categoryIds: data[0].category_ids };
-      setGlobalOptions([...globalOptions, mapped]);
+      setGlobalOptions(prev => [...prev, { ...data[0], categoryIds: data[0].category_ids || [] }]);
     }
   };
 
   const updateGlobalOption = async (option: GlobalOption) => {
-    const dbOption = { ...option, category_ids: option.categoryIds };
-    delete (dbOption as any).categoryIds;
-    const { error } = await supabase.from('global_options').update(dbOption).eq('id', option.id);
-    if (error) console.error(error);
-    setGlobalOptions(globalOptions.map(o => o.id === option.id ? option : o));
+    const payload = {
+      name: option.name,
+      type: option.type,
+      price: option.price,
+      image: option.image,
+      category_ids: option.categoryIds,
+      group: option.group
+    };
+    const { error } = await supabase.from('global_options').update(payload).eq('id', option.id);
+    if (error) throw error;
+    setGlobalOptions(prev => prev.map(o => o.id === option.id ? option : o));
   };
 
   const deleteGlobalOption = async (id: string) => {
     const { error } = await supabase.from('global_options').delete().eq('id', id);
-    if (error) console.error(error);
-    setGlobalOptions(globalOptions.filter(o => o.id !== id));
+    if (error) throw error;
+    setGlobalOptions(prev => prev.filter(o => o.id !== id));
   };
 
   // ==================== TRANSACTIONS ====================
@@ -527,23 +577,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('transactions').insert([transaction]).select();
     if (error) throw error;
-    if (data) {
-      setTransactions([data[0], ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    }
+    if (data) setTransactions(prev => [data[0], ...prev]);
   };
 
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (error) throw error;
-    setTransactions(transactions.filter(t => t.id !== id));
+    setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
   // ==================== ORDERS ====================
 
-  const addOrder = async (order: Omit<Order, 'id' | 'status' | 'created_at'>) => {
-    const { data, error } = await supabase.from('orders').insert([order]).select();
+  const addOrder = async (order: Omit<Order, 'id' | 'status' | 'created_at'>): Promise<string> => {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([{
+        ...order,
+        status: 'pending',
+        production_status: 'pending'
+      }])
+      .select();
+
     if (error) throw error;
-    if (data) {
+    if (data && data[0]) {
       setOrders(prev => [data[0], ...prev]);
       return data[0].id;
     }
@@ -627,10 +683,144 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setQuotes(prev => prev.filter(q => q.id !== id));
   };
 
+  // ==================== ROSARY BUILDER: MODELS ====================
+
+  const addRosaryModel = async (model: Omit<RosaryModel, 'id' | 'created_at' | 'updated_at'>) => {
+    const { data, error } = await supabase.from('rosary_models').insert([model]).select();
+    if (error) {
+      // Fallback local
+      const localModel: RosaryModel = {
+        ...model,
+        id: `model-${Date.now()}`,
+        created_at: new Date().toISOString()
+      };
+      setRosaryModels(prev => [...prev, localModel]);
+      return;
+    }
+    if (data && data[0]) {
+      setRosaryModels(prev => [...prev, data[0]]);
+    }
+  };
+
+  const updateRosaryModel = async (model: RosaryModel) => {
+    const { error } = await supabase.from('rosary_models').update({
+      name: model.name,
+      slug: model.slug,
+      description: model.description,
+      image: model.image,
+      base_price: model.base_price,
+      layout: model.layout,
+      is_active: model.is_active,
+      display_order: model.display_order,
+      updated_at: new Date().toISOString()
+    }).eq('id', model.id);
+
+    setRosaryModels(prev => prev.map(m => m.id === model.id ? model : m));
+    if (error) console.warn('Saved rosary_model locally (table might not exist in Supabase yet).');
+  };
+
+  const deleteRosaryModel = async (id: string) => {
+    const { error } = await supabase.from('rosary_models').delete().eq('id', id);
+    setRosaryModels(prev => prev.filter(m => m.id !== id));
+    if (error) console.warn('Deleted rosary_model locally.', error);
+  };
+
+  // ==================== ROSARY BUILDER: COMPONENTS ====================
+
+  const addCustomizationComponent = async (component: Omit<CustomizationComponent, 'id' | 'created_at' | 'updated_at'>) => {
+    const { data, error } = await supabase.from('customization_components').insert([component]).select();
+    if (error) {
+      // Fallback local
+      const localComp: CustomizationComponent = {
+        ...component,
+        id: `comp-${Date.now()}`,
+        created_at: new Date().toISOString()
+      };
+      setCustomizationComponents(prev => [...prev, localComp]);
+      return;
+    }
+    if (data && data[0]) {
+      setCustomizationComponents(prev => [...prev, data[0]]);
+    }
+  };
+
+  const updateCustomizationComponent = async (component: CustomizationComponent) => {
+    const { error } = await supabase.from('customization_components').update({
+      name: component.name,
+      slug: component.slug,
+      component_type: component.component_type,
+      description: component.description,
+      image: component.image,
+      color: component.color,
+      material: component.material,
+      size: component.size,
+      additional_price: component.additional_price,
+      cost: component.cost,
+      stock: component.stock,
+      min_stock: component.min_stock,
+      units_per_product: component.units_per_product,
+      display_order: component.display_order,
+      compatibility: component.compatibility,
+      metadata: component.metadata,
+      is_active: component.is_active,
+      updated_at: new Date().toISOString()
+    }).eq('id', component.id);
+
+    setCustomizationComponents(prev => prev.map(c => c.id === component.id ? component : c));
+    if (error) console.warn('Saved customization_component locally.', error);
+  };
+
+  const deleteCustomizationComponent = async (id: string) => {
+    const { error } = await supabase.from('customization_components').delete().eq('id', id);
+    setCustomizationComponents(prev => prev.filter(c => c.id !== id));
+    if (error) console.warn('Deleted customization_component locally.', error);
+  };
+
+  // ==================== ROSARY BUILDER: SAVE CUSTOM BUILD ====================
+
+  const saveCustomBuild = async (build: Omit<CustomBuild, 'id' | 'public_code' | 'created_at'>): Promise<{ id: string; public_code: string }> => {
+    const randomCode = `ES-${Math.floor(10000 + Math.random() * 90000)}`;
+    try {
+      const { data, error } = await supabase
+        .from('custom_builds')
+        .insert([{
+          public_code: randomCode,
+          product_type: build.product_type || 'rosary',
+          model_id: build.model_id || null,
+          configuration: build.configuration,
+          base_price: build.base_price,
+          additional_price: build.additional_price,
+          total_price: build.total_price
+        }])
+        .select();
+
+      if (!error && data && data[0]) {
+        setCustomBuilds(prev => [data[0], ...prev]);
+        return { id: data[0].id, public_code: data[0].public_code };
+      }
+    } catch (e) {
+      console.warn('custom_builds table not available yet, using generated code locally.', e);
+    }
+
+    const localBuild: CustomBuild = {
+      id: `build-${Date.now()}`,
+      public_code: randomCode,
+      product_type: build.product_type || 'rosary',
+      model_id: build.model_id,
+      configuration: build.configuration,
+      base_price: build.base_price,
+      additional_price: build.additional_price,
+      total_price: build.total_price,
+      created_at: new Date().toISOString()
+    };
+    setCustomBuilds(prev => [localBuild, ...prev]);
+    return { id: localBuild.id, public_code: randomCode };
+  };
+
   return (
     <DataContext.Provider value={{
       products, settings, loading, categories, globalOptions, transactions, orders,
-      collections, saints, quotes,
+      collections, saints, quotes, rosaryModels, customizationComponents, customBuilds,
       addProduct, updateProduct, deleteProduct, updateSettings, uploadFile,
       addCategory, updateCategory, deleteCategory,
       addGlobalOption, updateGlobalOption, deleteGlobalOption,
@@ -639,6 +829,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addCollection, updateCollection, deleteCollection,
       addSaint, updateSaint, deleteSaint,
       addQuote, updateQuoteStatus, deleteQuote,
+      addRosaryModel, updateRosaryModel, deleteRosaryModel,
+      addCustomizationComponent, updateCustomizationComponent, deleteCustomizationComponent,
+      saveCustomBuild
     }}>
       {children}
     </DataContext.Provider>

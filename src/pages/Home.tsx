@@ -5,31 +5,46 @@ import { FeaturedProducts } from '../components/FeaturedProducts';
 import { CollectionSection } from '../components/CollectionSection';
 import { TrustSection } from '../components/TrustSection';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 const PersonalizeTeaser: React.FC = () => (
   <section className="py-20 px-4 bg-cream/60">
     <div className="max-w-5xl mx-auto">
-      <div className="bg-gradient-to-br from-white to-amber-50 border border-gold/20 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+      <div className="bg-gradient-to-br from-white via-amber-50/50 to-cream border border-gold/20 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 shadow-sm">
         <div className="md:flex-1 text-center md:text-left">
-          <p className="text-[11px] text-gold-dark uppercase tracking-[0.3em] font-bold mb-3">Exclusivo para você</p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/15 border border-gold/25 text-gold-dark text-[10px] font-black uppercase tracking-wider mb-3">
+            <Sparkles size={12} />
+            <span>Ateliê Sob Medida</span>
+          </div>
           <h2 className="font-serif font-bold text-3xl sm:text-4xl text-navy mb-4">
-            Personalize<br />sua peça
+            Monte seu Terço ou<br />Personalize sua Peça
           </h2>
           <p className="text-navy/60 text-sm leading-relaxed mb-6 max-w-md">
-            Escolha o produto, a devoção, as cores e adicione um toque pessoal — nome, data ou mensagem especial.
+            Experimente nosso construtor visual 2D para montar seu terço com contas, medalhas e crucifixos exclusivos, ou personalize pulseiras e lembranças de fé.
           </p>
-          <Link to="/personalize" className="btn-primary inline-flex">
-            Começar agora
-            <ArrowRight size={15} />
-          </Link>
+          <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+            <Link to="/monte-seu-terco" className="btn-primary inline-flex">
+              Monte seu Terço (2D)
+              <ArrowRight size={15} />
+            </Link>
+            <Link to="/personalize" className="px-6 py-3.5 border-2 border-navy/20 text-navy font-bold text-xs uppercase tracking-wider rounded-full hover:border-navy hover:bg-navy/5 transition-all">
+              Outras Peças
+            </Link>
+          </div>
         </div>
         <div className="md:flex-1 flex flex-wrap gap-3 justify-center">
-          {['Terço', 'Pulseira', 'Phone Charm', 'Dezena'].map(p => (
+          <Link
+            to="/monte-seu-terco"
+            className="px-6 py-4 bg-gradient-to-r from-navy to-navy-light text-gold border border-gold/30 rounded-2xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Sparkles size={16} />
+            <span>Monte seu Terço</span>
+          </Link>
+          {['Pulseira', 'Phone Charm', 'Dezena'].map(p => (
             <Link
               key={p}
               to={`/personalize?produto=${encodeURIComponent(p)}`}
-              className="px-5 py-3 bg-white border border-gold/25 rounded-2xl text-sm font-bold text-navy hover:bg-gold/10 hover:border-gold/50 transition-all shadow-sm"
+              className="px-5 py-3.5 bg-white border border-gold/25 rounded-2xl text-sm font-bold text-navy hover:bg-gold/10 hover:border-gold/50 transition-all shadow-sm"
             >
               {p}
             </Link>
@@ -59,31 +74,24 @@ const MomentosTeaser: React.FC = () => {
           </div>
           <Link
             to="/momentos-de-fe"
-            className="inline-flex items-center gap-2 text-sm font-bold text-navy/60 hover:text-navy transition-colors uppercase tracking-wider group"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-navy hover:text-gold-dark transition-colors"
           >
-            Ver todos
-            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            Ver todas as ocasiões
+            <ArrowRight size={14} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {moments.map(m => (
             <Link
               key={m.label}
-              to={`/momentos-de-fe?evento=${encodeURIComponent(m.label)}`}
-              className="group flex flex-col items-center gap-3 p-6 bg-white border border-gold/15 rounded-2xl hover:border-gold/40 hover:shadow-premium transition-all text-center"
+              to={`/momentos-de-fe#${encodeURIComponent(m.label.toLowerCase())}`}
+              className="p-6 bg-white border border-gold/15 rounded-3xl text-center hover:border-gold/40 hover:bg-gold/5 transition-all shadow-sm group"
             >
-              <span className="text-3xl group-hover:scale-110 transition-transform">{m.icon}</span>
-              <span className="text-xs font-bold text-navy/70 group-hover:text-navy uppercase tracking-wider">{m.label}</span>
+              <span className="text-3xl block mb-3 group-hover:scale-110 transition-transform">{m.icon}</span>
+              <span className="font-serif font-bold text-sm text-navy block leading-tight">{m.label}</span>
             </Link>
           ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <p className="text-navy/50 text-sm mb-4">O Ateliê aceita pedidos personalizados em quantidade para eventos especiais.</p>
-          <Link to="/momentos-de-fe" className="text-gold-dark font-bold text-sm hover:text-gold-dark/80 inline-flex items-center gap-1 group">
-            Solicitar orçamento <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
         </div>
       </div>
     </section>
@@ -92,28 +100,15 @@ const MomentosTeaser: React.FC = () => {
 
 const Home: React.FC = () => {
   return (
-    <>
-      {/* 1. Hero */}
+    <div className="space-y-0">
       <Hero />
-
-      {/* 2. Categorias principais */}
       <CategoryCards />
-
-      {/* 3. Mais Amados */}
       <FeaturedProducts />
-
-      {/* 4. Coleções Entre Santos */}
       <CollectionSection />
-
-      {/* 5. Personalize sua peça */}
       <PersonalizeTeaser />
-
-      {/* 6. Momentos de Fé */}
       <MomentosTeaser />
-
-      {/* 7. Confiança */}
       <TrustSection />
-    </>
+    </div>
   );
 };
 

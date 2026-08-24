@@ -6,11 +6,12 @@ import {
   Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, 
   Palette, Grid, LineChart, LogOut, Download, LayoutDashboard, 
   FolderKanban, MessageSquareQuote, BookOpen, Layers, 
-  AlertTriangle, ExternalLink, QrCode, MessageCircle
+  AlertTriangle, ExternalLink, QrCode, MessageCircle, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FinancePanel } from '../components/FinancePanel';
+import { CustomizerAdmin } from '../components/admin/CustomizerAdmin';
 import { supabase } from '../lib/supabase';
 
 const getColorHex = (name: string): string => {
@@ -69,6 +70,7 @@ export const Admin: React.FC = () => {
   type AdminTab = 
     | 'dashboard'
     | 'products' 
+    | 'customizer'
     | 'orders' 
     | 'production'
     | 'quotes'
@@ -466,6 +468,7 @@ export const Admin: React.FC = () => {
           {[
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
             { id: 'products', label: 'Produtos', icon: <ShoppingBag size={18} /> },
+            { id: 'customizer', label: 'Personalizador', icon: <Sparkles size={18} /> },
             { id: 'orders', label: 'Pedidos', icon: <Download size={18} />, badge: orders.filter(o => o.status === 'pending').length },
             { id: 'production', label: 'Produção (Kanban)', icon: <FolderKanban size={18} />, badge: inProductionCount },
             { id: 'quotes', label: 'Orçamentos (Leads)', icon: <MessageSquareQuote size={18} />, badge: newQuotesCount },
@@ -519,6 +522,7 @@ export const Admin: React.FC = () => {
         >
           <option value="dashboard">Dashboard</option>
           <option value="products">Produtos</option>
+          <option value="customizer">Personalizador (Terços 2D)</option>
           <option value="orders">Pedidos ({orders.filter(o => o.status === 'pending').length})</option>
           <option value="production">Produção ({inProductionCount})</option>
           <option value="quotes">Orçamentos ({newQuotesCount})</option>
@@ -627,6 +631,9 @@ export const Admin: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* TAB: PERSONALIZADOR (ROSARY BUILDER 2D) */}
+        {activeTab === 'customizer' && <CustomizerAdmin />}
 
         {/* TAB: PRODUCTS */}
         {activeTab === 'products' && (

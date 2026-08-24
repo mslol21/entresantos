@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Minus, Plus, MessageCircle, ShoppingBag } from 'lucide-react';
+import { X, Trash2, Minus, Plus, MessageCircle, ShoppingBag, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 
@@ -42,11 +42,37 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
   const handleCheckout = async () => {
     const formattedItems = cart.map(item => {
-      const formattedName = item.name.includes('(')
-        ? item.name.replace(/\s*\(([^)]+)\)/, '\n   └─ Customização: $1')
-        : item.name;
+      let details = '';
+      if (item.customization) {
+        const s = item.customization.selections || {};
+        const parts = [
+          `Código: ${item.customization.code}`,
+          `Modelo: ${item.customization.model || s.model?.name || 'Tradicional'}`,
+          `Contas Ave-Marias: ${s.bead?.name || 'Clássicas'}`,
+          `Contas Pai-Nossos: ${s.ourFather?.name || s.bead?.name || 'Padrão'}`,
+          `Entremeio: ${s.centerpiece?.name || 'N. Sra. Aparecida'}`,
+          `Crucifixo: ${s.crucifix?.name || 'Barroco'}`,
+        ];
+        if (s.extras && Array.isArray(s.extras) && s.extras.length > 0) {
+          parts.push(`Extras: ${s.extras.map((e: any) => e.name).join(', ')}`);
+        }
+        if (s.customName) {
+          parts.push(`Nome Gravado: ${s.customName}`);
+        }
+        if (s.customMessage) {
+          parts.push(`Cartão: "${s.customMessage}"`);
+        }
+        if (s.notes) {
+          parts.push(`Obs: ${s.notes}`);
+        }
+        details = `\n   └─ *Configuração Exclusiva:*\n      • ` + parts.join('\n      • ');
+      } else if (item.name.includes('(')) {
+        details = item.name.replace(/\s*\(([^)]+)\)/, '\n   └─ Customização: $1');
+      }
+
       const itemSubtotal = (item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      return `• *${item.quantity}x ${formattedName}*\n  Subtotal: ${itemSubtotal}`;
+      const mainName = item.name.split('(')[0].trim();
+      return `• *${item.quantity}x ${mainName}*${details}\n  Subtotal: ${itemSubtotal}`;
     }).join('\n\n');
 
     const totalFormatted = totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -70,7 +96,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       name: item.name,
       price: item.price,
       quantity: item.quantity,
-      image: item.image
+      image: item.image,
+      customization: item.customization || undefined
     }));
 
     // Log the order to the database as pending
@@ -142,7 +169,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 onClick={handleCloseWrapper}
-                className="p-2.5 hover:bg-navy/5 rounded-full transition-all text-navy/40 hover:text-navy hover:rotate-90"
+                className="p-2.5 hover:bg-navy/5 rounded-full transition-all text-navy/40 hover:text-navy hover:rotate-90 cursor-pointer"
+                aria-label="Fechar"
               >
                 <X size={24} />
               </button>
@@ -176,19 +204,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   <div className="space-y-4">
                     {cart.map((item) => (
                       <motion.div 
-                        key={`${item.id}-${item.name}`}
+                        key={`${item.id}-${item.name}-${item.customization?.code || ''}`}
                         layout
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="flex flex-col p-5 bg-white rounded-[32px] border border-gold/15 group hover:border-gold/30 hover:shadow-premium transition-all duration-500"
                       >
                         <div className="flex gap-5 text-left">
-                          <div className="w-24 h-24 bg-cream-light rounded-[20px] overflow-hidden flex-shrink-0 border border-gold/15 group-hover:border-gold/30 transition-colors">
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
-                            />
+                          <div className="w-24 h-24 bg-cream-light rounded-[20px] overflow-hidden flex-shrink-0 border border-gold/15 group-hover:border-gold/30 transition-colors flex items-center justify-center">
+                            {item.image ? (
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+                              />
+                            ) : (
+                              <span className="text-3xl">📿</span>
+                            )}
                           </div>
                           <div className="flex-grow flex flex-col py-1">
                             <div className="flex justify-between items-start gap-4 mb-2">
@@ -201,13 +233,31 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                               <button
                                 onClick={() => removeFromCart(item.id, item.name)}
                                 className="text-navy/20 hover:text-red-500 transition-all p-2 hover:bg-red-500/5 rounded-full cursor-pointer"
+                                aria-label="Remover item"
                               >
                                 <Trash2 size={18} />
                               </button>
                             </div>
 
+                            {/* Customization Details Rendering */}
                             <div className="flex-grow">
-                              {item.name.includes('(') && (
+                              {item.customization ? (
+                                <div className="bg-cream/70 p-3 rounded-2xl border border-gold/20 mt-1 space-y-1.5 text-[11px] text-navy/70">
+                                  <div className="flex items-center gap-1.5 font-mono font-bold text-navy text-xs">
+                                    <Sparkles size={12} className="text-gold-dark" />
+                                    <span>{item.customization.code}</span>
+                                    <span className="text-[10px] font-sans font-normal text-navy/50">• {item.customization.model}</span>
+                                  </div>
+                                  <p className="line-clamp-2 text-[10px] text-navy/65">
+                                    {[
+                                      item.customization.selections?.bead?.name && `Contas: ${item.customization.selections.bead.name}`,
+                                      item.customization.selections?.centerpiece?.name && `Entremeio: ${item.customization.selections.centerpiece.name}`,
+                                      item.customization.selections?.crucifix?.name && `Cruz: ${item.customization.selections.crucifix.name}`,
+                                      item.customization.selections?.customName && `Nome: ${item.customization.selections.customName}`
+                                    ].filter(Boolean).join(' • ')}
+                                  </p>
+                                </div>
+                              ) : item.name.includes('(') ? (
                                 <div className="bg-cream-light p-2 rounded-xl border border-gold/15 mt-1">
                                   <p className="text-[10px] text-navy/60 leading-relaxed italic">
                                     {item.name.match(/\(([^)]+)\)/)?.[1].split(',').map((detail, idx) => (
@@ -218,7 +268,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                                     ))}
                                   </p>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -230,6 +280,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                               <button
                                 onClick={() => updateQuantity(item.id, item.quantity - 1, item.name)}
                                 className="text-navy/55 hover:text-navy transition-all active:scale-75 cursor-pointer"
+                                aria-label="Diminuir quantidade"
                               >
                                 <Minus size={14} strokeWidth={3} />
                               </button>
@@ -237,6 +288,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                               <button
                                 onClick={() => updateQuantity(item.id, item.quantity + 1, item.name)}
                                 className="text-navy/55 hover:text-navy transition-all active:scale-75 cursor-pointer"
+                                aria-label="Aumentar quantidade"
                               >
                                 <Plus size={14} strokeWidth={3} />
                               </button>
@@ -260,119 +312,85 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     <input
                       id="nome"
                       type="text"
-                      required
-                      placeholder="Digite seu nome completo"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
+                      placeholder="Como podemos te chamar?"
                       className="input-base"
                     />
                   </div>
 
                   <div>
-                    <label className="label-base" htmlFor="cep">Seu CEP *</label>
-                    <div className="relative">
-                      <input
-                        id="cep"
-                        type="text"
-                        required
-                        maxLength={8}
-                        placeholder="Apenas números (Ex: 01001000)"
-                        value={cep}
-                        onChange={handleCepChange}
-                        className="input-base pr-12"
-                      />
-                      {loadingCep && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                      )}
-                    </div>
+                    <label className="label-base flex items-center justify-between" htmlFor="cep">
+                      <span>CEP para Entrega *</span>
+                      {loadingCep && <span className="text-xs text-gold-dark font-medium animate-pulse">Buscando endereço...</span>}
+                    </label>
+                    <input
+                      id="cep"
+                      type="text"
+                      value={cep}
+                      onChange={handleCepChange}
+                      placeholder="00000-000"
+                      maxLength={8}
+                      className="input-base"
+                    />
                   </div>
 
                   <div>
-                    <label className="label-base" htmlFor="cidadeUf">Cidade / UF *</label>
+                    <label className="label-base" htmlFor="cidadeUf">Endereço Completo & Cidade/UF *</label>
                     <input
                       id="cidadeUf"
                       type="text"
-                      required
-                      placeholder="Ex: São Paulo/SP"
                       value={cidadeUf}
                       onChange={(e) => setCidadeUf(e.target.value)}
+                      placeholder="Rua, Número, Bairro — Cidade/UF"
                       className="input-base"
                     />
                   </div>
 
-                  <div>
-                    <label className="label-base">Forma de Pagamento</label>
-                    <div className="grid grid-cols-1">
-                      <div className="py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-widest bg-navy text-white border border-navy shadow-sm flex items-center justify-between">
-                        <span>Pix</span>
-                        <span className="text-[10px] text-gold font-medium normal-case">Liberação imediata</span>
-                      </div>
-                    </div>
+                  <div className="p-4 bg-cream/70 rounded-2xl border border-gold/20 text-xs text-navy/70 space-y-1">
+                    <p className="font-bold text-navy">💳 Pagamento Seguro via Pix</p>
+                    <p>Você receberá a chave Pix e confirmará os detalhes do pedido diretamente no WhatsApp do Ateliê.</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer Area */}
+            {/* Footer Buttons */}
             {cart.length > 0 && (
-              step === 'cart' ? (
-                <div className="p-8 border-t border-gold/20 bg-white shadow-lg space-y-6">
-                  <div className="space-y-2 text-left">
-                    <div className="flex items-center justify-between text-navy/50 text-[10px] uppercase tracking-[0.2em] font-black">
-                      <span>Subtotal</span>
-                      <span className="tabular-nums">
-                        {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-navy">
-                      <span className="font-serif font-bold text-lg">Total do Pedido</span>
-                      <span className="text-3xl font-black tabular-nums">
-                        {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </span>
-                    </div>
-                  </div>
+              <div className="p-6 bg-white border-t border-gold/20 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-navy/50 uppercase tracking-widest">Total do Pedido</span>
+                  <span className="text-2xl font-serif font-bold text-navy">
+                    {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
 
+                {step === 'cart' ? (
                   <button
                     onClick={() => setStep('checkout')}
-                    className="w-full gold-bg-gradient text-white py-6 rounded-full font-black text-lg flex items-center justify-center gap-3 transition-all shadow-xl shadow-gold/20 active:scale-[0.98] hover:scale-[1.02] group cursor-pointer"
+                    className="btn-primary w-full py-4 text-xs font-bold uppercase tracking-widest justify-center shadow-lg cursor-pointer"
                   >
-                    <MessageCircle size={24} strokeWidth={2.5} className="group-hover:animate-bounce" />
-                    Avançar para Checkout
+                    Avançar para Dados de Entrega
                   </button>
-                  
-                  <div className="flex items-center justify-center gap-2 text-[10px] text-navy/40 uppercase tracking-[0.15em] font-black">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                    Atendimento Personalizado via WhatsApp
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleCheckout}
+                      disabled={!nome.trim() || !cep.trim() || !cidadeUf.trim()}
+                      className="btn-whatsapp w-full py-4 text-xs font-bold uppercase tracking-widest justify-center shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <MessageCircle size={18} />
+                      Confirmar Pedido via WhatsApp
+                    </button>
+                    <button
+                      onClick={() => setStep('cart')}
+                      className="w-full py-2.5 text-xs text-navy/50 hover:text-navy font-bold uppercase tracking-wider text-center cursor-pointer"
+                    >
+                      Voltar ao Carrinho
+                    </button>
                   </div>
-                </div>
-              ) : (
-                <div className="p-8 border-t border-gold/20 bg-white shadow-lg space-y-4">
-                  <div className="flex items-center justify-between text-navy mb-2">
-                    <span className="font-serif font-bold text-lg text-left">Total do Pedido</span>
-                    <span className="text-2xl font-black tabular-nums">
-                      {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={handleCheckout}
-                    disabled={!nome.trim() || !cep.trim() || !cidadeUf.trim()}
-                    className={`w-full gold-bg-gradient text-white py-6 rounded-full font-black text-lg flex items-center justify-center gap-3 transition-all shadow-xl shadow-gold/20 active:scale-[0.98] hover:scale-[1.02] group cursor-pointer ${
-                      (!nome.trim() || !cep.trim() || !cidadeUf.trim()) ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <MessageCircle size={24} strokeWidth={2.5} className="group-hover:animate-bounce" />
-                    Finalizar no WhatsApp
-                  </button>
-                  
-                  <button
-                    onClick={() => setStep('cart')}
-                    className="w-full text-center text-xs font-bold uppercase tracking-widest text-navy/55 hover:text-navy py-2 transition-colors cursor-pointer"
-                  >
-                    Voltar para o Carrinho
-                  </button>
-                </div>
-              )
+                )}
+              </div>
             )}
           </motion.div>
         </>

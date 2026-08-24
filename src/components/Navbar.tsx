@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronDown, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface NavbarProps {
-  onCartClick: () => void;
-}
-
 const WHATSAPP_ICON = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.828L.057 23.805a.5.5 0 0 0 .609.637l6.183-1.621A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.806 9.806 0 0 1-5.002-1.368l-.358-.214-3.713.974.99-3.617-.234-.372A9.785 9.785 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
   </svg>
 );
 
-export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
+export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) => {
   const { totalItems } = useCart();
   const { settings } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,22 +26,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   };
 
   const lojaLinks = [
-    { label: 'Todos os produtos', to: '/loja' },
-    { label: 'Terços', to: '/loja?categoria=tercos' },
-    { label: 'Pulseiras', to: '/loja?categoria=pulseiras' },
-    { label: 'Para o celular', to: '/loja?categoria=strap-phone' },
-    { label: 'Presentes', to: '/loja?linha=presentes' },
+    { label: 'Todos os Produtos', to: '/loja' },
+    { label: 'Terços', to: '/loja?linha=devocionais' },
+    { label: 'Pulseiras & Dezenas', to: '/loja?linha=leve-sua-fe' },
+    { label: 'Lembranças & Momentos', to: '/loja?linha=momentos' },
   ];
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-cream-light/95 backdrop-blur-md border-b border-gold/10">
-        <div className="max-w-7xl mx-auto px-4 h-18 flex items-center justify-between gap-4" style={{ height: '4.5rem' }}>
-          
-          {/* Mobile: Hamburger */}
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-b border-gold/20 shadow-xs transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 h-[4.5rem] flex items-center justify-between gap-4">
+
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-navy/70 hover:text-navy rounded-full hover:bg-navy/5 transition-all"
+            className="md:hidden p-2 text-navy hover:text-gold-dark transition-colors"
             aria-label="Menu"
           >
             {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -125,6 +119,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               </AnimatePresence>
             </div>
 
+            {/* Monte seu Terço — Featured Nav Button */}
+            <Link
+              to="/monte-seu-terco"
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+                location.pathname === '/monte-seu-terco'
+                  ? 'bg-navy text-gold border-gold/40 shadow-sm'
+                  : 'bg-gold/15 text-navy border-gold/30 hover:bg-gold/25 hover:border-gold/50'
+              }`}
+            >
+              <Sparkles size={12} className="text-gold-dark" />
+              <span>Monte seu Terço</span>
+            </Link>
+
             <Link to="/personalize" className={`nav-link ${location.pathname === '/personalize' ? 'nav-link-active' : ''}`}>
               Personalize
             </Link>
@@ -155,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             {/* Cart */}
             <button
               onClick={onCartClick}
-              className="relative p-2.5 text-navy hover:bg-navy/5 rounded-full transition-all active:scale-90 group"
+              className="relative p-2.5 text-navy hover:bg-navy/5 rounded-full transition-all active:scale-90 group cursor-pointer"
               aria-label="Carrinho"
             >
               <ShoppingCart size={22} className="group-hover:rotate-12 transition-transform" />
@@ -203,6 +210,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                 <button onClick={handleNavClose} className="p-2 text-navy/40 hover:text-navy rounded-full hover:bg-navy/5">
                   <X size={20} />
                 </button>
+              </div>
+
+              {/* Mobile Featured CTA */}
+              <div className="p-4 pb-2">
+                <Link
+                  to="/monte-seu-terco"
+                  onClick={handleNavClose}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-navy to-navy-light text-gold rounded-2xl font-bold text-xs uppercase tracking-widest border border-gold/30 shadow-md"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} />
+                    <span>Monte seu Terço</span>
+                  </div>
+                  <span className="text-[10px] bg-gold/20 text-white px-2 py-0.5 rounded-full">2D</span>
+                </Link>
               </div>
 
               {/* Mobile Links */}
