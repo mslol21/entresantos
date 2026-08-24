@@ -3,40 +3,47 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MessageCircle, ArrowRight, Users } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { 
+  BaptismVectorIcon, 
+  CommunionVectorIcon, 
+  CrismaVectorIcon, 
+  WeddingVectorIcon, 
+  RetiroVectorIcon 
+} from '../components/icons/ProductIcons';
 
 const MOMENTS = [
   {
     id: 'batismo',
     label: 'Batismo',
-    icon: '💧',
+    iconComponent: <BaptismVectorIcon size={26} className="text-blue-600" />,
     description: 'Lembranças artesanais para celebrar o sacramento do Batismo.',
     suggestions: ['Terço infantil', 'Pulseira com medalha', 'Chaveiro personalizado'],
   },
   {
     id: 'primeira_comunhao',
     label: 'Primeira Comunhão',
-    icon: '🍞',
+    iconComponent: <CommunionVectorIcon size={26} className="text-gold-dark" />,
     description: 'Peças especiais para este momento tão significativo da vida de fé.',
     suggestions: ['Terço branco', 'Dezena personalizada', 'Pulseira com cruz'],
   },
   {
     id: 'crisma',
     label: 'Crisma',
-    icon: '✝️',
+    iconComponent: <CrismaVectorIcon size={26} className="text-amber-600" />,
     description: 'Acessórios para os jovens que confirmam sua fé no Espírito Santo.',
     suggestions: ['Terço personalizado', 'Pulseira com nome', 'Phone charm'],
   },
   {
     id: 'casamento',
     label: 'Casamento',
-    icon: '💍',
+    iconComponent: <WeddingVectorIcon size={26} className="text-gold-dark" />,
     description: 'Lembranças para o dia mais especial do casal.',
     suggestions: ['Terço de noiva', 'Dezena de casamento', 'Pulseiras para padrinhos'],
   },
   {
     id: 'retiro',
     label: 'Encontros e Retiros',
-    icon: '🕊️',
+    iconComponent: <RetiroVectorIcon size={26} className="text-emerald-700" />,
     description: 'Lembranças para grupos em retiros espirituais e encontros de fé.',
     suggestions: ['Pulseiras em quantidade', 'Chaveiros', 'Dezenas personalizadas'],
   },
@@ -154,7 +161,9 @@ const MomentsFaith: React.FC = () => {
                   : 'border-gold/15 bg-white text-navy hover:border-gold/40 hover:bg-gold/5'
               }`}
             >
-              <span className="text-3xl">{moment.icon}</span>
+              <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center border border-gold/20 shadow-xs">
+                {moment.iconComponent}
+              </div>
               <span className="text-xs font-bold uppercase tracking-wider leading-tight">{moment.label}</span>
             </motion.button>
           ))}
@@ -170,7 +179,9 @@ const MomentsFaith: React.FC = () => {
           >
             {/* Moment info */}
             <div className="bg-gradient-to-br from-cream to-amber-50 border border-gold/20 rounded-3xl p-8">
-              <div className="text-4xl mb-4">{selectedMoment.icon}</div>
+              <div className="w-14 h-14 rounded-2xl bg-gold/15 flex items-center justify-center mb-4 border border-gold/25 shadow-xs">
+                {selectedMoment.iconComponent}
+              </div>
               <h2 className="font-serif font-bold text-2xl text-navy mb-3">{selectedMoment.label}</h2>
               <p className="text-navy/60 text-sm leading-relaxed mb-6">{selectedMoment.description}</p>
 

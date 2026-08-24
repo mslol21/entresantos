@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Minus, Plus, MessageCircle, ShoppingBag, Sparkles } from 'lucide-react';
+import { RosaryVectorIcon } from './icons/ProductIcons';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 
@@ -219,7 +220,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
                               />
                             ) : (
-                              <span className="text-3xl">📿</span>
+                              <RosaryVectorIcon size={32} className="text-gold-dark" />
                             )}
                           </div>
                           <div className="flex-grow flex flex-col py-1">

@@ -1,21 +1,24 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { 
+  Check, Layers, CircleDot, Sparkles, Shield, 
+  Plus, Gift, CheckCircle2 
+} from 'lucide-react';
 
 export interface StepItem {
   id: number;
   label: string;
   shortLabel: string;
-  icon?: string;
+  iconComponent: React.ReactNode;
 }
 
 export const STEPS: StepItem[] = [
-  { id: 1, label: 'Modelo', shortLabel: 'Modelo', icon: '📿' },
-  { id: 2, label: 'Contas (Ave-Marias)', shortLabel: 'Contas', icon: '⚪' },
-  { id: 3, label: 'Pai-Nossos', shortLabel: 'Pai-Nosso', icon: '🌟' },
-  { id: 4, label: 'Entremeio', shortLabel: 'Entremeio', icon: '🕊️' },
-  { id: 5, label: 'Crucifixo', shortLabel: 'Crucifixo', icon: '✝️' },
-  { id: 6, label: 'Extras & Gravação', shortLabel: 'Extras', icon: '🎁' },
-  { id: 7, label: 'Resumo Final', shortLabel: 'Resumo', icon: '✨' },
+  { id: 1, label: 'Modelo', shortLabel: 'Modelo', iconComponent: <Layers size={13} /> },
+  { id: 2, label: 'Contas (Ave-Marias)', shortLabel: 'Contas', iconComponent: <CircleDot size={13} /> },
+  { id: 3, label: 'Pai-Nossos', shortLabel: 'Pai-Nosso', iconComponent: <Sparkles size={13} /> },
+  { id: 4, label: 'Entremeio', shortLabel: 'Entremeio', iconComponent: <Shield size={13} /> },
+  { id: 5, label: 'Crucifixo', shortLabel: 'Crucifixo', iconComponent: <Plus size={13} /> },
+  { id: 6, label: 'Extras & Gravação', shortLabel: 'Extras', iconComponent: <Gift size={13} /> },
+  { id: 7, label: 'Resumo Final', shortLabel: 'Resumo', iconComponent: <CheckCircle2 size={13} /> },
 ];
 
 interface RosaryStepperProps {
@@ -44,7 +47,7 @@ export const RosaryStepper: React.FC<RosaryStepperProps> = ({
               type="button"
               onClick={() => isClickable && onStepClick(step.id)}
               disabled={!isClickable}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
                 isCurrent
                   ? 'bg-navy text-white shadow-md'
                   : isCompleted
@@ -52,9 +55,11 @@ export const RosaryStepper: React.FC<RosaryStepperProps> = ({
                   : 'bg-white/60 text-navy/40 border border-gold/10 opacity-60'
               }`}
             >
-              <span className="text-xs">{step.icon}</span>
+              <span className={isCurrent ? 'text-gold' : isCompleted ? 'text-gold-dark' : 'text-navy/40'}>
+                {step.iconComponent}
+              </span>
               <span>{step.shortLabel}</span>
-              {isCompleted && <Check size={12} strokeWidth={3} className="text-gold-dark" />}
+              {isCompleted && <Check size={12} strokeWidth={3} className="text-gold-dark ml-0.5" />}
             </button>
           );
         })}

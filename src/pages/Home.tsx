@@ -55,13 +55,21 @@ const PersonalizeTeaser: React.FC = () => (
   </section>
 );
 
+import { 
+  BaptismVectorIcon, 
+  CommunionVectorIcon, 
+  CrismaVectorIcon, 
+  WeddingVectorIcon, 
+  RetiroVectorIcon 
+} from '../components/icons/ProductIcons';
+
 const MomentosTeaser: React.FC = () => {
   const moments = [
-    { icon: '💧', label: 'Batismo' },
-    { icon: '🍞', label: 'Primeira Comunhão' },
-    { icon: '✝️', label: 'Crisma' },
-    { icon: '💍', label: 'Casamento' },
-    { icon: '🕊️', label: 'Encontros e retiros' },
+    { iconComponent: <BaptismVectorIcon size={28} className="text-blue-600" />, label: 'Batismo' },
+    { iconComponent: <CommunionVectorIcon size={28} className="text-gold-dark" />, label: 'Primeira Comunhão' },
+    { iconComponent: <CrismaVectorIcon size={28} className="text-amber-600" />, label: 'Crisma' },
+    { iconComponent: <WeddingVectorIcon size={28} className="text-gold-dark" />, label: 'Casamento' },
+    { iconComponent: <RetiroVectorIcon size={28} className="text-emerald-700" />, label: 'Encontros e retiros' },
   ];
 
   return (
@@ -86,9 +94,11 @@ const MomentosTeaser: React.FC = () => {
             <Link
               key={m.label}
               to={`/momentos-de-fe#${encodeURIComponent(m.label.toLowerCase())}`}
-              className="p-6 bg-white border border-gold/15 rounded-3xl text-center hover:border-gold/40 hover:bg-gold/5 transition-all shadow-sm group"
+              className="p-6 bg-white border border-gold/15 rounded-3xl text-center hover:border-gold/40 hover:bg-gold/5 transition-all shadow-sm group flex flex-col items-center justify-center"
             >
-              <span className="text-3xl block mb-3 group-hover:scale-110 transition-transform">{m.icon}</span>
+              <div className="w-14 h-14 rounded-2xl bg-gold/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-gold/20 shadow-xs">
+                {m.iconComponent}
+              </div>
               <span className="font-serif font-bold text-sm text-navy block leading-tight">{m.label}</span>
             </Link>
           ))}

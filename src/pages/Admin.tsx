@@ -751,7 +751,7 @@ export const Admin: React.FC = () => {
                           </div>
                           <div className="text-xs text-navy/60 space-y-1 mb-3">
                             {order.items.map((it, idx) => (
-                              <p key={idx} className="line-clamp-1">📿 {it.quantity}x {it.name}</p>
+                              <p key={idx} className="line-clamp-1">• {it.quantity}x {it.name}</p>
                             ))}
                           </div>
                           <div className="flex items-center justify-between pt-2 border-t border-gold/10">

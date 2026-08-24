@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, MessageCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { RosaryVectorIcon, BraceletVectorIcon, DezenaVectorIcon, PhoneCharmVectorIcon } from '../components/icons/ProductIcons';
 import { useData } from '../context/DataContext';
 
 const DEVOTIONS = [
@@ -302,7 +303,9 @@ const Personalize: React.FC = () => {
 
               {/* Visual Showcase Thumbnail */}
               <div className="w-full max-w-[280px] aspect-square rounded-2xl bg-white border border-gold/20 p-6 flex flex-col items-center justify-center shadow-md relative group-hover:scale-105 transition-transform duration-500">
-                <span className="text-6xl mb-3">📿</span>
+                <div className="w-16 h-16 rounded-2xl bg-gold/15 flex items-center justify-center text-gold-dark mb-3 border border-gold/25 shadow-inner">
+                  <RosaryVectorIcon size={38} className="text-gold-dark" />
+                </div>
                 <span className="font-serif font-bold text-navy text-base text-center">Terço Sob Medida</span>
                 <span className="text-[10px] text-gold-dark font-black uppercase tracking-widest mt-1">Preview em tempo real</span>
               </div>
@@ -319,9 +322,9 @@ const Personalize: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { id: 'Pulseira', icon: '🧶', title: 'Personalize sua Pulseira', desc: 'Pulseiras devocionais com medalhas, pérolas e cristais ajustáveis.' },
-              { id: 'Dezena', icon: '🔮', title: 'Personalize sua Dezena', desc: 'Dezenas para retrovisor, bolsa ou oração de bolso.' },
-              { id: 'Phone Charm', icon: '📱', title: 'Personalize seu Phone Charm', desc: 'Acessório de celular com contas e medalhas de proteção diária.' },
+              { id: 'Pulseira', iconComponent: <BraceletVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize sua Pulseira', desc: 'Pulseiras devocionais com medalhas, pérolas e cristais ajustáveis.' },
+              { id: 'Dezena', iconComponent: <DezenaVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize sua Dezena', desc: 'Dezenas para retrovisor, bolsa ou oração de bolso.' },
+              { id: 'Phone Charm', iconComponent: <PhoneCharmVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize seu Phone Charm', desc: 'Acessório de celular com contas e medalhas de proteção diária.' },
             ].map(item => (
               <button
                 key={item.id}
@@ -334,7 +337,9 @@ const Personalize: React.FC = () => {
                 }`}
               >
                 <div>
-                  <span className="text-4xl block mb-4">{item.icon}</span>
+                  <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center mb-4 border border-gold/20 shadow-xs">
+                    {item.iconComponent}
+                  </div>
                   <h4 className="font-serif font-bold text-lg text-navy mb-2">{item.title}</h4>
                   <p className="text-xs text-navy/60 leading-relaxed">{item.desc}</p>
                 </div>
