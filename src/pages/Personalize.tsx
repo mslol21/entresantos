@@ -322,22 +322,22 @@ const Personalize: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { id: 'Pulseira', iconComponent: <BraceletVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize sua Pulseira', desc: 'Pulseiras devocionais com medalhas, pérolas e cristais ajustáveis.' },
-              { id: 'Dezena', iconComponent: <DezenaVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize sua Dezena', desc: 'Dezenas para retrovisor, bolsa ou oração de bolso.' },
-              { id: 'Phone Charm', iconComponent: <PhoneCharmVectorIcon size={28} className="text-gold-dark" />, title: 'Personalize seu Phone Charm', desc: 'Acessório de celular com contas e medalhas de proteção diária.' },
+              { id: 'Pulseira', iconComponent: <BraceletVectorIcon size={36} className="text-gold-dark" />, title: 'Personalize sua Pulseira', desc: 'Pulseiras devocionais com medalhas, pérolas e cristais ajustáveis.' },
+              { id: 'Dezena', iconComponent: <DezenaVectorIcon size={36} className="text-gold-dark" />, title: 'Personalize sua Dezena', desc: 'Dezenas para retrovisor, bolsa ou oração de bolso.' },
+              { id: 'Phone Charm', iconComponent: <PhoneCharmVectorIcon size={36} className="text-gold-dark" />, title: 'Personalize seu Phone Charm', desc: 'Acessório de celular com contas e medalhas de proteção diária.' },
             ].map(item => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleSelectProductCard(item.id)}
-                className={`p-6 rounded-3xl border-2 text-left flex flex-col justify-between transition-all cursor-pointer ${
+                className={`p-6 rounded-3xl border-2 text-left flex flex-col justify-between transition-all cursor-pointer group ${
                   selectedProduct === item.id
                     ? 'border-navy bg-navy/5 shadow-md ring-2 ring-navy/10'
                     : 'border-gold/15 bg-white hover:border-gold/40 hover:bg-gold/5 shadow-sm'
                 }`}
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center mb-4 border border-gold/20 shadow-xs">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 via-white to-amber-100/40 flex items-center justify-center mb-4 border border-gold/30 shadow-xs group-hover:scale-105 transition-transform">
                     {item.iconComponent}
                   </div>
                   <h4 className="font-serif font-bold text-lg text-navy mb-2">{item.title}</h4>
@@ -345,7 +345,7 @@ const Personalize: React.FC = () => {
                 </div>
                 <div className="mt-6 pt-4 border-t border-gold/10 flex items-center justify-between text-xs font-bold text-gold-dark">
                   <span>{selectedProduct === item.id ? 'Selecionado' : 'Personalizar'}</span>
-                  <ArrowRight size={14} />
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
             ))}

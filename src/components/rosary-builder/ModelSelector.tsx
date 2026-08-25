@@ -3,11 +3,13 @@ import type { RosaryModel } from '../../types';
 import { RosaryOptionCard } from './RosaryOptionCard';
 import { motion } from 'framer-motion';
 import { 
-  RosaryVectorIcon, 
-  DezenaVectorIcon, 
-  BraceletVectorIcon 
+  TradicionalModelIcon,
+  DelicadoModelIcon,
+  PremiumModelIcon,
+  NoivaModelIcon,
+  InfantilModelIcon,
+  DezenaVectorIcon
 } from '../icons/ProductIcons';
-import { Crown, Sparkles, Heart } from 'lucide-react';
 
 interface ModelSelectorProps {
   models: RosaryModel[];
@@ -39,18 +41,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const getModelIcon = (slug: string): React.ReactNode => {
     switch (slug) {
       case 'dezena':
-        return <DezenaVectorIcon size={26} className="text-gold-dark" />;
+        return <DezenaVectorIcon size={30} className="text-gold-dark" />;
       case 'delicado':
-        return <BraceletVectorIcon size={26} className="text-gold-dark" />;
+        return <DelicadoModelIcon size={30} className="text-gold-dark" />;
       case 'premium':
-        return <Crown size={22} className="text-gold-dark" />;
+        return <PremiumModelIcon size={30} className="text-gold-dark" />;
       case 'noiva':
-        return <Sparkles size={22} className="text-gold-dark" />;
+        return <NoivaModelIcon size={30} className="text-gold-dark" />;
       case 'infantil':
-        return <Heart size={22} className="text-rose-500" />;
+        return <InfantilModelIcon size={30} className="text-rose-500" />;
       case 'tradicional':
       default:
-        return <RosaryVectorIcon size={26} className="text-gold-dark" />;
+        return <TradicionalModelIcon size={30} className="text-gold-dark" />;
     }
   };
 
