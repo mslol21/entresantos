@@ -63,6 +63,15 @@ export const DEFAULT_ROSARY_MODELS: RosaryModel[] = [
     base_price: 44.90,
     is_active: true,
     display_order: 5
+  },
+  {
+    id: "model-dezena",
+    name: "Dezena de Bolso / Carro",
+    slug: "dezena",
+    description: "1 dezena compacta em arco com fecho superior para retrovisor, bolsa ou oração rápida.",
+    base_price: 29.90,
+    is_active: true,
+    display_order: 6
   }
 ];
 

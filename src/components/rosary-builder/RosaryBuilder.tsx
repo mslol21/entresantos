@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -22,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export const RosaryBuilder: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { rosaryModels, customizationComponents, saveCustomBuild, products } = useData();
   const { addToCart, setIsCartOpen } = useCart();
   const { showToast } = useToast();
@@ -42,12 +44,23 @@ export const RosaryBuilder: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [publicCode, setPublicCode] = useState(() => `ES-${Math.floor(10000 + Math.random() * 90000)}`);
 
-  // Default selections on load
+  // Default selections on load with URL query param support
   useEffect(() => {
     if (!selectedModel && rosaryModels.length > 0) {
+      const modelParam = searchParams.get('modelo') || searchParams.get('produto');
+      if (modelParam) {
+        const found = rosaryModels.find(m => 
+          m.slug.toLowerCase() === modelParam.toLowerCase() ||
+          m.name.toLowerCase().includes(modelParam.toLowerCase())
+        );
+        if (found) {
+          setSelectedModel(found);
+          return;
+        }
+      }
       setSelectedModel(rosaryModels[0]);
     }
-  }, [rosaryModels, selectedModel]);
+  }, [rosaryModels, selectedModel, searchParams]);
 
   useEffect(() => {
     if (!selectedBead && customizationComponents.length > 0) {

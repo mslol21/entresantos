@@ -11,48 +11,74 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
   const { model, bead, ourFather, centerpiece, crucifix, extras, customName } = configuration;
   const [zoomLevel, setZoomLevel] = useState(1);
 
+  const modelSlug = model?.slug || 'tradicional';
+  const isDezena = modelSlug === 'dezena';
+  const isNoiva = modelSlug === 'noiva';
+  const isPremium = modelSlug === 'premium';
+  const isDelicado = modelSlug === 'delicado';
+  const isInfantil = modelSlug === 'infantil';
+
   // Compute colors & finishes
   const beadColor = bead?.color || '#F8F8F6';
-  const ourFatherColor = ourFather?.color || beadColor;
+  const ourFatherColor = ourFather?.color || (isNoiva ? '#FFFDF0' : beadColor);
   
-  const getMetalFinish = (compColor?: string, compName?: string): { base: string; highlight: string; shadow: string } => {
+  const getMetalFinish = (compColor?: string, compName?: string): { base: string; highlight: string; shadow: string; accent: string } => {
     const str = `${compColor || ''} ${compName || ''}`.toLowerCase();
     if (str.includes('prata') || str.includes('prateado') || str.includes('silver') || str.includes('#cf') || str.includes('#fff')) {
-      return { base: '#C0C0C0', highlight: '#FFFFFF', shadow: '#787878' };
+      return { base: '#C0C0C0', highlight: '#FFFFFF', shadow: '#707070', accent: '#E8E8E8' };
     }
     if (str.includes('ouro velho') || str.includes('envelhecido') || str.includes('vintage') || str.includes('#a68')) {
-      return { base: '#A68A56', highlight: '#D1B880', shadow: '#5C4824' };
+      return { base: '#A68A56', highlight: '#D1B880', shadow: '#5C4824', accent: '#8C7030' };
     }
     if (str.includes('madeira') || str.includes('#664') || str.includes('#8c6')) {
-      return { base: '#7A4A28', highlight: '#A66B3E', shadow: '#4A2A12' };
+      return { base: '#7A4A28', highlight: '#A66B3E', shadow: '#4A2A12', accent: '#D4AF37' };
     }
     // Default Gold
-    return { base: '#D4AF37', highlight: '#FFE680', shadow: '#8C701E' };
+    return { base: '#D4AF37', highlight: '#FFF0A0', shadow: '#8C701E', accent: '#FFE680' };
   };
 
   const centerpieceFinish = getMetalFinish(centerpiece?.color, centerpiece?.name);
   const crucifixFinish = getMetalFinish(crucifix?.color, crucifix?.name);
 
-  // Generate coordinates for 5 decades (50 Ave-Marias + 4 Our-Fathers) around the loop
-  // The loop starts from centerpiece top-left, goes up, curves over top, and comes down to centerpiece top-right.
+  // Model-specific bead sizing & geometry
+  const aveMariaRadius = isDelicado ? 4.2 : isPremium ? 6.2 : isNoiva ? 5.8 : isInfantil ? 5.8 : 5.4;
+  const ourFatherRadius = isDelicado ? 6.0 : isPremium ? 8.8 : isNoiva ? 8.0 : isInfantil ? 7.6 : 7.5;
+
+  // Generate coordinates for loop beads according to model
   const loopBeads = useMemo(() => {
     const points: Array<{ x: number; y: number; type: 'ave_maria' | 'our_father'; decade: number; index: number }> = [];
     const centerX = 250;
-    const centerY = 195;
-    const radiusX = 145;
-    const radiusY = 125;
 
-    // We have 5 decades of 10 beads + 4 Our Father beads separating them = 54 points in loop
-    // Total steps: 5 * 10 (ave-marias) + 4 (our-fathers) = 54 points along ellipse from angle 75° to 465° (counter-clockwise)
+    if (isDezena) {
+      // Single decade arc: 10 Ave-Maria beads in a gentle top horseshoe arc
+      const centerY = 195;
+      const radiusX = 115;
+      const radiusY = 95;
+      const totalBeads = 10;
+
+      for (let b = 1; b <= totalBeads; b++) {
+        // Map 1..10 across arc from 110 deg to 430 deg
+        const progress = (b - 1) / (totalBeads - 1);
+        const angle = Math.PI * 0.65 + progress * Math.PI * 1.70;
+        const x = centerX + radiusX * Math.cos(angle);
+        const y = centerY + radiusY * Math.sin(angle);
+        points.push({ x, y, type: 'ave_maria', decade: 1, index: b });
+      }
+      return points;
+    }
+
+    // 5 Decades (Tradicional, Delicado, Premium, Noiva, Infantil)
+    const centerY = isNoiva ? 185 : 195;
+    const radiusX = isNoiva ? 140 : isPremium ? 152 : isDelicado ? 138 : isInfantil ? 136 : 145;
+    const radiusY = isNoiva ? 145 : isPremium ? 130 : isDelicado ? 118 : isInfantil ? 118 : 125;
+
     let pointIndex = 0;
 
     for (let decade = 1; decade <= 5; decade++) {
-      // 10 Ave-Maria beads
+      // 10 Ave-Maria beads per decade
       for (let b = 1; b <= 10; b++) {
-        // Map pointIndex to parametric angle on ellipse
-        // Leave an opening at bottom (between 80° and 100°) for centerpiece
         const progress = pointIndex / 54;
-        const angle = Math.PI * 0.58 + progress * Math.PI * 1.84; // 105 deg to 435 deg
+        const angle = Math.PI * 0.58 + progress * Math.PI * 1.84;
         const x = centerX + radiusX * Math.cos(angle);
         const y = centerY + radiusY * Math.sin(angle);
 
@@ -60,7 +86,7 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
         pointIndex++;
       }
 
-      // 1 Our Father bead after decades 1, 2, 3, 4
+      // 1 Our Father bead between decades 1-4
       if (decade < 5) {
         const progress = pointIndex / 54;
         const angle = Math.PI * 0.58 + progress * Math.PI * 1.84;
@@ -73,31 +99,64 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
     }
 
     return points;
-  }, []);
+  }, [isDezena, isNoiva, isPremium, isDelicado, isInfantil]);
 
-  // Drop pendant beads below centerpiece
-  // Centerpiece at (250, 325)
-  // 1 Our Father at (250, 360)
-  // 3 Ave-Marias at (250, 385), (250, 405), (250, 425)
-  // 1 Our Father at (250, 455)
-  // Crucifix at (250, 500)
-  const dropBeads = [
-    { x: 250, y: 360, type: 'our_father' as const, label: 'Pai-Nosso' },
-    { x: 250, y: 388, type: 'ave_maria' as const, label: 'Ave-Maria 1' },
-    { x: 250, y: 408, type: 'ave_maria' as const, label: 'Ave-Maria 2' },
-    { x: 250, y: 428, type: 'ave_maria' as const, label: 'Ave-Maria 3' },
-    { x: 250, y: 456, type: 'our_father' as const, label: 'Pai-Nosso' },
-  ];
+  // Drop pendant coordinates below centerpiece
+  const dropBeads = useMemo(() => {
+    if (isDezena) {
+      // Dezena has only 1 Our-Father on the drop
+      return [
+        { x: 250, y: 345, type: 'our_father' as const, label: 'Pai-Nosso' }
+      ];
+    }
+
+    // Standard 5-decade drop: 1 Our Father, 3 Ave-Marias, 1 Our Father
+    const startY = isNoiva ? 362 : 360;
+    const spacing = isDelicado ? 18 : isNoiva ? 23 : 20;
+
+    return [
+      { x: 250, y: startY, type: 'our_father' as const, label: 'Pai-Nosso 1' },
+      { x: 250, y: startY + spacing * 1.3, type: 'ave_maria' as const, label: 'Ave-Maria 1' },
+      { x: 250, y: startY + spacing * 2.2, type: 'ave_maria' as const, label: 'Ave-Maria 2' },
+      { x: 250, y: startY + spacing * 3.1, type: 'ave_maria' as const, label: 'Ave-Maria 3' },
+      { x: 250, y: startY + spacing * 4.4, type: 'our_father' as const, label: 'Pai-Nosso 2' },
+    ];
+  }, [isDezena, isNoiva, isDelicado]);
+
+  // Centerpiece Y position
+  const centerpieceY = isDezena ? 285 : 325;
+  // Crucifix Y position
+  const crucifixY = isDezena ? 420 : isNoiva ? 515 : 495;
 
   return (
-    <div className="relative w-full h-full min-h-[440px] md:min-h-[600px] flex flex-col items-center justify-center bg-gradient-to-b from-cream-light via-white to-amber-50/40 rounded-3xl border border-gold/20 shadow-premium p-4 select-none overflow-hidden group">
+    <div className="relative w-full h-full min-h-[460px] md:min-h-[620px] flex flex-col items-center justify-center bg-gradient-to-b from-cream-light via-white to-amber-50/40 rounded-3xl border border-gold/20 shadow-premium p-4 select-none overflow-hidden group">
       
       {/* Floating Badges */}
-      <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 pointer-events-none">
-        <span className="bg-navy/85 backdrop-blur-xs text-gold border border-gold/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5">
-          <Sparkles size={12} />
+      <div className="absolute top-4 left-4 z-20 flex flex-col sm:flex-row gap-2 pointer-events-none">
+        <span className="bg-navy/90 backdrop-blur-xs text-gold border border-gold/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5">
+          <Sparkles size={12} className="text-gold" />
           {model?.name || 'Terço Personalizado'}
         </span>
+        {isDezena && (
+          <span className="bg-amber-100/90 text-amber-900 border border-amber-300 px-3 py-1 rounded-full text-[10px] font-bold shadow-xs">
+            1 Dezena (10 Contas)
+          </span>
+        )}
+        {isNoiva && (
+          <span className="bg-rose-50/90 text-rose-900 border border-rose-200 px-3 py-1 rounded-full text-[10px] font-bold shadow-xs flex items-center gap-1">
+            ✨ Nupcial & Zircônias
+          </span>
+        )}
+        {isPremium && (
+          <span className="bg-gold/20 text-gold-dark border border-gold/40 px-3 py-1 rounded-full text-[10px] font-bold shadow-xs">
+            👑 Com Tulipas & Resplendor
+          </span>
+        )}
+        {isDelicado && (
+          <span className="bg-slate-100/90 text-slate-800 border border-slate-300 px-3 py-1 rounded-full text-[10px] font-bold shadow-xs">
+            🪶 Contas Finas 6mm
+          </span>
+        )}
         {customName && (
           <span className="bg-white/90 backdrop-blur-xs text-navy border border-gold/30 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
             Nome: {customName}
@@ -110,7 +169,7 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
         <button
           type="button"
           onClick={() => setZoomLevel(prev => Math.min(1.4, prev + 0.15))}
-          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors"
+          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors cursor-pointer"
           title="Aproximar"
           aria-label="Aproximar visualização"
         >
@@ -119,7 +178,7 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
         <button
           type="button"
           onClick={() => setZoomLevel(prev => Math.max(0.8, prev - 0.15))}
-          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors"
+          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors cursor-pointer"
           title="Afastar"
           aria-label="Afastar visualização"
         >
@@ -128,7 +187,7 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
         <button
           type="button"
           onClick={() => setZoomLevel(1)}
-          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors"
+          className="p-1.5 hover:bg-navy/5 text-navy/60 hover:text-navy rounded-full transition-colors cursor-pointer"
           title="Restaurar tamanho"
           aria-label="Restaurar tamanho padrão"
         >
@@ -143,7 +202,7 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
         className="w-full max-w-[480px] aspect-[5/6] flex items-center justify-center relative cursor-grab active:cursor-grabbing"
       >
         <svg
-          viewBox="0 0 500 560"
+          viewBox="0 0 500 580"
           className="w-full h-full filter drop-shadow-md overflow-visible"
         >
           <defs>
@@ -154,10 +213,14 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
             <filter id="metal-shadow" x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="1.5" dy="3" stdDeviation="2.5" floodColor="#0A1128" floodOpacity="0.35" />
             </filter>
+            <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
 
             {/* Ave-Maria Bead Radial Gradient */}
             <radialGradient id="bead-grad" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity={isNoiva ? 0.95 : 0.9} />
               <stop offset="45%" stopColor={beadColor} />
               <stop offset="90%" stopColor={beadColor} stopOpacity="0.95" />
               <stop offset="100%" stopColor="#2A2A2A" stopOpacity="0.35" />
@@ -188,41 +251,114 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
             {/* Cord / Chain Gradient */}
             <linearGradient id="cord-grad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#E2DBD0" />
+              <stop offset="50%" stopColor={centerpieceFinish.base} />
+              <stop offset="100%" stopColor={centerpieceFinish.shadow} />
+            </linearGradient>
+
+            {/* Tulipas (Bead Caps) Gradient for Premium */}
+            <linearGradient id="tulip-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFF8D6" />
               <stop offset="50%" stopColor="#D4AF37" />
               <stop offset="100%" stopColor="#8C701E" />
             </linearGradient>
           </defs>
 
-          {/* Background Cord / Chain Line */}
-          {/* Main Loop Path */}
-          <path
-            d="M 235 320 C 100 290 80 120 250 80 C 420 120 400 290 265 320"
-            fill="none"
-            stroke="url(#cord-grad)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
+          {/* ============================================================ */}
+          {/* BACKGROUND CORD / CHAIN LINES */}
+          {/* ============================================================ */}
+
+          {isDezena ? (
+            // Dezena Loop & Top Clasp
+            <>
+              {/* Top Ring / Clasp for Car mirror / key ring */}
+              <circle cx="250" cy="100" r="8" fill="none" stroke="url(#cord-grad)" strokeWidth="2.5" />
+              <path d="M 245 92 L 255 108" stroke={centerpieceFinish.highlight} strokeWidth="1.5" />
+              <line x1="250" y1="108" x2="250" y2="135" stroke="url(#cord-grad)" strokeWidth="2" />
+              
+              {/* Semicircle Arc of Beads */}
+              <path
+                d="M 235 285 C 120 250 120 135 250 135 C 380 135 380 250 265 285"
+                fill="none"
+                stroke="url(#cord-grad)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+            </>
+          ) : (
+            // 5-Decade Main Loop
+            <path
+              d={isNoiva 
+                ? "M 235 320 C 80 290 90 90 250 65 C 410 90 420 290 265 320" 
+                : "M 235 320 C 95 290 85 110 250 80 C 415 110 405 290 265 320"
+              }
+              fill="none"
+              stroke="url(#cord-grad)"
+              strokeWidth={isDelicado ? "1.2" : isPremium ? "2.5" : "2.0"}
+              strokeDasharray={isDelicado ? "2 2" : "none"}
+              strokeLinecap="round"
+              opacity="0.75"
+            />
+          )}
 
           {/* Drop Cord Path */}
           <line
             x1="250"
-            y1="325"
+            y1={centerpieceY}
             x2="250"
-            y2="485"
+            y2={crucifixY - 20}
             stroke="url(#cord-grad)"
-            strokeWidth="2.5"
+            strokeWidth={isDelicado ? "1.4" : "2.2"}
             strokeLinecap="round"
-            opacity="0.8"
+            opacity="0.85"
           />
 
-          {/* Loop Beads (Ave-Marias & Our-Fathers) */}
+          {/* ============================================================ */}
+          {/* LOOP BEADS (AVE-MARIAS & OUR-FATHERS) */}
+          {/* ============================================================ */}
           {loopBeads.map((pt, i) => {
             const isOurFather = pt.type === 'our_father';
-            const radius = isOurFather ? 7.5 : 5.5;
+            const radius = isOurFather ? ourFatherRadius : aveMariaRadius;
 
             return (
               <g key={`loop-${i}`} className="transition-all duration-300">
+                {/* Premium Model: Tulipas / Metal Bead Caps on Our Father beads */}
+                {isOurFather && isPremium && (
+                  <g>
+                    {/* Top Tulip Cap */}
+                    <path
+                      d={`M ${pt.x - radius * 0.9} ${pt.y - radius * 0.4} Q ${pt.x} ${pt.y - radius * 1.3} ${pt.x + radius * 0.9} ${pt.y - radius * 0.4} Q ${pt.x} ${pt.y - radius * 0.8} ${pt.x - radius * 0.9} ${pt.y - radius * 0.4}`}
+                      fill="url(#tulip-grad)"
+                      stroke={centerpieceFinish.highlight}
+                      strokeWidth="0.5"
+                      filter="url(#bead-shadow)"
+                    />
+                    {/* Bottom Tulip Cap */}
+                    <path
+                      d={`M ${pt.x - radius * 0.9} ${pt.y + radius * 0.4} Q ${pt.x} ${pt.y + radius * 1.3} ${pt.x + radius * 0.9} ${pt.y + radius * 0.4} Q ${pt.x} ${pt.y + radius * 0.8} ${pt.x - radius * 0.9} ${pt.y + radius * 0.4}`}
+                      fill="url(#tulip-grad)"
+                      stroke={centerpieceFinish.highlight}
+                      strokeWidth="0.5"
+                      filter="url(#bead-shadow)"
+                    />
+                  </g>
+                )}
+
+                {/* Noiva Model: Shimmering crystal halo on Our-Father beads */}
+                {isOurFather && isNoiva && (
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={radius + 3}
+                    fill="none"
+                    stroke="#FFEAA7"
+                    strokeWidth="0.8"
+                    strokeDasharray="1.5 2"
+                    opacity="0.8"
+                  />
+                )}
+
+                {/* Main Bead Sphere */}
                 <circle
                   cx={pt.x}
                   cy={pt.y}
@@ -232,25 +368,60 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
                   strokeWidth={isOurFather ? 1.2 : 0.6}
                   filter="url(#bead-shadow)"
                 />
+
                 {/* Specular Highlight dot */}
                 <circle
                   cx={pt.x - radius * 0.35}
                   cy={pt.y - radius * 0.35}
                   r={radius * 0.28}
                   fill="#FFFFFF"
-                  opacity="0.75"
+                  opacity={isNoiva ? 0.9 : 0.75}
                 />
               </g>
             );
           })}
 
-          {/* Drop Pendant Beads */}
+          {/* ============================================================ */}
+          {/* DROP PENDANT BEADS */}
+          {/* ============================================================ */}
           {dropBeads.map((pt, i) => {
             const isOurFather = pt.type === 'our_father';
-            const radius = isOurFather ? 8 : 5.8;
+            const radius = isOurFather ? ourFatherRadius : aveMariaRadius;
 
             return (
               <g key={`drop-${i}`} className="transition-all duration-300">
+                {/* Premium Model: Tulipas on Drop Our-Father beads */}
+                {isOurFather && isPremium && (
+                  <g>
+                    <path
+                      d={`M ${pt.x - radius * 0.9} ${pt.y - radius * 0.4} Q ${pt.x} ${pt.y - radius * 1.3} ${pt.x + radius * 0.9} ${pt.y - radius * 0.4} Q ${pt.x} ${pt.y - radius * 0.8} ${pt.x - radius * 0.9} ${pt.y - radius * 0.4}`}
+                      fill="url(#tulip-grad)"
+                      stroke={centerpieceFinish.highlight}
+                      strokeWidth="0.5"
+                    />
+                    <path
+                      d={`M ${pt.x - radius * 0.9} ${pt.y + radius * 0.4} Q ${pt.x} ${pt.y + radius * 1.3} ${pt.x + radius * 0.9} ${pt.y + radius * 0.4} Q ${pt.x} ${pt.y + radius * 0.8} ${pt.x - radius * 0.9} ${pt.y + radius * 0.4}`}
+                      fill="url(#tulip-grad)"
+                      stroke={centerpieceFinish.highlight}
+                      strokeWidth="0.5"
+                    />
+                  </g>
+                )}
+
+                {/* Noiva Model: Shimmering crystal halo */}
+                {isOurFather && isNoiva && (
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={radius + 3}
+                    fill="none"
+                    stroke="#FFEAA7"
+                    strokeWidth="0.8"
+                    strokeDasharray="1.5 2"
+                    opacity="0.8"
+                  />
+                )}
+
                 <circle
                   cx={pt.x}
                   cy={pt.y}
@@ -265,101 +436,254 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
                   cy={pt.y - radius * 0.35}
                   r={radius * 0.28}
                   fill="#FFFFFF"
-                  opacity="0.75"
+                  opacity={isNoiva ? 0.9 : 0.75}
                 />
               </g>
             );
           })}
 
-          {/* Centerpiece (Entremeio Medal) at (250, 325) */}
-          <g filter="url(#metal-shadow)" className="transition-transform duration-500 hover:scale-105 origin-[250px_325px]">
-            {/* Outer Ring & Loops */}
-            <circle cx="250" cy="325" r="16" fill="url(#centerpiece-grad)" stroke={centerpieceFinish.highlight} strokeWidth="1.5" />
-            <circle cx="250" cy="325" r="13" fill="none" stroke={centerpieceFinish.shadow} strokeWidth="0.8" strokeDasharray="1 2" />
-            
-            {/* Centerpiece Image / Icon Content */}
-            {centerpiece?.image ? (
-              <clipPath id="centerpiece-clip">
-                <circle cx="250" cy="325" r="12" />
-              </clipPath>
-            ) : null}
+          {/* ============================================================ */}
+          {/* CENTERPIECE MEDAL (ENTREMEIO) */}
+          {/* ============================================================ */}
+          
+          {/* Premium Model: Sunburst Resplendor Aureole behind centerpiece */}
+          {isPremium && (
+            <g opacity="0.85" filter="url(#glow-filter)">
+              {Array.from({ length: 16 }).map((_, rIdx) => {
+                const rayAngle = (rIdx * 360) / 16;
+                const rad = (rayAngle * Math.PI) / 180;
+                const x1 = 250 + 17 * Math.cos(rad);
+                const y1 = centerpieceY + 17 * Math.sin(rad);
+                const x2 = 250 + (rIdx % 2 === 0 ? 27 : 23) * Math.cos(rad);
+                const y2 = centerpieceY + (rIdx % 2 === 0 ? 27 : 23) * Math.sin(rad);
+                return (
+                  <line
+                    key={`ray-${rIdx}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke={centerpieceFinish.highlight}
+                    strokeWidth={rIdx % 2 === 0 ? 1.8 : 1.0}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+            </g>
+          )}
 
+          {/* Noiva Model: Pavé Crystal Zircônias ring around centerpiece */}
+          {isNoiva && (
+            <g>
+              <circle cx="250" cy={centerpieceY} r="20" fill="none" stroke={centerpieceFinish.highlight} strokeWidth="1" opacity="0.6" />
+              {Array.from({ length: 12 }).map((_, zIdx) => {
+                const zAngle = (zIdx * 360) / 12;
+                const zRad = (zAngle * Math.PI) / 180;
+                const zx = 250 + 20 * Math.cos(zRad);
+                const zy = centerpieceY + 20 * Math.sin(zRad);
+                return (
+                  <circle
+                    key={`zircon-${zIdx}`}
+                    cx={zx}
+                    cy={zy}
+                    r="1.8"
+                    fill="#FFFFFF"
+                    stroke={centerpieceFinish.base}
+                    strokeWidth="0.5"
+                    filter="url(#bead-shadow)"
+                  />
+                );
+              })}
+            </g>
+          )}
+
+          {/* Centerpiece Main Disc */}
+          <g filter="url(#metal-shadow)" className="transition-transform duration-500 hover:scale-105 origin-[250px_325px]">
+            {/* Outer Ring */}
+            <circle
+              cx="250"
+              cy={centerpieceY}
+              r={isDelicado ? 13 : isPremium ? 17 : 15}
+              fill="url(#centerpiece-grad)"
+              stroke={centerpieceFinish.highlight}
+              strokeWidth="1.5"
+            />
+            {/* Inner Border */}
+            <circle
+              cx="250"
+              cy={centerpieceY}
+              r={isDelicado ? 10.5 : isPremium ? 14 : 12}
+              fill="none"
+              stroke={centerpieceFinish.shadow}
+              strokeWidth="0.8"
+              strokeDasharray="1 2"
+            />
+            
+            {/* Centerpiece Icon/Saint Content */}
             {centerpiece?.image ? (
-              <image
-                href={centerpiece.image}
-                x="238"
-                y="313"
-                width="24"
-                height="24"
-                clipPath="url(#centerpiece-clip)"
-                preserveAspectRatio="xMidYMid slice"
-              />
+              <>
+                <clipPath id="centerpiece-clip">
+                  <circle cx="250" cy={centerpieceY} r={isDelicado ? 10 : 12} />
+                </clipPath>
+                <image
+                  href={centerpiece.image}
+                  x={isDelicado ? 240 : 238}
+                  y={centerpieceY - (isDelicado ? 10 : 12)}
+                  width={isDelicado ? 20 : 24}
+                  height={isDelicado ? 20 : 24}
+                  clipPath="url(#centerpiece-clip)"
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              </>
             ) : (
-              // Holy Cross / Saint silhouette vector
-              <path
-                d="M 250 317 L 250 333 M 244 322 L 256 322"
-                stroke="#FFFFFF"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                opacity="0.9"
-              />
+              // Saint / Devotional Emblem
+              <g>
+                <path
+                  d={`M 250 ${centerpieceY - 7} L 250 ${centerpieceY + 7} M 244 ${centerpieceY - 2} L 256 ${centerpieceY - 2}`}
+                  stroke="#FFFFFF"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  opacity="0.9"
+                />
+                {/* Subtle halo */}
+                <circle cx="250" cy={centerpieceY - 3} r="4" fill="none" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.6" />
+              </g>
             )}
 
-            {/* Top connection loops */}
-            <circle cx="237" cy="316" r="2.5" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
-            <circle cx="263" cy="316" r="2.5" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
-            <circle cx="250" cy="339" r="2.5" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
+            {/* Connection loops */}
+            <circle cx="237" cy={centerpieceY - 9} r="2.2" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
+            <circle cx="263" cy={centerpieceY - 9} r="2.2" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
+            <circle cx="250" cy={centerpieceY + 14} r="2.2" fill="none" stroke={centerpieceFinish.base} strokeWidth="1" />
           </g>
 
           {/* Extra Medals attached to Centerpiece (if selected) */}
           {extras.some(e => e.component_type === 'medal') && (
-            <g filter="url(#metal-shadow)" className="animate-pulse">
-              <line x1="262" y1="328" x2="276" y2="340" stroke="url(#cord-grad)" strokeWidth="1.2" />
-              <circle cx="280" cy="344" r="9" fill="url(#centerpiece-grad)" stroke={centerpieceFinish.highlight} strokeWidth="1" />
-              <text x="280" y="347" textAnchor="middle" fontSize="8" fill="#FFFFFF" fontWeight="bold">✝</text>
+            <g filter="url(#metal-shadow)">
+              <line x1="263" y1={centerpieceY + 3} x2="277" y2={centerpieceY + 15} stroke="url(#cord-grad)" strokeWidth="1.2" />
+              <circle cx="280" cy={centerpieceY + 18} r="9" fill="url(#centerpiece-grad)" stroke={centerpieceFinish.highlight} strokeWidth="1" />
+              <text x="280" y={centerpieceY + 21} textAnchor="middle" fontSize="8" fill="#FFFFFF" fontWeight="bold">✝</text>
             </g>
           )}
 
-          {/* Crucifix at bottom (250, 500) */}
+          {/* ============================================================ */}
+          {/* CRUCIFIX (AT BOTTOM) */}
+          {/* ============================================================ */}
           <g filter="url(#metal-shadow)" className="transition-transform duration-500 hover:scale-105 origin-[250px_500px]">
-            {/* Cross Shape (Barroca/Tradicional) */}
-            <path
-              d="M 243 472 H 257 V 485 H 272 V 497 H 257 V 535 H 243 V 497 H 228 V 485 H 243 Z"
-              fill="url(#crucifix-grad)"
-              stroke={crucifixFinish.highlight}
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-            />
-            {/* Inner Cross Inset */}
-            <path
-              d="M 245 475 H 255 V 487 H 269 V 495 H 255 V 532 H 245 V 495 H 231 V 487 H 245 Z"
-              fill="none"
-              stroke={crucifixFinish.shadow}
-              strokeWidth="0.8"
-            />
-            {/* Corpus Christi Silhouette */}
-            <path
-              d="M 250 484 L 250 514 M 242 490 L 258 490 M 248 514 L 252 514"
-              stroke="#FFFFFF"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              opacity="0.85"
-            />
-            {/* INRI Banner */}
-            <rect x="246" y="474" width="8" height="4" rx="1" fill={crucifixFinish.highlight} opacity="0.9" />
-            {/* Ring at top */}
-            <circle cx="250" cy="470" r="3" fill="none" stroke={crucifixFinish.base} strokeWidth="1.2" />
+            
+            {/* 1. DELICADO MODEL: Slim cross with sparkling zircon crystal in center */}
+            {isDelicado ? (
+              <g>
+                <line x1="250" y1={crucifixY - 22} x2="250" y2={crucifixY + 26} stroke="url(#crucifix-grad)" strokeWidth="3.2" strokeLinecap="round" />
+                <line x1="237" y1={crucifixY - 8} x2="263" y2={crucifixY - 8} stroke="url(#crucifix-grad)" strokeWidth="3.2" strokeLinecap="round" />
+                {/* Central Ponto de Luz (Crystal Gem) */}
+                <circle cx="250" cy={crucifixY - 8} r="3.2" fill="#FFFFFF" stroke={crucifixFinish.base} strokeWidth="0.8" />
+                <polygon points={`250,${crucifixY - 12} 251.5,${crucifixY - 8} 255.5,${crucifixY - 8} 252,${crucifixY - 5.5} 253.5,${crucifixY - 1.5} 250,${crucifixY - 4} 246.5,${crucifixY - 1.5} 248,${crucifixY - 5.5} 244.5,${crucifixY - 8} 248.5,${crucifixY - 8}`} fill="#FFFFFF" opacity="0.9" />
+              </g>
+            ) : isInfantil ? (
+              // 2. INFANTIL MODEL: Rounded gentle cross without sharp points
+              <g>
+                <rect x="244" y={crucifixY - 24} width="12" height="52" rx="6" fill="url(#crucifix-grad)" stroke={crucifixFinish.highlight} strokeWidth="1" />
+                <rect x="232" y={crucifixY - 12} width="36" height="12" rx="6" fill="url(#crucifix-grad)" stroke={crucifixFinish.highlight} strokeWidth="1" />
+                {/* Cute heart or dove emblem in center */}
+                <circle cx="250" cy={crucifixY - 6} r="4.5" fill="#FFFFFF" opacity="0.9" />
+                <path d={`M 250 ${crucifixY - 8} L 250 ${crucifixY - 4} M 248 ${crucifixY - 6} L 252 ${crucifixY - 6}`} stroke={crucifixFinish.base} strokeWidth="1.2" strokeLinecap="round" />
+              </g>
+            ) : isNoiva ? (
+              // 3. NOIVA MODEL: Ornate pavé-encrusted bridal cross with crystal flares
+              <g>
+                <path
+                  d={`M 243 ${crucifixY - 26} H 257 V ${crucifixY - 12} H 272 V ${crucifixY} H 257 V ${crucifixY + 34} H 243 V ${crucifixY} H 228 V ${crucifixY - 12} H 243 Z`}
+                  fill="url(#crucifix-grad)"
+                  stroke={crucifixFinish.highlight}
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+                {/* 5 Pavé stones on tips & intersection */}
+                {[
+                  { cx: 250, cy: crucifixY - 6 }, // Center
+                  { cx: 250, cy: crucifixY - 20 }, // Top
+                  { cx: 250, cy: crucifixY + 26 }, // Bottom
+                  { cx: 234, cy: crucifixY - 6 }, // Left
+                  { cx: 266, cy: crucifixY - 6 }, // Right
+                ].map((st, sIdx) => (
+                  <circle key={`stone-${sIdx}`} cx={st.cx} cy={st.cy} r="2.4" fill="#FFFFFF" stroke={crucifixFinish.base} strokeWidth="0.6" />
+                ))}
+                {/* Center Star Flare */}
+                <path d={`M 250 ${crucifixY - 10} L 250 ${crucifixY - 2} M 246 ${crucifixY - 6} L 254 ${crucifixY - 6}`} stroke="#FFFFFF" strokeWidth="1.2" />
+              </g>
+            ) : isPremium ? (
+              // 4. PREMIUM / BARROCO MODEL: Fleur-de-lis ornate tips & high relief
+              <g>
+                <path
+                  d={`M 242 ${crucifixY - 28} Q 250 ${crucifixY - 33} 258 ${crucifixY - 28} V ${crucifixY - 14} Q 275 ${crucifixY - 14} 275 ${crucifixY - 6} Q 275 ${crucifixY + 2} 258 ${crucifixY + 2} V ${crucifixY + 32} Q 250 ${crucifixY + 37} 242 ${crucifixY + 32} V ${crucifixY + 2} Q 225 ${crucifixY + 2} 225 ${crucifixY - 6} Q 225 ${crucifixY - 14} 242 ${crucifixY - 14} Z`}
+                  fill="url(#crucifix-grad)"
+                  stroke={crucifixFinish.highlight}
+                  strokeWidth="1.4"
+                />
+                {/* Corpus Christi Relief */}
+                <path
+                  d={`M 250 ${crucifixY - 14} L 250 ${crucifixY + 16} M 241 ${crucifixY - 8} L 259 ${crucifixY - 8}`}
+                  stroke="#FFFFFF"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  opacity="0.9"
+                />
+                {/* INRI Scroll */}
+                <rect x="246" y={crucifixY - 25} width="8" height="4" rx="1" fill={crucifixFinish.highlight} opacity="0.9" />
+              </g>
+            ) : (
+              // 5. TRADICIONAL / STANDARD MODEL
+              <g>
+                <path
+                  d={`M 243 ${crucifixY - 24} H 257 V ${crucifixY - 11} H 272 V ${crucifixY + 1} H 257 V ${crucifixY + 34} H 243 V ${crucifixY + 1} H 228 V ${crucifixY - 11} H 243 Z`}
+                  fill="url(#crucifix-grad)"
+                  stroke={crucifixFinish.highlight}
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+                {/* Inner Border */}
+                <path
+                  d={`M 245 ${crucifixY - 21} H 255 V ${crucifixY - 9} H 269 V ${crucifixY - 1} H 255 V ${crucifixY + 31} H 245 V ${crucifixY - 1} H 231 V ${crucifixY - 9} H 245 Z`}
+                  fill="none"
+                  stroke={crucifixFinish.shadow}
+                  strokeWidth="0.8"
+                />
+                {/* Corpus Christi Silhouette */}
+                <path
+                  d={`M 250 ${crucifixY - 12} L 250 ${crucifixY + 14} M 242 ${crucifixY - 6} L 258 ${crucifixY - 6}`}
+                  stroke="#FFFFFF"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  opacity="0.85"
+                />
+                {/* INRI Banner */}
+                <rect x="246" y={crucifixY - 22} width="8" height="4" rx="1" fill={crucifixFinish.highlight} opacity="0.9" />
+              </g>
+            )}
+
+            {/* Top connection loop */}
+            <circle cx="250" cy={crucifixY - (isPremium ? 29 : 25)} r="2.8" fill="none" stroke={crucifixFinish.base} strokeWidth="1.2" />
           </g>
 
-          {/* Subtle Devotional Rays behind Centerpiece */}
-          <circle cx="250" cy="325" r="32" fill="none" stroke="#D4AF37" strokeWidth="0.5" strokeDasharray="2 6" opacity="0.4" />
+          {/* Devotional Halo Circles */}
+          <circle cx="250" cy={centerpieceY} r="34" fill="none" stroke="#D4AF37" strokeWidth="0.5" strokeDasharray="2 6" opacity="0.35" />
         </svg>
       </motion.div>
 
-      {/* Helper text */}
+      {/* Helper caption */}
       <div className="text-center pt-2">
-        <p className="text-[11px] text-navy/40 font-medium">
-          Preview 2D interativo em escala • Toque nos controles para ampliar detalhes
+        <p className="text-[11px] text-navy/50 font-medium">
+          {isDezena 
+            ? 'Visualização de Dezena Compacta (10 contas + pingente)' 
+            : isNoiva 
+            ? 'Visualização de Terço Nupcial com halo de zircônias e crucifixo cravejado'
+            : isPremium
+            ? 'Visualização Premium com tulipas metálicas nos Pai-Nossos e resplendor'
+            : isDelicado
+            ? 'Visualização Delicada com contas finas 6mm e ponto de luz'
+            : isInfantil
+            ? 'Visualização Infantil com acabamento suave e seguro'
+            : 'Visualização Tradicional com 5 dezenas completas em escala'}
         </p>
       </div>
     </div>

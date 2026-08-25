@@ -10,6 +10,8 @@ interface RosaryOptionCardProps {
   color?: string;
   material?: string;
   size?: string;
+  badge?: string;
+  icon?: React.ReactNode;
   additionalPrice?: number;
   basePrice?: number;
   isSelected: boolean;
@@ -25,6 +27,8 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
   color,
   material,
   size,
+  badge,
+  icon,
   additionalPrice,
   basePrice,
   isSelected,
@@ -39,7 +43,7 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
       whileTap={isDisabled ? {} : { scale: 0.98 }}
       onClick={isDisabled ? undefined : onClick}
       disabled={isDisabled}
-      className={`relative w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group ${
+      className={`relative w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group cursor-pointer ${
         isSelected
           ? 'border-navy bg-navy/5 shadow-md ring-2 ring-navy/10'
           : isDisabled
@@ -65,6 +69,10 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
               <div className="w-full h-full border border-gold/20 rounded-xl" />
             )}
           </div>
+        ) : icon ? (
+          <div className="w-14 h-14 rounded-xl bg-gold/10 border border-gold/25 flex items-center justify-center text-gold-dark shadow-xs">
+            {icon}
+          </div>
         ) : (
           <div className="w-14 h-14 rounded-xl bg-gold/10 border border-gold/25 flex items-center justify-center text-gold-dark font-serif font-bold text-lg">
             ✦
@@ -81,10 +89,19 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
 
       {/* Info & Details */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           <h4 className={`font-serif font-bold text-sm truncate ${isSelected ? 'text-navy' : 'text-navy/90'}`}>
             {name}
           </h4>
+          {badge && (
+            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+              isSelected 
+                ? 'bg-gold text-navy border-gold-dark' 
+                : 'bg-gold/10 text-gold-dark border-gold/25'
+            }`}>
+              {badge}
+            </span>
+          )}
         </div>
 
         {(material || size) && (
@@ -94,7 +111,7 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
         )}
 
         {description && (
-          <p className="text-xs text-navy/60 line-clamp-1 leading-relaxed">
+          <p className="text-xs text-navy/60 line-clamp-2 leading-relaxed">
             {description}
           </p>
         )}

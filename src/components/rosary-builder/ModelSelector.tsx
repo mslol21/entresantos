@@ -2,6 +2,12 @@ import React from 'react';
 import type { RosaryModel } from '../../types';
 import { RosaryOptionCard } from './RosaryOptionCard';
 import { motion } from 'framer-motion';
+import { 
+  RosaryVectorIcon, 
+  DezenaVectorIcon, 
+  BraceletVectorIcon 
+} from '../icons/ProductIcons';
+import { Crown, Sparkles, Heart } from 'lucide-react';
 
 interface ModelSelectorProps {
   models: RosaryModel[];
@@ -18,6 +24,36 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     .filter(m => m.is_active !== false)
     .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
+  const getModelBadge = (slug: string): string => {
+    switch (slug) {
+      case 'tradicional': return '5 Dezenas Clássicas';
+      case 'delicado': return 'Contas Finas 6mm';
+      case 'premium': return 'Tulipas & Resplendor';
+      case 'noiva': return 'Nupcial & Zircônias';
+      case 'infantil': return 'Acabamento Suave';
+      case 'dezena': return '1 Dezena Compacta';
+      default: return 'Exclusivo';
+    }
+  };
+
+  const getModelIcon = (slug: string): React.ReactNode => {
+    switch (slug) {
+      case 'dezena':
+        return <DezenaVectorIcon size={26} className="text-gold-dark" />;
+      case 'delicado':
+        return <BraceletVectorIcon size={26} className="text-gold-dark" />;
+      case 'premium':
+        return <Crown size={22} className="text-gold-dark" />;
+      case 'noiva':
+        return <Sparkles size={22} className="text-gold-dark" />;
+      case 'infantil':
+        return <Heart size={22} className="text-rose-500" />;
+      case 'tradicional':
+      default:
+        return <RosaryVectorIcon size={26} className="text-gold-dark" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -28,7 +64,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           Escolha o Modelo do seu Terço
         </h3>
         <p className="text-xs text-navy/60 leading-relaxed mt-1">
-          Cada modelo define o estilo de montagem, a quantidade de mistérios e a base inicial da sua peça.
+          Selecione o formato da sua peça. O simulador 2D ao lado se adapta em tempo real à estrutura escolhida.
         </p>
       </div>
 
@@ -44,6 +80,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             name={model.name}
             description={model.description}
             image={model.image}
+            badge={getModelBadge(model.slug)}
+            icon={getModelIcon(model.slug)}
             basePrice={model.base_price}
             isSelected={selectedModel?.id === model.id}
             onClick={() => onSelectModel(model)}

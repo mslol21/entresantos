@@ -114,7 +114,8 @@ VALUES
   ('Delicado', 'delicado', 'Contas menores e acabamento sutil, leve para carregar consigo ou na bolsa.', 49.90, 2, true),
   ('Premium & Colecionador', 'premium', 'Acabamentos nobres, entremeio trabalhado e cristais selecionados.', 79.90, 3, true),
   ('Noiva Especial', 'noiva', 'Montagem refinada com cristais e pérolas translúcidas para o grande dia.', 119.90, 4, true),
-  ('Infantil / Lembrança', 'infantil', 'Cores suaves e contas resistentes, ideal para batizados e primeira comunhão.', 44.90, 5, true)
+  ('Infantil / Lembrança', 'infantil', 'Cores suaves e contas resistentes, ideal para batizados e primeira comunhão.', 44.90, 5, true),
+  ('Dezena de Bolso / Carro', 'dezena', '1 dezena compacta em arco com fecho superior para retrovisor, bolsa ou oração rápida.', 29.90, 6, true)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Contas das Ave-Marias (bead)
