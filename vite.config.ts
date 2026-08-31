@@ -10,19 +10,31 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png', 'favicon.svg', 'logo.png', 'og-image.png'],
       manifest: {
         name: 'Ateliê Entre Santos',
         short_name: 'Entre Santos',
         description: 'Artesanato Católico & Presentes de Fé',
-        theme_color: '#050B18',
-        background_color: '#050B18',
+        theme_color: '#0B284C',
+        background_color: '#F7F4EB',
         display: 'standalone',
         icons: [
           {
             src: 'favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
+            purpose: 'any maskable'
+          },
+          {
+            src: 'favicon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
