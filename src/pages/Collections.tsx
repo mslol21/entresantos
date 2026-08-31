@@ -18,7 +18,7 @@ const Collections: React.FC = () => {
     .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Header */}
       <div className="bg-navy text-white py-16 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy to-navy-light opacity-90" />

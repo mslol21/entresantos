@@ -251,7 +251,7 @@ const Personalize: React.FC = () => {
   ];
 
   return (
-    <div className="pt-[4.5rem] min-h-screen bg-cream">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen bg-cream">
       {/* Header Banner */}
       <div className="bg-gradient-to-b from-navy via-navy to-navy-light text-white py-14 px-4 relative overflow-hidden border-b border-gold/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/10 via-transparent to-transparent opacity-70 pointer-events-none" />

@@ -22,7 +22,7 @@ const SaintPage: React.FC = () => {
 
   if (!saint) {
     return (
-      <div className="pt-[4.5rem] min-h-screen flex items-center justify-center bg-cream">
+      <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen flex items-center justify-center bg-cream">
         <div className="text-center max-w-md px-4">
           <p className="text-6xl mb-4">🕊️</p>
           <h1 className="font-serif font-bold text-2xl text-navy mb-3">Página não encontrada</h1>
@@ -36,7 +36,7 @@ const SaintPage: React.FC = () => {
   }
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Breadcrumb */}
       <div className="bg-cream border-b border-gold/10 py-4 px-4">
         <div className="max-w-5xl mx-auto flex items-center gap-4">

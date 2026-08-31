@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 export const Hero: React.FC = () => {
 
   return (
-    <section className="pt-[4.5rem] relative overflow-hidden min-h-[90vh] flex items-center">
+    <section className="pt-[4.75rem] md:pt-[5.25rem] relative overflow-hidden min-h-[90vh] flex items-center">
       {/* Background layer */}
       <div className="absolute inset-0 bg-gradient-to-br from-cream-light via-[#F9F6EE] to-[#F2EDD6]" />
       <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-amber-50/60 to-transparent pointer-events-none" />

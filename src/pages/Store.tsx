@@ -71,7 +71,7 @@ const Store: React.FC = () => {
   const hasFilters = activeCategory || activeLine || activeAvailability || search;
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Header */}
       <div className="bg-cream border-b border-gold/10 py-10 px-4">
         <div className="max-w-7xl mx-auto">

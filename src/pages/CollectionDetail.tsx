@@ -46,7 +46,7 @@ const CollectionDetail: React.FC = () => {
   const progress = totalItems > 0 ? Math.round((availableCount / totalItems) * 100) : 0;
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Breadcrumb */}
       <div className="bg-cream border-b border-gold/10 py-4 px-4">
         <div className="max-w-7xl mx-auto">

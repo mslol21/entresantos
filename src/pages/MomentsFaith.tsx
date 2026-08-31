@@ -133,7 +133,7 @@ const MomentsFaith: React.FC = () => {
   };
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Header */}
       <div className="bg-cream border-b border-gold/10 py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">

@@ -33,7 +33,7 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-b border-gold/20 shadow-xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 h-[4.5rem] flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-[4.75rem] md:h-[5.25rem] flex items-center justify-between gap-4">
 
           {/* Mobile Menu Button */}
           <button
@@ -45,14 +45,18 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
           </button>
 
           {/* Logo */}
-          <Link to="/" onClick={handleNavClose} className="flex items-center gap-3 flex-shrink-0">
-            <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain rounded-full border border-gold/20 bg-white" />
+          <Link to="/" onClick={handleNavClose} className="flex items-center gap-3.5 flex-shrink-0 group">
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-full border border-gold/30 bg-white shadow-xs group-hover:scale-105 transition-transform duration-300" 
+            />
             <div className="hidden sm:flex flex-col">
-              <span className="font-serif font-bold text-base leading-none text-navy uppercase tracking-wider">
+              <span className="font-serif font-bold text-base md:text-lg leading-none text-navy uppercase tracking-wider group-hover:text-gold-dark transition-colors">
                 {settings.name || 'Ateliê Entre Santos'}
               </span>
               {settings.slogan && (
-                <span className="text-[9px] text-navy/50 uppercase tracking-[0.2em] font-medium leading-tight mt-0.5">
+                <span className="text-[9px] md:text-[10px] text-navy/55 uppercase tracking-[0.22em] font-medium leading-tight mt-1">
                   {settings.slogan}
                 </span>
               )}
@@ -194,13 +198,13 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
             >
               {/* Mobile Header */}
               <div className="flex items-center justify-between p-6 border-b border-gold/10">
-                <Link to="/" onClick={handleNavClose} className="flex items-center gap-3">
-                  <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold/20 bg-white" />
+                <Link to="/" onClick={handleNavClose} className="flex items-center gap-3.5">
+                  <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gold/30 bg-white shadow-xs" />
                   <div className="flex flex-col">
                     <span className="font-serif font-bold text-base text-navy uppercase tracking-wider leading-none">
                       {settings.name || 'Ateliê Entre Santos'}
                     </span>
-                    <span className="text-[9px] text-navy/40 uppercase tracking-[0.2em] font-medium mt-0.5">
+                    <span className="text-[9px] text-navy/50 uppercase tracking-[0.2em] font-medium mt-1">
                       {settings.slogan}
                     </span>
                   </div>

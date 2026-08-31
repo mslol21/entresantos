@@ -8,7 +8,7 @@ const OurStory: React.FC = () => {
   const hasAboutContent = settings.about_text || settings.about_image;
 
   return (
-    <div className="pt-[4.5rem] min-h-screen">
+    <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen">
       {/* Header */}
       <div className="bg-gradient-to-br from-cream to-amber-50 border-b border-gold/10 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
