@@ -20,13 +20,17 @@ export const Footer: React.FC = () => {
           
           {/* Brand */}
           <div className="sm:col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-3 mb-5">
-              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold/20 bg-white" />
+            <Link to="/" className="flex items-center gap-3.5 mb-5 group">
+              <img 
+                src="/logo.png" 
+                alt={settings.name || 'Ateliê Entre Santos'} 
+                className="h-16 w-auto object-contain bg-white/95 p-1.5 rounded-2xl border border-gold/30 shadow-md group-hover:scale-105 transition-transform duration-300" 
+              />
               <div className="flex flex-col">
-                <span className="font-serif font-bold text-base leading-none uppercase tracking-wider text-gold">
+                <span className="font-serif font-bold text-base md:text-lg leading-none uppercase tracking-wider text-gold group-hover:text-gold-light transition-colors">
                   {settings.name || 'Ateliê Entre Santos'}
                 </span>
-                <span className="text-[8px] text-gold/50 uppercase tracking-[0.2em] font-medium mt-0.5">
+                <span className="text-[8px] md:text-[9px] text-gold/60 uppercase tracking-[0.2em] font-medium mt-1">
                   {settings.slogan}
                 </span>
               </div>

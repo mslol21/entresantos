@@ -45,14 +45,14 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
           </button>
 
           {/* Logo */}
-          <Link to="/" onClick={handleNavClose} className="flex items-center gap-3.5 flex-shrink-0 group">
+          <Link to="/" onClick={handleNavClose} className="flex items-center gap-3.5 flex-shrink-0 group py-1">
             <img 
               src="/logo.png" 
-              alt="Logo" 
-              className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-full border border-gold/30 bg-white shadow-xs group-hover:scale-105 transition-transform duration-300" 
+              alt={settings.name || 'Ateliê Entre Santos'} 
+              className="h-14 sm:h-16 md:h-20 w-auto max-w-[180px] object-contain drop-shadow-xs group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="hidden sm:flex flex-col">
-              <span className="font-serif font-bold text-base md:text-lg leading-none text-navy uppercase tracking-wider group-hover:text-gold-dark transition-colors">
+              <span className="font-serif font-bold text-base md:text-xl leading-none text-navy uppercase tracking-wider group-hover:text-gold-dark transition-colors">
                 {settings.name || 'Ateliê Entre Santos'}
               </span>
               {settings.slogan && (
@@ -199,7 +199,7 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
               {/* Mobile Header */}
               <div className="flex items-center justify-between p-6 border-b border-gold/10">
                 <Link to="/" onClick={handleNavClose} className="flex items-center gap-3.5">
-                  <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gold/30 bg-white shadow-xs" />
+                  <img src="/logo.png" alt={settings.name || 'Ateliê Entre Santos'} className="h-14 w-auto object-contain drop-shadow-xs" />
                   <div className="flex flex-col">
                     <span className="font-serif font-bold text-base text-navy uppercase tracking-wider leading-none">
                       {settings.name || 'Ateliê Entre Santos'}

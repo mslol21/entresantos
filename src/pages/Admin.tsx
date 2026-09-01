@@ -457,7 +457,7 @@ export const Admin: React.FC = () => {
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-navy text-white p-6 border-r border-gold/15 flex-shrink-0 min-h-screen">
         <div className="flex items-center gap-3 mb-8">
-          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full border border-gold/30 bg-white" />
+          <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain bg-white/95 p-1 rounded-xl border border-gold/30 shadow-xs" />
           <div>
             <h2 className="font-serif font-bold text-base text-gold uppercase tracking-wider leading-none">Painel Admin</h2>
             <p className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-medium mt-1">Entre Santos</p>
@@ -512,7 +512,7 @@ export const Admin: React.FC = () => {
       {/* Mobile Top Navigation */}
       <div className="md:hidden bg-navy text-white p-4 border-b border-gold/15 sticky top-0 z-30 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
+          <img src="/logo.png" alt="Logo" className="h-9 w-auto object-contain bg-white/95 p-0.5 rounded-lg border border-gold/30" />
           <span className="font-serif font-bold text-gold text-sm uppercase">Admin</span>
         </div>
         <select
