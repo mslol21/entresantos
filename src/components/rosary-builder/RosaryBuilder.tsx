@@ -17,7 +17,6 @@ import { BeadSelector } from './BeadSelector';
 import { OurFatherSelector } from './OurFatherSelector';
 import { CenterpieceSelector } from './CenterpieceSelector';
 import { CrucifixSelector } from './CrucifixSelector';
-import { ExtrasSelector } from './ExtrasSelector';
 import { RosarySummary } from './RosarySummary';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -38,10 +37,10 @@ export const RosaryBuilder: React.FC = () => {
   const [selectedOurFather, setSelectedOurFather] = useState<CustomizationComponent | undefined>(undefined);
   const [selectedCenterpiece, setSelectedCenterpiece] = useState<CustomizationComponent | undefined>(undefined);
   const [selectedCrucifix, setSelectedCrucifix] = useState<CustomizationComponent | undefined>(undefined);
-  const [selectedExtras, setSelectedExtras] = useState<CustomizationComponent[]>([]);
-  const [customName, setCustomName] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
-  const [notes, setNotes] = useState('');
+  const selectedExtras: CustomizationComponent[] = [];
+  const customName = '';
+  const customMessage = '';
+  const notes = '';
   const [publicCode, setPublicCode] = useState(() => `ES-${Math.floor(10000 + Math.random() * 90000)}`);
 
   // Default selections on load with URL query param support
@@ -92,11 +91,8 @@ export const RosaryBuilder: React.FC = () => {
     if (selectedOurFather?.additional_price) total += selectedOurFather.additional_price;
     if (selectedCenterpiece?.additional_price) total += selectedCenterpiece.additional_price;
     if (selectedCrucifix?.additional_price) total += selectedCrucifix.additional_price;
-    selectedExtras.forEach(e => {
-      if (e.additional_price) total += e.additional_price;
-    });
     return total;
-  }, [selectedBead, selectedOurFather, selectedCenterpiece, selectedCrucifix, selectedExtras]);
+  }, [selectedBead, selectedOurFather, selectedCenterpiece, selectedCrucifix]);
 
   const totalPrice = basePrice + additionalPrice;
 
@@ -121,8 +117,7 @@ export const RosaryBuilder: React.FC = () => {
       case 3: return true; // Optional (falls back to selectedBead)
       case 4: return !!selectedCenterpiece;
       case 5: return !!selectedCrucifix;
-      case 6: return true; // Extras are optional
-      case 7: return true;
+      case 6: return true;
       default: return false;
     }
   }, [currentStep, selectedModel, selectedBead, selectedCenterpiece, selectedCrucifix]);
@@ -140,14 +135,6 @@ export const RosaryBuilder: React.FC = () => {
       setCurrentStep(prev => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const handleToggleExtra = (extra: CustomizationComponent) => {
-    setSelectedExtras(prev =>
-      prev.some(e => e.id === extra.id)
-        ? prev.filter(e => e.id !== extra.id)
-        : [...prev, extra]
-    );
   };
 
   // Add to Cart handler
@@ -308,20 +295,6 @@ export const RosaryBuilder: React.FC = () => {
               )}
 
               {currentStep === 6 && (
-                <ExtrasSelector
-                  extrasComponents={customizationComponents}
-                  selectedExtras={selectedExtras}
-                  onToggleExtra={handleToggleExtra}
-                  customName={customName}
-                  onChangeCustomName={setCustomName}
-                  customMessage={customMessage}
-                  onChangeCustomMessage={setCustomMessage}
-                  notes={notes}
-                  onChangeNotes={setNotes}
-                />
-              )}
-
-              {currentStep === 7 && (
                 <RosarySummary
                   configuration={configuration}
                   basePrice={basePrice}
@@ -346,7 +319,7 @@ export const RosaryBuilder: React.FC = () => {
           </div>
 
           {/* Navigation Controls (Voltar / Continuar) */}
-          {currentStep < 7 && (
+          {currentStep < 6 && (
             <div className="flex items-center justify-between pt-6 border-t border-gold/15 sticky bottom-0 bg-cream/95 backdrop-blur-md py-4 z-10">
               <button
                 type="button"

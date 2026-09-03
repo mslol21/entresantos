@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Check, Layers, CircleDot, Sparkles, Shield, 
-  Plus, Gift, CheckCircle2 
+  Plus, CheckCircle2 
 } from 'lucide-react';
 
 export interface StepItem {
@@ -17,8 +17,7 @@ export const STEPS: StepItem[] = [
   { id: 3, label: 'Pai-Nossos', shortLabel: 'Pai-Nosso', iconComponent: <Sparkles size={13} /> },
   { id: 4, label: 'Entremeio', shortLabel: 'Entremeio', iconComponent: <Shield size={13} /> },
   { id: 5, label: 'Crucifixo', shortLabel: 'Crucifixo', iconComponent: <Plus size={13} /> },
-  { id: 6, label: 'Extras & Gravação', shortLabel: 'Extras', iconComponent: <Gift size={13} /> },
-  { id: 7, label: 'Resumo Final', shortLabel: 'Resumo', iconComponent: <CheckCircle2 size={13} /> },
+  { id: 6, label: 'Resumo Final', shortLabel: 'Resumo', iconComponent: <CheckCircle2 size={13} /> },
 ];
 
 interface RosaryStepperProps {

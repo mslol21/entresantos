@@ -24,13 +24,13 @@ export const RosarySummary: React.FC<RosarySummaryProps> = ({
   onAddToCart,
   onEditStep
 }) => {
-  const { model, bead, ourFather, centerpiece, crucifix, extras, customName, customMessage, notes } = configuration;
+  const { model, bead, ourFather, centerpiece, crucifix } = configuration;
 
   return (
     <div className="space-y-6 text-left">
       <div>
         <span className="text-[10px] text-gold-dark font-black uppercase tracking-[0.2em] block mb-1">
-          Etapa 7 de 7
+          Etapa 6 de 6
         </span>
         <h3 className="font-serif font-bold text-3xl text-navy">
           Seu terço ficou assim ✨
@@ -147,45 +147,7 @@ export const RosarySummary: React.FC<RosarySummaryProps> = ({
           </button>
         </div>
 
-        {/* Extras / Medals / Name */}
-        {(extras.length > 0 || customName || customMessage || notes) && (
-          <div className="flex items-start justify-between pt-3">
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-navy/40 font-bold uppercase tracking-widest block">Personalizações & Extras</span>
-              {extras.map(ex => (
-                <div key={ex.id} className="text-xs text-navy/70 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gold rounded-full" />
-                  <span>{ex.name}</span>
-                </div>
-              ))}
-              {customName && (
-                <div className="text-xs text-navy/70 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gold rounded-full" />
-                  <span>Nome Gravado: <strong>{customName}</strong></span>
-                </div>
-              )}
-              {customMessage && (
-                <div className="text-xs text-navy/70 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gold rounded-full" />
-                  <span>Cartão: <em>"{customMessage}"</em></span>
-                </div>
-              )}
-              {notes && (
-                <div className="text-xs text-navy/70 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gold rounded-full" />
-                  <span>Obs: {notes}</span>
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => onEditStep(6)}
-              className="text-xs font-bold text-gold-dark hover:text-navy flex items-center gap-1 p-2"
-            >
-              <Edit3 size={13} /> Alterar
-            </button>
-          </div>
-        )}
+
         {/* Price Breakdown in Summary */}
         <div className="pt-4 space-y-2 border-t border-gold/15">
           <div className="flex justify-between text-xs text-navy/60">

@@ -40,9 +40,14 @@ export const RosaryPreview: React.FC<RosaryPreviewProps> = ({ configuration }) =
   const centerpieceFinish = getMetalFinish(centerpiece?.color, centerpiece?.name);
   const crucifixFinish = getMetalFinish(crucifix?.color, crucifix?.name);
 
-  // Model-specific bead sizing & geometry
-  const aveMariaRadius = isDelicado ? 4.2 : isPremium ? 6.2 : isNoiva ? 5.8 : isInfantil ? 5.8 : 5.4;
-  const ourFatherRadius = isDelicado ? 6.0 : isPremium ? 8.8 : isNoiva ? 8.0 : isInfantil ? 7.6 : 7.5;
+  // Model-specific bead sizing & geometry reacting to 6mm vs 8mm
+  const beadIs6mm = (bead?.size || bead?.name || '').includes('6mm') || (bead?.size || bead?.name || '').includes('6 mm');
+  const baseAveMariaRadius = isDelicado ? 4.2 : isPremium ? 6.2 : isNoiva ? 5.8 : isInfantil ? 5.4 : 5.4;
+  const aveMariaRadius = beadIs6mm ? baseAveMariaRadius * 0.8 : baseAveMariaRadius;
+
+  const ourFatherIs8mm = (ourFather?.size || ourFather?.name || '').includes('8mm') || (ourFather?.size || ourFather?.name || '').includes('8 mm');
+  const baseOurFatherRadius = isDelicado ? 6.0 : isPremium ? 8.8 : isNoiva ? 8.0 : isInfantil ? 7.2 : 7.5;
+  const ourFatherRadius = ourFatherIs8mm ? baseOurFatherRadius * 0.85 : baseOurFatherRadius;
 
   // Generate coordinates for loop beads according to model
   const loopBeads = useMemo(() => {
