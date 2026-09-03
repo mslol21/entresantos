@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, Share2, Download, ShoppingBag, MessageCircle, Clock, 
@@ -154,6 +154,37 @@ export const ProductDetails: React.FC = () => {
 
   const displayPrice = getBasePrice() + getAddonsPrice();
   const displayImage = selectedVariation ? selectedVariation.image : (productImages[selectedImageIndex] || product?.image || '');
+
+  // Estratégia de limpeza e remoção de espaços/linhas vazias excessivas na descrição
+  const descriptionParagraphs = useMemo(() => {
+    if (!product.description) return [];
+    
+    // 1. Unificar quebras de linha e limpar espaços em branco repetidos
+    const rawLines = product.description
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(line => line.trim());
+
+    // 2. Colapsar múltiplas linhas vazias consecutivas (máximo 1 linha vazia de separador)
+    const collapsedLines: string[] = [];
+    for (const line of rawLines) {
+      if (line === '') {
+        if (collapsedLines.length > 0 && collapsedLines[collapsedLines.length - 1] !== '') {
+          collapsedLines.push('');
+        }
+      } else {
+        collapsedLines.push(line);
+      }
+    }
+
+    // 3. Agrupar em blocos de parágrafos consistentes
+    const rawBlocks = collapsedLines.join('\n').split(/\n\s*\n/);
+
+    return rawBlocks
+      .map(block => block.trim())
+      .filter(Boolean);
+  }, [product.description]);
 
   const handleAddToCart = () => {
     let customName = product.name;
@@ -358,14 +389,43 @@ export const ProductDetails: React.FC = () => {
                 {product.name}
               </h1>
               
-              {product.description && (
-                <div className="bg-white/95 backdrop-blur-xs p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-gold/20 shadow-xs">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-dark block mb-2">
+              {descriptionParagraphs.length > 0 && (
+                <div className="bg-white/95 backdrop-blur-xs p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-gold/20 shadow-xs space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-dark block mb-1">
                     Sobre a Peça
                   </span>
-                  <p className="text-sm sm:text-[15px] text-navy/85 font-medium leading-relaxed whitespace-pre-line">
-                    {product.description}
-                  </p>
+                  
+                  {descriptionParagraphs.map((block, bIdx) => {
+                    const isSpecsTitle = /^especifica[çc][õo]es/i.test(block.trim());
+                    if (isSpecsTitle) {
+                      return (
+                        <div key={bIdx} className="pt-3 border-t border-gold/15 mt-2">
+                          <span className="text-xs font-serif font-bold text-navy uppercase tracking-wider block">
+                            {block}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+                    if (lines.length > 1) {
+                      return (
+                        <div key={bIdx} className="space-y-1.5">
+                          {lines.map((line, lIdx) => (
+                            <p key={lIdx} className="text-sm sm:text-[15px] text-navy/80 font-medium leading-relaxed">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p key={bIdx} className="text-sm sm:text-[15px] text-navy/80 font-medium leading-relaxed">
+                        {block}
+                      </p>
+                    );
+                  })}
                 </div>
               )}
             </div>

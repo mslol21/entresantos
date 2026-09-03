@@ -260,6 +260,24 @@ export const Admin: React.FC = () => {
         payload.customizationLists = [];
       }
 
+      if (payload.description) {
+        payload.description = payload.description
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split('\n')
+          .map((l: string) => l.trim())
+          .reduce((acc: string[], curr: string) => {
+            if (curr === '') {
+              if (acc.length > 0 && acc[acc.length - 1] !== '') acc.push('');
+            } else {
+              acc.push(curr);
+            }
+            return acc;
+          }, [])
+          .join('\n')
+          .trim();
+      }
+
       if (editingProduct) {
         await updateProduct(payload as Product);
         showToast('Produto atualizado com sucesso!', 'success');
@@ -1717,8 +1735,47 @@ export const Admin: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="label-base">Descrição</label>
-                  <textarea rows={3} value={formProduct.description} onChange={e => setFormProduct({...formProduct, description: e.target.value})} className="input-base resize-none" />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="label-base mb-0">Descrição do Produto</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!formProduct.description) return;
+                        const cleaned = formProduct.description
+                          .replace(/\r\n/g, '\n')
+                          .replace(/\r/g, '\n')
+                          .split('\n')
+                          .map((l: string) => l.trim())
+                          .reduce((acc: string[], curr: string) => {
+                            if (curr === '') {
+                              if (acc.length > 0 && acc[acc.length - 1] !== '') acc.push('');
+                            } else {
+                              acc.push(curr);
+                            }
+                            return acc;
+                          }, [])
+                          .join('\n')
+                          .trim();
+                        setFormProduct(prev => ({ ...prev, description: cleaned }));
+                        showToast('Espaços e quebras excessivas removidos!', 'success');
+                      }}
+                      className="text-[11px] text-[#1C4F8C] hover:text-[#2563AB] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Remove linhas em branco duplas e espaços extras automaticamente"
+                    >
+                      <Sparkles size={12} />
+                      <span>Limpar Espaços Extras</span>
+                    </button>
+                  </div>
+                  <textarea 
+                    rows={4} 
+                    value={formProduct.description} 
+                    onChange={e => setFormProduct({...formProduct, description: e.target.value})} 
+                    placeholder="Descreva a peça, materiais, acabamentos e especificações..."
+                    className="input-base" 
+                  />
+                  <p className="text-[10px] text-navy/45 mt-1">
+                    Dica: Você pode colar seu texto normalmente. O sistema limpa quebras excessivas e espaços vazios de forma inteligente.
+                  </p>
                 </div>
 
                 <div>

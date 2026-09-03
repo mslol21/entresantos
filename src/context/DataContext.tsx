@@ -146,6 +146,25 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+const cleanProductDescription = (text?: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map(l => l.trim())
+    .reduce((acc: string[], curr: string) => {
+      if (curr === '') {
+        if (acc.length > 0 && acc[acc.length - 1] !== '') acc.push('');
+      } else {
+        acc.push(curr);
+      }
+      return acc;
+    }, [])
+    .join('\n')
+    .trim();
+};
+
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -210,6 +229,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const categoriesList = p.categories && Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : (p.category ? [p.category] : []);
         return {
           ...p,
+          description: cleanProductDescription(p.description),
           image: p.image || imagesList[0] || '',
           images: imagesList.slice(0, 5),
           category: p.category || categoriesList[0] || '',
@@ -374,7 +394,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fullPayload = {
       name: product.name,
-      description: product.description,
+      description: cleanProductDescription(product.description),
       price: product.price,
       image: mainImage,
       images: imagesList,
@@ -427,7 +447,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fullPayload = {
       name: product.name,
-      description: product.description,
+      description: cleanProductDescription(product.description),
       price: product.price,
       image: mainImage,
       images: imagesList,
