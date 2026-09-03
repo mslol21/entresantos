@@ -60,7 +60,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     <div className="space-y-4">
       <div>
         <span className="text-[10px] text-gold-dark font-black uppercase tracking-[0.2em] block mb-1">
-          Etapa 1 de 7
+          Etapa 1 de 5
         </span>
         <h3 className="font-serif font-bold text-2xl text-navy">
           Escolha o Modelo do seu Terço

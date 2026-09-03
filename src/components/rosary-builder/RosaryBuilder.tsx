@@ -16,7 +16,6 @@ import { ModelSelector } from './ModelSelector';
 import { BeadSelector } from './BeadSelector';
 import { OurFatherSelector } from './OurFatherSelector';
 import { CenterpieceSelector } from './CenterpieceSelector';
-import { CrucifixSelector } from './CrucifixSelector';
 import { RosarySummary } from './RosarySummary';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -90,9 +89,8 @@ export const RosaryBuilder: React.FC = () => {
     if (selectedBead?.additional_price) total += selectedBead.additional_price;
     if (selectedOurFather?.additional_price) total += selectedOurFather.additional_price;
     if (selectedCenterpiece?.additional_price) total += selectedCenterpiece.additional_price;
-    if (selectedCrucifix?.additional_price) total += selectedCrucifix.additional_price;
     return total;
-  }, [selectedBead, selectedOurFather, selectedCenterpiece, selectedCrucifix]);
+  }, [selectedBead, selectedOurFather, selectedCenterpiece]);
 
   const totalPrice = basePrice + additionalPrice;
 
@@ -116,11 +114,10 @@ export const RosaryBuilder: React.FC = () => {
       case 2: return !!selectedBead;
       case 3: return true; // Optional (falls back to selectedBead)
       case 4: return !!selectedCenterpiece;
-      case 5: return !!selectedCrucifix;
-      case 6: return true;
+      case 5: return true;
       default: return false;
     }
-  }, [currentStep, selectedModel, selectedBead, selectedCenterpiece, selectedCrucifix]);
+  }, [currentStep, selectedModel, selectedBead, selectedCenterpiece]);
 
   const handleNextStep = () => {
     if (!canProceed) return;
@@ -284,17 +281,6 @@ export const RosaryBuilder: React.FC = () => {
               )}
 
               {currentStep === 5 && (
-                <CrucifixSelector
-                  crucifixes={customizationComponents}
-                  selectedCrucifix={selectedCrucifix}
-                  onSelectCrucifix={(item) => {
-                    setSelectedCrucifix(item);
-                    showToast(`Crucifixo ${item.name} adicionado.`, 'info');
-                  }}
-                />
-              )}
-
-              {currentStep === 6 && (
                 <RosarySummary
                   configuration={configuration}
                   basePrice={basePrice}
@@ -319,7 +305,7 @@ export const RosaryBuilder: React.FC = () => {
           </div>
 
           {/* Navigation Controls (Voltar / Continuar) */}
-          {currentStep < 6 && (
+          {currentStep < 5 && (
             <div className="flex items-center justify-between pt-6 border-t border-gold/15 sticky bottom-0 bg-cream/95 backdrop-blur-md py-4 z-10">
               <button
                 type="button"

@@ -30,7 +30,7 @@ export const RosarySummary: React.FC<RosarySummaryProps> = ({
     <div className="space-y-6 text-left">
       <div>
         <span className="text-[10px] text-gold-dark font-black uppercase tracking-[0.2em] block mb-1">
-          Etapa 6 de 6
+          Etapa 5 de 5
         </span>
         <h3 className="font-serif font-bold text-3xl text-navy">
           Seu terço ficou assim ✨
@@ -136,15 +136,11 @@ export const RosarySummary: React.FC<RosarySummaryProps> = ({
         <div className="flex items-center justify-between pt-3">
           <div>
             <span className="text-[10px] text-navy/40 font-bold uppercase tracking-widest block">Cruz / Crucifixo</span>
-            <span className="font-medium text-navy text-sm">{crucifix?.name || 'Crucifixo Barroco'}</span>
+            <span className="font-medium text-navy text-sm">{crucifix?.name || 'Crucifixo Tradicional'}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => onEditStep(5)}
-            className="text-xs font-bold text-gold-dark hover:text-navy flex items-center gap-1 p-2"
-          >
-            <Edit3 size={13} /> Alterar
-          </button>
+          <span className="text-[10px] font-bold text-navy/50 bg-navy/5 px-2.5 py-1 rounded-full border border-gold/15">
+            Padrão Incluso
+          </span>
         </div>
 
 
