@@ -59,14 +59,14 @@ export const ExtrasSelector: React.FC<ExtrasSelectorProps> = ({
               onClick={() => onToggleExtra(item)}
               className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between gap-4 cursor-pointer ${
                 isSelected
-                  ? 'border-navy bg-navy/5 shadow-md'
+                  ? 'border-[#1C4F8C] bg-[#1C4F8C]/5 shadow-md'
                   : 'border-gold/15 bg-white hover:border-gold/40 hover:bg-gold/5'
               }`}
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div
                   className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                    isSelected ? 'bg-navy border-navy text-gold' : 'border-gold/30 bg-white'
+                    isSelected ? 'bg-[#1C4F8C] border-[#1C4F8C] text-white' : 'border-gold/30 bg-white'
                   }`}
                 >
                   {isSelected && <Check size={14} strokeWidth={3} />}

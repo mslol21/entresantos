@@ -130,7 +130,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </AnimatePresence>
 
             {needsCustomizer ? (
-              <span className="w-full sm:w-auto bg-navy text-white px-5 py-3 rounded-full hover:bg-navy/90 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5">
+              <span className="w-full sm:w-auto bg-[#1C4F8C] text-white px-5 py-3 rounded-full hover:bg-[#2563AB] hover:scale-105 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5 font-medium">
                 <Settings2 size={16} strokeWidth={2.5} />
                 <span className="text-[10px] font-black uppercase tracking-wider">Opções</span>
               </span>

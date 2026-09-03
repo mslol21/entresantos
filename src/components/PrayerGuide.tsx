@@ -146,9 +146,9 @@ export const PrayerGuide: React.FC = () => {
                   <button
                     key={prayer.id}
                     onClick={() => setActivePrayerId(prayer.id)}
-                    className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-wider whitespace-nowrap transition-all border snap-center ${
+                    className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-wider whitespace-nowrap transition-all border snap-center cursor-pointer ${
                       activePrayerId === prayer.id
-                        ? 'bg-navy text-white border-navy shadow-sm'
+                        ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-sm'
                         : 'bg-white text-navy/60 border-gold/15 hover:border-gold/30 hover:text-navy'
                     }`}
                   >

@@ -133,16 +133,16 @@ const StorefrontExplorer: React.FC = () => {
           {/* Construtor 2D em Destaque */}
           <Link
             to="/monte-seu-terco"
-            className="group flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-navy via-navy to-navy-light text-gold border border-gold/40 shadow-sm hover:scale-105 transition-all flex-shrink-0"
+            className="group flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#1C4F8C] via-[#20579A] to-[#2563AB] text-white border border-gold/30 shadow-sm hover:scale-105 transition-all flex-shrink-0"
           >
-            <div className="w-6 h-6 rounded-lg bg-gold/20 flex items-center justify-center text-gold">
+            <div className="w-6 h-6 rounded-lg bg-gold/25 flex items-center justify-center text-gold">
               <Sparkles size={14} />
             </div>
             <div className="text-left">
               <span className="block text-xs font-bold leading-none">Monte seu Terço</span>
-              <span className="text-[9px] text-gold/70 font-semibold uppercase tracking-wider">Simulador 2D</span>
+              <span className="text-[9px] text-gold-light font-semibold uppercase tracking-wider">Simulador 2D</span>
             </div>
-            <ChevronRight size={14} className="text-gold/60 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight size={14} className="text-white/60 group-hover:translate-x-0.5 transition-transform" />
           </Link>
 
           {/* Terços */}
@@ -151,11 +151,11 @@ const StorefrontExplorer: React.FC = () => {
             onClick={() => { setActiveTab('tercos'); setSearchQuery(''); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all flex-shrink-0 cursor-pointer ${
               activeTab === 'tercos' && !searchQuery
-                ? 'bg-navy text-white border-navy shadow-sm'
+                ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-sm'
                 : 'bg-white border-gold/25 text-navy/80 hover:border-gold/60 hover:bg-gold/5'
             }`}
           >
-            <RosaryVectorIcon size={18} className={activeTab === 'tercos' && !searchQuery ? 'text-gold' : 'text-gold-dark'} />
+            <RosaryVectorIcon size={18} className={activeTab === 'tercos' && !searchQuery ? 'text-gold-light' : 'text-gold-dark'} />
             <span className="text-xs font-bold">Terços</span>
           </button>
 
@@ -165,11 +165,11 @@ const StorefrontExplorer: React.FC = () => {
             onClick={() => { setActiveTab('pulseiras'); setSearchQuery(''); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all flex-shrink-0 cursor-pointer ${
               activeTab === 'pulseiras' && !searchQuery
-                ? 'bg-navy text-white border-navy shadow-sm'
+                ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-sm'
                 : 'bg-white border-gold/25 text-navy/80 hover:border-gold/60 hover:bg-gold/5'
             }`}
           >
-            <BraceletVectorIcon size={18} className={activeTab === 'pulseiras' && !searchQuery ? 'text-gold' : 'text-gold-dark'} />
+            <BraceletVectorIcon size={18} className={activeTab === 'pulseiras' && !searchQuery ? 'text-gold-light' : 'text-gold-dark'} />
             <span className="text-xs font-bold">Pulseiras</span>
           </button>
 
@@ -179,11 +179,11 @@ const StorefrontExplorer: React.FC = () => {
             onClick={() => { setActiveTab('chaveiros'); setSearchQuery(''); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all flex-shrink-0 cursor-pointer ${
               activeTab === 'chaveiros' && !searchQuery
-                ? 'bg-navy text-white border-navy shadow-sm'
+                ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-sm'
                 : 'bg-white border-gold/25 text-navy/80 hover:border-gold/60 hover:bg-gold/5'
             }`}
           >
-            <DezenaVectorIcon size={18} className={activeTab === 'chaveiros' && !searchQuery ? 'text-gold' : 'text-gold-dark'} />
+            <DezenaVectorIcon size={18} className={activeTab === 'chaveiros' && !searchQuery ? 'text-gold-light' : 'text-gold-dark'} />
             <span className="text-xs font-bold">Dezenas & Carro</span>
           </button>
 
@@ -193,11 +193,11 @@ const StorefrontExplorer: React.FC = () => {
             onClick={() => { setActiveTab('strap-phone'); setSearchQuery(''); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all flex-shrink-0 cursor-pointer ${
               activeTab === 'strap-phone' && !searchQuery
-                ? 'bg-navy text-white border-navy shadow-sm'
+                ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-sm'
                 : 'bg-white border-gold/25 text-navy/80 hover:border-gold/60 hover:bg-gold/5'
             }`}
           >
-            <PhoneCharmVectorIcon size={18} className={activeTab === 'strap-phone' && !searchQuery ? 'text-gold' : 'text-gold-dark'} />
+            <PhoneCharmVectorIcon size={18} className={activeTab === 'strap-phone' && !searchQuery ? 'text-gold-light' : 'text-gold-dark'} />
             <span className="text-xs font-bold">Strap Phone</span>
           </button>
 
@@ -230,11 +230,11 @@ const StorefrontExplorer: React.FC = () => {
           {/* Card 1: Construtor 2D */}
           <Link
             to="/monte-seu-terco"
-            className="group p-5 rounded-3xl bg-gradient-to-br from-navy via-navy to-navy-light text-white border border-gold/30 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+            className="group p-5 rounded-3xl bg-gradient-to-br from-[#1C4F8C] via-[#20579A] to-[#2563AB] text-white border border-gold/30 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="px-2.5 py-1 rounded-full bg-gold/20 text-gold text-[10px] font-black uppercase tracking-widest border border-gold/30">
+                <span className="px-2.5 py-1 rounded-full bg-gold/25 text-gold-light text-[10px] font-black uppercase tracking-widest border border-gold/30">
                   Simulador 2D
                 </span>
                 <Sparkles size={16} className="text-gold group-hover:rotate-12 transition-transform" />
@@ -336,7 +336,7 @@ const StorefrontExplorer: React.FC = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       activeTab === tab.id
-                        ? 'bg-navy text-gold shadow-xs'
+                        ? 'bg-[#1C4F8C] text-white shadow-xs'
                         : 'bg-white border border-gold/20 text-navy/60 hover:text-navy hover:border-gold/40'
                     }`}
                   >
@@ -374,7 +374,7 @@ const StorefrontExplorer: React.FC = () => {
           <div className="mt-8 text-center">
             <Link
               to="/loja"
-              className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white border border-gold/30 rounded-2xl text-xs font-bold text-navy hover:bg-navy hover:text-gold hover:border-navy transition-all shadow-sm group uppercase tracking-wider"
+              className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white border border-gold/30 rounded-2xl text-xs font-bold text-navy hover:bg-[#1C4F8C] hover:text-white hover:border-[#1C4F8C] transition-all shadow-sm group uppercase tracking-wider"
             >
               <span>Ver catálogo completo na Loja ({products.length} peças)</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -410,7 +410,7 @@ const PersonalizeTeaser: React.FC = () => (
               Monte seu Terço (2D)
               <ArrowRight size={15} />
             </Link>
-            <Link to="/personalize" className="px-6 py-3.5 border-2 border-navy/20 text-navy font-bold text-xs uppercase tracking-wider rounded-full hover:border-navy hover:bg-navy/5 transition-all">
+            <Link to="/personalize" className="px-6 py-3.5 border-2 border-navy/20 text-navy font-bold text-xs uppercase tracking-wider rounded-full hover:border-[#1C4F8C] hover:text-[#1C4F8C] hover:bg-[#1C4F8C]/5 transition-all">
               Outras Peças
             </Link>
           </div>
@@ -418,9 +418,9 @@ const PersonalizeTeaser: React.FC = () => (
         <div className="md:flex-1 flex flex-wrap gap-3 justify-center">
           <Link
             to="/monte-seu-terco"
-            className="px-6 py-4 bg-gradient-to-r from-navy to-navy-light text-gold border border-gold/30 rounded-2xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2"
+            className="px-6 py-4 bg-gradient-to-r from-[#1C4F8C] to-[#2563AB] text-white border border-gold/30 rounded-2xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2"
           >
-            <Sparkles size={16} />
+            <Sparkles size={16} className="text-gold" />
             <span>Monte seu Terço</span>
           </Link>
           {['Pulseira', 'Phone Charm', 'Dezena'].map(p => (

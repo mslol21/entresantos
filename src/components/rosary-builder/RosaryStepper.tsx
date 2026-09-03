@@ -49,13 +49,13 @@ export const RosaryStepper: React.FC<RosaryStepperProps> = ({
               disabled={!isClickable}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
                 isCurrent
-                  ? 'bg-navy text-white shadow-md'
+                  ? 'bg-[#1C4F8C] text-white shadow-md'
                   : isCompleted
                   ? 'bg-gold/15 text-navy border border-gold/30 hover:bg-gold/25'
                   : 'bg-white/60 text-navy/40 border border-gold/10 opacity-60'
               }`}
             >
-              <span className={isCurrent ? 'text-gold' : isCompleted ? 'text-gold-dark' : 'text-navy/40'}>
+              <span className={isCurrent ? 'text-gold-light' : isCompleted ? 'text-gold-dark' : 'text-navy/40'}>
                 {step.iconComponent}
               </span>
               <span>{step.shortLabel}</span>
@@ -85,7 +85,7 @@ export const RosaryStepper: React.FC<RosaryStepperProps> = ({
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
                     isCurrent
-                      ? 'bg-navy border-navy text-gold shadow-md scale-110'
+                      ? 'bg-[#1C4F8C] border-[#1C4F8C] text-gold shadow-md scale-110'
                       : isCompleted
                       ? 'bg-gold border-gold text-navy shadow-sm'
                       : 'bg-white border-gold/20 text-navy/40 group-hover:border-gold/50'

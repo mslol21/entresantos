@@ -60,9 +60,9 @@ export const ProductGrid: React.FC = () => {
         <div className="flex flex-wrap gap-2 mb-12 scrollbar-hide overflow-x-auto pb-2">
           <button
             onClick={() => setSelectedCategory('')}
-            className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
+            className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 cursor-pointer ${
               selectedCategory === ''
-                ? 'bg-navy text-white border-navy shadow-md'
+                ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-md'
                 : 'bg-white text-navy/60 border-gold/20 hover:border-gold/40 hover:text-navy hover:bg-cream-light'
             }`}
           >
@@ -74,9 +74,9 @@ export const ProductGrid: React.FC = () => {
               onClick={() => {
                 setSelectedCategory(cat.id);
               }}
-              className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 ${
+              className={`px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border whitespace-nowrap active:scale-95 cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-navy text-white border-navy shadow-md'
+                  ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-md'
                   : 'bg-white text-navy/60 border-gold/20 hover:border-gold/40 hover:text-navy hover:bg-cream-light'
               }`}
             >

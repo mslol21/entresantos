@@ -113,8 +113,8 @@ const Store: React.FC = () => {
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setFilter('linha', '')}
-            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-              !activeLine && !activeCategory ? 'bg-navy text-white' : 'bg-white border border-gold/20 text-navy/60 hover:border-gold/40 hover:text-navy'
+            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              !activeLine && !activeCategory ? 'bg-[#1C4F8C] text-white shadow-xs' : 'bg-white border border-gold/20 text-navy/60 hover:border-gold/40 hover:text-navy'
             }`}
           >
             Todos
@@ -123,8 +123,8 @@ const Store: React.FC = () => {
             <button
               key={key}
               onClick={() => { setFilter('linha', activeLine === key ? '' : key); setFilter('categoria', ''); }}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                activeLine === key ? 'bg-navy text-white' : 'bg-white border border-gold/20 text-navy/60 hover:border-gold/40 hover:text-navy'
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeLine === key ? 'bg-[#1C4F8C] text-white shadow-xs' : 'bg-white border border-gold/20 text-navy/60 hover:border-gold/40 hover:text-navy'
               }`}
             >
               {label}

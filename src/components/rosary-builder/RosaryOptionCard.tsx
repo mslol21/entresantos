@@ -45,7 +45,7 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
       disabled={isDisabled}
       className={`relative w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group cursor-pointer ${
         isSelected
-          ? 'border-navy bg-navy/5 shadow-md ring-2 ring-navy/10'
+          ? 'border-[#1C4F8C] bg-[#1C4F8C]/5 shadow-md ring-2 ring-[#1C4F8C]/15'
           : isDisabled
           ? 'border-gray-200 bg-gray-50/70 opacity-60 cursor-not-allowed'
           : 'border-gold/15 bg-white hover:border-gold/50 hover:bg-gold/5'
@@ -81,7 +81,7 @@ export const RosaryOptionCard: React.FC<RosaryOptionCardProps> = ({
 
         {/* Selected Checkmark overlay on icon */}
         {isSelected && (
-          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-navy text-gold flex items-center justify-center shadow-md">
+          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1C4F8C] text-white flex items-center justify-center shadow-md">
             <Check size={12} strokeWidth={3} />
           </div>
         )}

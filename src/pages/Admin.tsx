@@ -690,7 +690,7 @@ export const Admin: React.FC = () => {
                       onClick={() => setProductCategoryFilter('all')}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                         productCategoryFilter === 'all'
-                          ? 'bg-navy text-white shadow-xs'
+                          ? 'bg-[#1C4F8C] text-white shadow-xs'
                           : 'bg-cream/60 border border-gold/20 text-navy/70 hover:border-gold/50'
                       }`}
                     >
@@ -706,7 +706,7 @@ export const Admin: React.FC = () => {
                           onClick={() => setProductCategoryFilter(c.id)}
                           className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                             isSelected
-                              ? 'bg-navy text-gold border border-navy shadow-xs'
+                              ? 'bg-[#1C4F8C] text-white border border-[#1C4F8C] shadow-xs'
                               : 'bg-cream/60 border border-gold/20 text-navy/70 hover:border-gold/50'
                           }`}
                         >
