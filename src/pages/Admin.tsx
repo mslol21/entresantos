@@ -6,7 +6,8 @@ import {
   Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, 
   Palette, Grid, LineChart, LogOut, Download, LayoutDashboard, 
   FolderKanban, MessageSquareQuote, BookOpen, Layers, 
-  AlertTriangle, ExternalLink, QrCode, MessageCircle, Sparkles, Search
+  AlertTriangle, ExternalLink, QrCode, MessageCircle, Sparkles, Search,
+  Calculator
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -98,6 +99,18 @@ export const Admin: React.FC = () => {
   // Product filter states
   const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
   const [productSearch, setProductSearch] = useState<string>('');
+  
+  // Product pricing calculator states
+  const [costPrice, setCostPrice] = useState<number>(0);
+  const [expensesPrice, setExpensesPrice] = useState<number>(0);
+  const [profitMargin, setProfitMargin] = useState<number>(100);
+  const [showPricingCalc, setShowPricingCalc] = useState<boolean>(true);
+
+  // Quick pricing modal from products table
+  const [quickCalcProduct, setQuickCalcProduct] = useState<Product | null>(null);
+  const [quickCost, setQuickCost] = useState<number>(0);
+  const [quickExpenses, setQuickExpenses] = useState<number>(0);
+  const [quickMargin, setQuickMargin] = useState<number>(100);
   
   // Security state
   const [user, setUser] = useState<any>(null);
@@ -258,6 +271,9 @@ export const Admin: React.FC = () => {
 
   const resetProductForm = () => {
     const defaultCat = categories[0]?.id || 'tercos';
+    setCostPrice(0);
+    setExpensesPrice(0);
+    setProfitMargin(100);
     setFormProduct({
       name: '', description: '', price: 0, promotional_price: undefined, image: '', images: [],
       category: defaultCat, categories: [defaultCat], subcategory: 'Todos',
@@ -272,6 +288,15 @@ export const Admin: React.FC = () => {
     const imagesList = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
     const mainCat = product.category || categoriesList[0] || (categories[0]?.id || 'tercos');
+    
+    // Inicializar valores de referência na calculadora
+    const currentPrice = product.price || 0;
+    const estCost = currentPrice > 0 ? Number((currentPrice * 0.4).toFixed(2)) : 0;
+    const estExp = currentPrice > 0 ? Number((currentPrice * 0.1).toFixed(2)) : 0;
+    setCostPrice(estCost);
+    setExpensesPrice(estExp);
+    setProfitMargin(100);
+
     setEditingProduct(product);
     setFormProduct({
       ...product,
@@ -286,6 +311,28 @@ export const Admin: React.FC = () => {
       production_days: product.production_days ?? 5,
     });
     setIsAddingProduct(true);
+  };
+
+  const openQuickCalc = (product: Product) => {
+    setQuickCalcProduct(product);
+    const pPrice = product.price || 0;
+    setQuickCost(pPrice > 0 ? Number((pPrice * 0.4).toFixed(2)) : 0);
+    setQuickExpenses(pPrice > 0 ? Number((pPrice * 0.1).toFixed(2)) : 0);
+    setQuickMargin(100);
+  };
+
+  const handleSaveQuickPrice = async (newPrice: number) => {
+    if (!quickCalcProduct || newPrice <= 0) return;
+    try {
+      await updateProduct({
+        ...quickCalcProduct,
+        price: newPrice
+      });
+      showToast(`Preço de "${quickCalcProduct.name}" atualizado para R$ ${newPrice.toFixed(2)}!`, 'success');
+      setQuickCalcProduct(null);
+    } catch (err: any) {
+      showToast('Erro ao atualizar preço: ' + (err.message || 'Falha no banco'), 'error');
+    }
   };
 
   // Collection submission
@@ -831,11 +878,19 @@ export const Admin: React.FC = () => {
                                 </span>
                               </td>
                               <td className="p-4 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-xl text-gold-dark transition-colors" title="Editar produto">
+                                <div className="flex justify-end gap-1.5">
+                                  <button 
+                                    type="button"
+                                    onClick={() => openQuickCalc(p)} 
+                                    className="p-2 hover:bg-[#1C4F8C]/10 rounded-xl text-[#1C4F8C] hover:text-[#2563AB] transition-colors cursor-pointer" 
+                                    title="Calcular preço final (Custo + Despesas + Margem)"
+                                  >
+                                    <Calculator size={16} />
+                                  </button>
+                                  <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-xl text-gold-dark transition-colors cursor-pointer" title="Editar produto">
                                     <Edit2 size={16} />
                                   </button>
-                                  <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 rounded-xl text-red-500 transition-colors" title="Excluir produto">
+                                  <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 rounded-xl text-red-500 transition-colors cursor-pointer" title="Excluir produto">
                                     <Trash2 size={16} />
                                   </button>
                                 </div>
@@ -1427,6 +1482,175 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
 
+                {/* CALCULADORA DE FORMAÇÃO DE PREÇO FINAL (CUSTO + DESPESAS + PORCENTAGEM) */}
+                <div className="bg-gradient-to-br from-amber-50/70 via-cream to-white p-4 sm:p-5 rounded-2xl border border-gold/30 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#1C4F8C]/15 flex items-center justify-center text-[#1C4F8C] border border-[#1C4F8C]/30">
+                        <Calculator size={15} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-navy uppercase tracking-wider flex items-center gap-2">
+                          <span>Calculadora de Formação do Preço Final</span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-gold/20 text-gold-dark font-black">
+                            Custo + Despesas + Lucro
+                          </span>
+                        </h4>
+                        <p className="text-[10px] text-navy/55">
+                          Defina o custo dos materiais, despesas e margem desejada para gerar o preço final automaticamente.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPricingCalc(!showPricingCalc)}
+                      className="text-xs text-[#1C4F8C] hover:underline font-bold cursor-pointer ml-2 flex-shrink-0"
+                    >
+                      {showPricingCalc ? 'Recolher' : 'Abrir'}
+                    </button>
+                  </div>
+
+                  {showPricingCalc && (
+                    <div className="space-y-3.5 pt-2 border-t border-gold/15">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* 1. Custo dos Materiais */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-navy/70 mb-1">
+                            1. Custo dos Materiais (R$)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0,00"
+                              value={costPrice || ''}
+                              onChange={e => setCostPrice(parseFloat(e.target.value) || 0)}
+                              className="input-base pl-8 py-2 text-xs font-semibold"
+                            />
+                          </div>
+                          <span className="text-[9px] text-navy/45 mt-0.5 block">Contas, cruz, entremeio, cordão</span>
+                        </div>
+
+                        {/* 2. Despesas Extras */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-navy/70 mb-1">
+                            2. Despesas & Embalagem (R$)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0,00"
+                              value={expensesPrice || ''}
+                              onChange={e => setExpensesPrice(parseFloat(e.target.value) || 0)}
+                              className="input-base pl-8 py-2 text-xs font-semibold"
+                            />
+                          </div>
+                          <span className="text-[9px] text-navy/45 mt-0.5 block">Saquinho de veludo, caixa, taxas</span>
+                        </div>
+
+                        {/* 3. Porcentagem de Lucro / Margem (%) */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-bold text-navy/70">
+                              3. Margem / Lucro (%)
+                            </label>
+                            <span className="text-[10px] font-bold text-[#1C4F8C]">{profitMargin}%</span>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="1"
+                              min="0"
+                              placeholder="100"
+                              value={profitMargin}
+                              onChange={e => setProfitMargin(parseFloat(e.target.value) || 0)}
+                              className="input-base pr-8 py-2 text-xs font-semibold"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">%</span>
+                          </div>
+                          {/* Quick Margin Pills */}
+                          <div className="flex gap-1 mt-1.5 overflow-x-auto">
+                            {[30, 50, 100, 150, 200].map(pct => (
+                              <button
+                                type="button"
+                                key={pct}
+                                onClick={() => setProfitMargin(pct)}
+                                className={`text-[9px] px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                                  profitMargin === pct 
+                                    ? 'bg-[#1C4F8C] text-white' 
+                                    : 'bg-white border border-gold/20 text-navy/60 hover:border-gold/40'
+                                }`}
+                              >
+                                +{pct}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Resumo do Cálculo em Tempo Real */}
+                      <div className="bg-white p-3.5 rounded-xl border border-gold/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div>
+                            <span className="text-[10px] text-navy/50 uppercase block font-semibold">Custo Total Base</span>
+                            <span className="font-mono font-bold text-navy">
+                              {((costPrice || 0) + (expensesPrice || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                          </div>
+                          <div className="text-navy/30">+</div>
+                          <div>
+                            <span className="text-[10px] text-navy/50 uppercase block font-semibold">Lucro Estimado</span>
+                            <span className="font-mono font-bold text-emerald-700">
+                              {(((costPrice || 0) + (expensesPrice || 0)) * ((profitMargin || 0) / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                          </div>
+                          <div className="text-navy/30">=</div>
+                          <div>
+                            <span className="text-[10px] text-gold-dark uppercase block font-bold">Preço Final Sugerido</span>
+                            <span className="font-mono font-black text-base text-[#1C4F8C]">
+                              {(((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Botão de Aplicar Preço */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const finalVal = Number((((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100)).toFixed(2));
+                            if (finalVal > 0) {
+                              setFormProduct(prev => ({ ...prev, price: finalVal }));
+                              showToast(`Preço de Venda atualizado para R$ ${finalVal.toFixed(2)}!`, 'success');
+                            }
+                          }}
+                          disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
+                          className="px-4 py-2 bg-[#1C4F8C] hover:bg-[#2563AB] text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Save size={13} />
+                          <span>Aplicar Preço Final</span>
+                        </button>
+                      </div>
+
+                      {/* Margem Reversa se o Preço de Venda já foi digitado */}
+                      {(formProduct.price || 0) > 0 && ((costPrice || 0) + (expensesPrice || 0)) > 0 && (
+                        <div className="flex items-center justify-between text-[11px] text-navy/60 px-1 pt-1 border-t border-gold/10">
+                          <span>
+                            Preço no campo acima: <strong className="text-navy">R$ {(formProduct.price || 0).toFixed(2)}</strong>
+                          </span>
+                          <span>
+                            Lucro real: <strong className="text-emerald-700">R$ {((formProduct.price || 0) - ((costPrice || 0) + (expensesPrice || 0))).toFixed(2)}</strong> ({((((formProduct.price || 0) - ((costPrice || 0) + (expensesPrice || 0))) / ((costPrice || 0) + (expensesPrice || 0))) * 100).toFixed(0)}% de margem)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Categorias Secundárias / Adicionais */}
                 {categories.length > 1 && (
                   <div className="bg-cream/40 p-3.5 rounded-2xl border border-gold/15">
@@ -1671,6 +1895,156 @@ export const Admin: React.FC = () => {
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
+      {/* MODAL: CALCULADORA RÁPIDA DE PREÇO (DIRETO DA TABELA) */}
+      <AnimatePresence>
+        {quickCalcProduct && (() => {
+          const qTotalCost = (quickCost || 0) + (quickExpenses || 0);
+          const qFinalPrice = qTotalCost > 0 
+            ? Number((qTotalCost * (1 + (quickMargin || 0) / 100)).toFixed(2)) 
+            : 0;
+          const qProfit = qFinalPrice > 0 ? Number((qFinalPrice - qTotalCost).toFixed(2)) : 0;
+
+          return (
+            <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-gold/15">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#1C4F8C]/15 text-[#1C4F8C] flex items-center justify-center border border-[#1C4F8C]/30">
+                      <Calculator size={20} />
+                    </div>
+                    <div>
+                      <h2 className="font-serif font-bold text-xl text-navy">
+                        Cálculo do Preço Final
+                      </h2>
+                      <p className="text-xs text-navy/55 line-clamp-1">
+                        {quickCalcProduct.name}
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setQuickCalcProduct(null)} 
+                    className="p-2 text-navy/40 hover:text-navy rounded-full hover:bg-navy/5 cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="label-base mb-1">Custo dos Materiais (R$)</label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={quickCost || ''}
+                          onChange={e => setQuickCost(parseFloat(e.target.value) || 0)}
+                          className="input-base pl-9 text-sm font-semibold"
+                        />
+                      </div>
+                      <span className="text-[10px] text-navy/40 mt-1 block">Contas, crucifixo, entremeio</span>
+                    </div>
+
+                    <div>
+                      <label className="label-base mb-1">Despesas & Embalagem (R$)</label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={quickExpenses || ''}
+                          onChange={e => setQuickExpenses(parseFloat(e.target.value) || 0)}
+                          className="input-base pl-9 text-sm font-semibold"
+                        />
+                      </div>
+                      <span className="text-[10px] text-navy/40 mt-1 block">Saquinho, caixa, taxas</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="label-base mb-0">Porcentagem de Lucro / Margem (%)</label>
+                      <span className="font-mono font-bold text-sm text-[#1C4F8C]">{quickMargin}%</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={quickMargin}
+                        onChange={e => setQuickMargin(parseFloat(e.target.value) || 0)}
+                        className="input-base pr-8 font-semibold"
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">%</span>
+                    </div>
+
+                    <div className="flex gap-1.5 mt-2">
+                      {[30, 50, 80, 100, 150, 200].map(pct => (
+                        <button
+                          type="button"
+                          key={pct}
+                          onClick={() => setQuickMargin(pct)}
+                          className={`flex-1 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            quickMargin === pct
+                              ? 'bg-[#1C4F8C] text-white'
+                              : 'bg-cream border border-gold/20 text-navy/70 hover:border-gold/40'
+                          }`}
+                        >
+                          +{pct}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Resumo da Precificação */}
+                  <div className="bg-cream/60 p-4 rounded-2xl border border-gold/20 space-y-2">
+                    <div className="flex justify-between text-xs text-navy/70">
+                      <span>Custo Base (Materiais + Despesas):</span>
+                      <strong className="text-navy">{qTotalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                    </div>
+                    <div className="flex justify-between text-xs text-emerald-700">
+                      <span>Lucro Bruto Estimado:</span>
+                      <strong className="font-bold">+{qProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                    </div>
+                    <div className="pt-2 border-t border-gold/20 flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gold-dark block leading-tight">Preço Final Sugerido</span>
+                        <span className="text-xs text-navy/50">Atual: {(quickCalcProduct.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </div>
+                      <span className="font-mono font-black text-2xl text-[#1C4F8C]">
+                        {qFinalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuickCalcProduct(null)}
+                    className="px-6 py-3.5 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/3 hover:bg-gold/5 cursor-pointer"
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={qFinalPrice <= 0}
+                    onClick={() => handleSaveQuickPrice(qFinalPrice)}
+                    className="btn-primary w-2/3 justify-center text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <Save size={15} />
+                    <span>Salvar Preço Final</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
