@@ -15,14 +15,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { globalOptions } = useData();
   const [isAdded, setIsAdded] = useState(false);
 
-  const isMonteSeuTerco = product.isCustomizable;
-  const hasNameOption = product.hasNameOption;
-  const hasColorOption = product.hasColorOption;
+  const isCustomizable = !!product.isCustomizable;
+  const hasColorOption = isCustomizable && !!product.hasColorOption;
 
   const relevantColors = hasColorOption ? globalOptions.filter(o => o.type === 'color' && o.categoryIds?.includes(product.category || '')) : [];
-  const relevantAssembly = isMonteSeuTerco ? globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || '')) : [];
+  const relevantAssembly = isCustomizable ? globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || '')) : [];
 
-  const needsCustomizer = isMonteSeuTerco || hasNameOption || hasColorOption || (product.variations && product.variations.length > 0) || (product.customizationLists && product.customizationLists.length > 0) || relevantColors.length > 0 || relevantAssembly.length > 0;
+  const hasVariations = (product.variations && product.variations.length > 0) || (product.customizationLists && product.customizationLists.length > 0);
+
+  const needsCustomizer = isCustomizable || hasVariations || relevantColors.length > 0 || relevantAssembly.length > 0;
 
   const handleDirectAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -73,7 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="relative aspect-square overflow-hidden bg-cream-light">
         {renderMedia()}
         <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
-          {needsCustomizer && (
+          {isCustomizable && (
             <span className="bg-navy/85 backdrop-blur-xs text-gold px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.12em] flex items-center gap-1 shadow-sm border border-gold/20">
               <Settings2 size={10} strokeWidth={2.5} />
               Personalizável

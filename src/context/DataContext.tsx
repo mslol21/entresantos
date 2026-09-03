@@ -203,8 +203,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (pError) throw pError;
 
       const mappedProducts = (productsData || []).map(p => {
-        const hasColorOption = p.available_colors?.includes('[HAS_COLOR_OPTION]') || false;
-        const availableColors = p.available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '';
+        const isCustomizable = !!p.is_customizable;
+        const hasColorOption = isCustomizable && (p.available_colors?.includes('[HAS_COLOR_OPTION]') || false);
+        const availableColors = isCustomizable ? (p.available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '') : '';
         const imagesList = p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
         const categoriesList = p.categories && Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : (p.category ? [p.category] : []);
         return {
@@ -213,15 +214,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           images: imagesList.slice(0, 5),
           category: p.category || categoriesList[0] || '',
           categories: categoriesList,
-          isCustomizable: p.is_customizable,
+          isCustomizable,
           isActive: p.is_active,
           isFeatured: !!p.is_featured,
           availableColors,
           hasColorOption,
-          hasNameOption: p.has_name_option,
-          namePrice: p.name_price,
+          hasNameOption: isCustomizable ? !!p.has_name_option : false,
+          namePrice: isCustomizable ? p.name_price : undefined,
           variations: p.variations || [],
-          customizationLists: p.customization_lists || [],
+          customizationLists: isCustomizable ? (p.customization_lists || []) : [],
           line: p.line || 'devocionais',
           availability: p.availability || 'ready',
         };
@@ -360,11 +361,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ==================== PRODUCTS ====================
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
-    const isCustomizable = product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable;
-    const hasNameOption = product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option;
+    const isCustomizable = !!(product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable);
+    const hasNameOption = isCustomizable ? !!(product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option) : false;
     const isActive = product.isActive !== undefined ? product.isActive : (product as any).is_active;
-    const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
-    const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
+    const hasColorOption = isCustomizable ? !!(product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false)) : false;
+    const availableColors = isCustomizable ? (product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '')) : '';
 
     const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
     const mainImage = imagesList[0] || product.image || '';
@@ -383,14 +384,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       slug: product.slug || product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
       sku: product.sku || null,
       line: product.line || 'devocionais',
-      is_customizable: !!isCustomizable,
+      is_customizable: isCustomizable,
       is_active: isActive !== false,
       is_featured: !!product.isFeatured,
       available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
-      has_name_option: !!hasNameOption,
+      has_name_option: hasNameOption,
       variations: product.variations || [],
-      customization_lists: product.customizationLists || [],
-      name_price: product.namePrice || null,
+      customization_lists: isCustomizable ? (product.customizationLists || []) : [],
+      name_price: isCustomizable ? (product.namePrice || null) : null,
       availability: product.availability || 'ready',
       production_days: product.production_days || null,
       stock: product.stock || 0,
@@ -413,11 +414,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProduct = async (product: Product) => {
-    const isCustomizable = product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable;
-    const hasNameOption = product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option;
+    const isCustomizable = !!(product.isCustomizable !== undefined ? product.isCustomizable : (product as any).is_customizable);
+    const hasNameOption = isCustomizable ? !!(product.hasNameOption !== undefined ? product.hasNameOption : (product as any).has_name_option) : false;
     const isActive = product.isActive !== undefined ? product.isActive : (product as any).is_active;
-    const hasColorOption = product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false);
-    const availableColors = product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '');
+    const hasColorOption = isCustomizable ? !!(product.hasColorOption !== undefined ? product.hasColorOption : ((product as any).available_colors?.includes('[HAS_COLOR_OPTION]') || false)) : false;
+    const availableColors = isCustomizable ? (product.availableColors !== undefined ? product.availableColors : ((product as any).available_colors?.replace('[HAS_COLOR_OPTION]', '').trim() || '')) : '';
 
     const imagesList = product.images && product.images.length > 0 ? product.images.slice(0, 5) : (product.image ? [product.image] : []);
     const mainImage = imagesList[0] || product.image || '';
@@ -436,11 +437,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       slug: product.slug || product.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
       sku: product.sku || null,
       line: product.line || 'devocionais',
-      is_customizable: !!isCustomizable,
+      is_customizable: isCustomizable,
       is_active: isActive !== false,
       is_featured: !!product.isFeatured,
       available_colors: hasColorOption ? `${availableColors || ''} [HAS_COLOR_OPTION]`.trim() : (availableColors || ''),
-      has_name_option: !!hasNameOption,
+      has_name_option: hasNameOption,
       variations: product.variations || [],
       customization_lists: product.customizationLists || [],
       name_price: product.namePrice || null,

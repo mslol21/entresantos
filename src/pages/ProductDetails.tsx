@@ -117,26 +117,19 @@ export const ProductDetails: React.FC = () => {
     );
   }
 
-  const isMonteSeuTerco = product.isCustomizable;
-  const hasNameOption = product.hasNameOption;
-  const hasColorOption = product.hasColorOption;
+  const isCustomizable = !!product.isCustomizable;
+  const hasColorOption = isCustomizable && !!product.hasColorOption;
 
   const relevantColors = hasColorOption ? globalOptions.filter(o => o.type === 'color' && o.categoryIds?.includes(product.category || '')) : [];
-  const relevantAssembly = isMonteSeuTerco ? globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || '')) : [];
+  const relevantAssembly = isCustomizable ? globalOptions.filter(o => o.type === 'assembly' && o.categoryIds?.includes(product.category || '')) : [];
 
-  const colorList = product.availableColors 
+  const colorList = hasColorOption && product.availableColors 
     ? product.availableColors.split(',').map(c => c.trim()).filter(c => c !== '') 
     : [];
 
-  const needsCustomizer = !!(
-    isMonteSeuTerco || 
-    hasNameOption || 
-    hasColorOption || 
-    (product.variations && product.variations.length > 0) || 
-    (product.customizationLists && product.customizationLists.length > 0) || 
-    relevantColors.length > 0 || 
-    relevantAssembly.length > 0
-  );
+  const hasVariations = (product.variations && product.variations.length > 0) || (isCustomizable && product.customizationLists && product.customizationLists.length > 0);
+
+  const needsCustomizer = isCustomizable || hasVariations || relevantColors.length > 0 || relevantAssembly.length > 0;
 
   const getBasePrice = () => {
     if (selectedVariation && !('type' in (selectedVariation as any))) return (selectedVariation as any).price || 0;
@@ -297,7 +290,7 @@ export const ProductDetails: React.FC = () => {
               
               {/* Badges */}
               <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
-                {needsCustomizer && (
+                {isCustomizable && (
                   <span className="badge-custom flex items-center gap-1 bg-gold text-navy font-black">
                     <Settings2 size={10} strokeWidth={3} />
                     Personalizável
@@ -802,9 +795,7 @@ interface CarouselCardProps {
 
 const CarouselCard: React.FC<CarouselCardProps> = ({ product, dragging, onClick }) => {
   const [hovered, setHovered] = useState(false);
-  const needsCustomizer = !!(product.isCustomizable || product.hasNameOption || product.hasColorOption ||
-    (product.variations && product.variations.length > 0) ||
-    (product.customizationLists && product.customizationLists.length > 0));
+  const isCustomizable = !!product.isCustomizable;
 
   return (
     <motion.div
@@ -833,7 +824,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({ product, dragging, onClick 
         )}
 
         {/* Badge */}
-        {needsCustomizer && (
+        {isCustomizable && (
           <div className="absolute top-3 left-3 bg-gold text-navy px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] flex items-center gap-1 shadow-md">
             <Settings2 size={9} strokeWidth={3} />
             Personalizável

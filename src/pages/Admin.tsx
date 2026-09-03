@@ -182,7 +182,7 @@ export const Admin: React.FC = () => {
     isActive: true,
     isFeatured: false,
     availableColors: '',
-    hasNameOption: true,
+    hasNameOption: false,
     hasColorOption: false,
     variations: [],
     customizationLists: []
@@ -252,6 +252,13 @@ export const Admin: React.FC = () => {
         payload.categories = [payload.category, ...payload.categories];
       }
       payload.isActive = payload.isActive !== false;
+      payload.isCustomizable = !!payload.isCustomizable;
+      if (!payload.isCustomizable) {
+        payload.hasNameOption = false;
+        payload.hasColorOption = false;
+        payload.availableColors = '';
+        payload.customizationLists = [];
+      }
 
       if (editingProduct) {
         await updateProduct(payload as Product);
@@ -279,7 +286,7 @@ export const Admin: React.FC = () => {
       category: defaultCat, categories: [defaultCat], subcategory: 'Todos',
       line: 'devocionais', sku: '', availability: 'ready', production_days: 5,
       stock: 10, min_stock: 2, isCustomizable: false, isActive: true, isFeatured: false,
-      availableColors: '', hasNameOption: true, hasColorOption: false,
+      availableColors: '', hasNameOption: false, hasColorOption: false,
       variations: [], customizationLists: []
     });
   };
