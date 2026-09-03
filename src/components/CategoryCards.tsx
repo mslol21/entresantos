@@ -23,15 +23,6 @@ const categories = [
     accent: 'from-gold-dark/50 to-amber-800/10',
   },
   {
-    id: 'colecoes',
-    title: 'Coleções',
-    description: 'Peças especiais criadas para conhecer, guardar e colecionar.',
-    image: '/cat-colecoes.jpg',
-    to: '/colecoes',
-    cta: 'Descobrir',
-    accent: 'from-navy/60 to-navy/20',
-  },
-  {
     id: 'personalizados',
     title: 'Personalizados',
     description: 'Escolha detalhes e tenha uma peça criada especialmente para você.',
@@ -68,7 +59,7 @@ export const CategoryCards: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {categories.map((cat) => (
             <motion.div key={cat.id} variants={itemVariants}>

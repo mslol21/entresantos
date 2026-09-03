@@ -442,19 +442,6 @@ export const ProductDetails: React.FC = () => {
               )}
             </div>
 
-            {/* Collection Banner Link if product belongs to collection */}
-            {product.collection_id && (
-              <div className="bg-gold/10 border border-gold/25 rounded-2xl p-3.5 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gold-dark block">Parte da Coleção</span>
-                  <span className="font-serif font-bold text-navy text-sm">{product.collection_subtitle || 'Coleções Entre Santos'}</span>
-                </div>
-                <Link to="/colecoes" className="text-xs font-bold text-gold-dark hover:underline">
-                  Ver Coleção →
-                </Link>
-              </div>
-            )}
-
             {/* Availability and Production info */}
             <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-navy/70 py-1">
               {product.availability === 'made_to_order' ? (

@@ -14,13 +14,11 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
   const { settings } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLojaOpen, setIsLojaOpen] = useState(false);
-  const [isColOpen, setIsColOpen] = useState(false);
   const location = useLocation();
 
   const handleNavClose = () => {
     setIsMenuOpen(false);
     setIsLojaOpen(false);
-    setIsColOpen(false);
   };
 
   const lojaLinks = [
@@ -89,33 +87,6 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
                         {l.label}
                       </Link>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Coleções dropdown */}
-            <div className="relative" onMouseEnter={() => setIsColOpen(true)} onMouseLeave={() => setIsColOpen(false)}>
-              <Link to="/colecoes" className={`nav-link flex items-center gap-1 ${location.pathname.startsWith('/colecoes') ? 'nav-link-active' : ''}`}>
-                Coleções <ChevronDown size={13} className={`transition-transform text-gold ${isColOpen ? 'rotate-180' : ''}`} />
-              </Link>
-              <AnimatePresence>
-                {isColOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 w-52 bg-navy border border-gold/30 rounded-2xl shadow-2xl py-2 z-50 text-white"
-                  >
-                    <Link to="/colecoes" onClick={handleNavClose}
-                      className="block px-4 py-2.5 text-xs font-semibold text-white/80 hover:text-gold hover:bg-white/10 transition-colors uppercase tracking-wider">
-                      Todas as coleções
-                    </Link>
-                    <Link to="/colecoes/guardioes-da-fe" onClick={handleNavClose}
-                      className="block px-4 py-2.5 text-xs font-semibold text-white/80 hover:text-gold hover:bg-white/10 transition-colors uppercase tracking-wider">
-                      Guardiões da Fé
-                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -230,7 +201,6 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
                 {[
                   { label: 'Início', to: '/' },
                   { label: 'Loja', to: '/loja' },
-                  { label: 'Coleções', to: '/colecoes' },
                   { label: 'Personalize', to: '/personalize' },
                   { label: 'Momentos de Fé', to: '/momentos-de-fe' },
                   { label: 'Nossa História', to: '/nossa-historia' },

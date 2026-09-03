@@ -84,7 +84,6 @@ export const Footer: React.FC = () => {
                 { label: 'Loja', to: '/loja' },
                 { label: 'Terços', to: '/loja?categoria=tercos' },
                 { label: 'Pulseiras', to: '/loja?categoria=pulseiras' },
-                { label: 'Coleções', to: '/colecoes' },
                 { label: 'Presentes', to: '/loja?linha=presentes' },
                 { label: 'Personalizados', to: '/personalize' },
               ].map(item => (
@@ -133,7 +132,6 @@ export const Footer: React.FC = () => {
             <ul className="space-y-3">
               {[
                 { label: 'Nossa História', to: '/nossa-historia' },
-                { label: 'Coleções', to: '/colecoes' },
               ].map(item => (
                 <li key={item.label}>
                   <Link to={item.to} className="text-gold/55 hover:text-gold text-sm transition-colors">

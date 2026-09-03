@@ -7,7 +7,6 @@ import {
 import { useData } from '../context/DataContext';
 import { ProductCard } from '../components/ProductCard';
 import { CategoryCards } from '../components/CategoryCards';
-import { CollectionSection } from '../components/CollectionSection';
 import { TrustSection } from '../components/TrustSection';
 import { 
   RosaryVectorIcon, 
@@ -214,15 +213,6 @@ const StorefrontExplorer: React.FC = () => {
             <Package size={15} />
             <span className="text-xs font-bold">Pronta Entrega</span>
           </button>
-
-          {/* Coleções */}
-          <Link
-            to="/colecoes"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border border-gold/25 text-navy/80 hover:border-gold/60 hover:bg-gold/5 transition-all flex-shrink-0"
-          >
-            <Heart size={15} className="text-rose-500" />
-            <span className="text-xs font-bold">Coleções dos Santos</span>
-          </Link>
         </div>
 
         {/* 3 Banners de Ação Rápida e Destaques */}
@@ -498,10 +488,7 @@ const Home: React.FC = () => {
       {/* 2. Banners das Linhas do Ateliê */}
       <CategoryCards />
 
-      {/* 3. Coleções dos Santos & QR Code */}
-      <CollectionSection />
-
-      {/* 4. Construtor Visual 2D Teaser */}
+      {/* 3. Construtor Visual 2D Teaser */}
       <PersonalizeTeaser />
 
       {/* 5. Ocasiões & Momentos de Fé */}
