@@ -361,12 +361,20 @@ export const ProductDetails: React.FC = () => {
               <span className="text-[11px] text-gold-dark uppercase tracking-[0.25em] font-black block mb-2">
                 {categoryData?.name || product.category}
               </span>
-              <h1 className="font-serif font-bold text-3xl md:text-4xl text-navy leading-tight mb-3">
+              <h1 className="font-serif font-bold text-3xl md:text-4xl text-navy leading-tight mb-4">
                 {product.name}
               </h1>
-              <p className="text-sm text-navy/60 font-medium leading-relaxed">
-                {product.description}
-              </p>
+              
+              {product.description && (
+                <div className="bg-white/95 backdrop-blur-xs p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-gold/20 shadow-xs">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-dark block mb-2">
+                    Sobre a Peça
+                  </span>
+                  <p className="text-sm sm:text-[15px] text-navy/85 font-medium leading-relaxed whitespace-pre-line">
+                    {product.description}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Price section */}
@@ -609,7 +617,7 @@ export const ProductDetails: React.FC = () => {
                           onClick={() => setCustomOptions(prev => ({ ...prev, [list.id]: option }))}
                           className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
                             customOptions[list.id] === option
-                              ? 'bg-navy text-white border-navy shadow-md'
+                              ? 'bg-[#1C4F8C] text-white border-[#1C4F8C] shadow-md'
                               : 'bg-white text-navy/70 border-navy/15 hover:border-navy/40'
                           }`}
                         >
