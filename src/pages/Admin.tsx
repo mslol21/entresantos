@@ -6,7 +6,7 @@ import {
   Plus, Edit2, Trash2, Save, X, ShoppingBag, Settings, ArrowLeft, Lock, 
   Palette, Grid, LineChart, LogOut, Download, LayoutDashboard, 
   FolderKanban, MessageSquareQuote, BookOpen, Layers, 
-  AlertTriangle, ExternalLink, QrCode, MessageCircle, Sparkles
+  AlertTriangle, ExternalLink, QrCode, MessageCircle, Sparkles, Search
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -94,6 +94,10 @@ export const Admin: React.FC = () => {
   const [isAddingSaint, setIsAddingSaint] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [subTab, setSubTab] = useState<'colors' | 'entremeio' | 'crucifixo' | 'outros'>('colors');
+  
+  // Product filter states
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
+  const [productSearch, setProductSearch] = useState<string>('');
   
   // Security state
   const [user, setUser] = useState<any>(null);
@@ -229,6 +233,11 @@ export const Admin: React.FC = () => {
       if (!payload.category && categories.length > 0) {
         payload.category = categories[0].id;
       }
+      if (!payload.categories || payload.categories.length === 0) {
+        payload.categories = payload.category ? [payload.category] : [];
+      } else if (payload.category && !payload.categories.includes(payload.category)) {
+        payload.categories = [payload.category, ...payload.categories];
+      }
       payload.isActive = payload.isActive !== false;
 
       if (editingProduct) {
@@ -248,9 +257,10 @@ export const Admin: React.FC = () => {
   };
 
   const resetProductForm = () => {
+    const defaultCat = categories[0]?.id || 'tercos';
     setFormProduct({
-      name: '', description: '', price: 0, promotional_price: 0, image: '', images: [],
-      category: categories[0]?.id || '', categories: [], subcategory: 'Todos',
+      name: '', description: '', price: 0, promotional_price: undefined, image: '', images: [],
+      category: defaultCat, categories: [defaultCat], subcategory: 'Todos',
       line: 'devocionais', sku: '', availability: 'ready', production_days: 5,
       stock: 10, min_stock: 2, isCustomizable: false, isActive: true, isFeatured: false,
       availableColors: '', hasNameOption: true, hasColorOption: false,
@@ -261,13 +271,14 @@ export const Admin: React.FC = () => {
   const startEditProduct = (product: Product) => {
     const imagesList = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
     const categoriesList = product.categories && product.categories.length > 0 ? product.categories : (product.category ? [product.category] : []);
+    const mainCat = product.category || categoriesList[0] || (categories[0]?.id || 'tercos');
     setEditingProduct(product);
     setFormProduct({
       ...product,
       images: imagesList.slice(0, 5),
       image: imagesList[0] || product.image || '',
-      category: product.category || categoriesList[0] || '',
-      categories: categoriesList,
+      category: mainCat,
+      categories: categoriesList.length > 0 ? categoriesList : [mainCat],
       line: product.line || 'devocionais',
       availability: product.availability || 'ready',
       stock: product.stock ?? 10,
@@ -636,86 +647,210 @@ export const Admin: React.FC = () => {
         {activeTab === 'customizer' && <CustomizerAdmin />}
 
         {/* TAB: PRODUCTS */}
-        {activeTab === 'products' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="font-serif font-bold text-3xl text-navy">Produtos ({products.length})</h1>
-                <p className="text-navy/50 text-sm">Catálogo com controle de SKU, linhas e disponibilidade.</p>
-              </div>
-              <button 
-                onClick={() => { resetProductForm(); setEditingProduct(null); setIsAddingProduct(true); }}
-                className="btn-primary"
-              >
-                <Plus size={16} /> Novo Produto
-              </button>
-            </div>
+        {activeTab === 'products' && (() => {
+          const filteredProducts = products.filter(p => {
+            if (productCategoryFilter !== 'all') {
+              const matchCat = p.category === productCategoryFilter || (p.categories || []).includes(productCategoryFilter);
+              if (!matchCat) return false;
+            }
+            if (productSearch.trim()) {
+              const q = productSearch.toLowerCase();
+              const matchName = p.name.toLowerCase().includes(q);
+              const matchSku = p.sku?.toLowerCase().includes(q);
+              const matchCat = p.category?.toLowerCase().includes(q);
+              if (!matchName && !matchSku && !matchCat) return false;
+            }
+            return true;
+          });
 
-            <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-cream/80 text-navy/40 text-[10px] uppercase font-black tracking-widest border-b border-gold/10">
-                    <tr>
-                      <th className="p-4">Produto</th>
-                      <th className="p-4">SKU / Linha</th>
-                      <th className="p-4">Preço</th>
-                      <th className="p-4">Disponibilidade</th>
-                      <th className="p-4">Estoque</th>
-                      <th className="p-4 text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gold/10 text-sm">
-                    {products.map(p => (
-                      <tr key={p.id} className="hover:bg-cream/30 transition-colors">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <img src={p.image || '/logo.png'} alt={p.name} className="w-12 h-12 rounded-xl object-cover border border-gold/15 bg-cream" />
-                            <div>
-                              <p className="font-bold text-navy">{p.name}</p>
-                              <span className="text-[10px] text-navy/40 uppercase">{p.category}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <p className="font-mono text-xs font-bold text-navy/70">{p.sku || '—'}</p>
-                          <span className="text-[10px] font-bold text-gold-dark uppercase">{p.line || 'devocionais'}</span>
-                        </td>
-                        <td className="p-4 font-bold text-navy">
-                          {p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </td>
-                        <td className="p-4">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                            p.availability === 'made_to_order' ? 'bg-amber-100 text-amber-800' :
-                            p.availability === 'limited_edition' ? 'bg-purple-100 text-purple-800' :
-                            'bg-emerald-100 text-emerald-800'
-                          }`}>
-                            {p.availability === 'made_to_order' ? 'Sob encomenda' :
-                             p.availability === 'limited_edition' ? 'Edição limitada' : 'Pronta entrega'}
-                          </span>
-                        </td>
-                        <td className="p-4 font-bold">
-                          <span className={p.stock !== undefined && p.stock <= (p.min_stock || 1) ? 'text-red-500' : 'text-navy'}>
-                            {p.stock ?? '—'} un.
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-xl text-gold-dark transition-colors">
-                              <Edit2 size={16} />
-                            </button>
-                            <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 rounded-xl text-red-500 transition-colors">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
+          return (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h1 className="font-serif font-bold text-3xl text-navy">
+                    Produtos ({products.length})
+                  </h1>
+                  <p className="text-navy/50 text-sm">Catálogo com controle de categorias, SKU, linhas e estoque.</p>
+                </div>
+                <button 
+                  onClick={() => { resetProductForm(); setEditingProduct(null); setIsAddingProduct(true); }}
+                  className="btn-primary"
+                >
+                  <Plus size={16} /> Novo Produto
+                </button>
+              </div>
+
+              {/* Bar: Filter by Category + Search */}
+              <div className="bg-white p-4 rounded-3xl border border-gold/15 shadow-sm space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+                  {/* Category Chips */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                    <button
+                      type="button"
+                      onClick={() => setProductCategoryFilter('all')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                        productCategoryFilter === 'all'
+                          ? 'bg-navy text-white shadow-xs'
+                          : 'bg-cream/60 border border-gold/20 text-navy/70 hover:border-gold/50'
+                      }`}
+                    >
+                      Todas ({products.length})
+                    </button>
+                    {categories.map(c => {
+                      const count = products.filter(p => p.category === c.id || (p.categories || []).includes(c.id)).length;
+                      const isSelected = productCategoryFilter === c.id;
+                      return (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onClick={() => setProductCategoryFilter(c.id)}
+                          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                            isSelected
+                              ? 'bg-navy text-gold border border-navy shadow-xs'
+                              : 'bg-cream/60 border border-gold/20 text-navy/70 hover:border-gold/50'
+                          }`}
+                        >
+                          {c.name} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-64 flex-shrink-0">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-navy/40" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por nome ou SKU..."
+                      value={productSearch}
+                      onChange={e => setProductSearch(e.target.value)}
+                      className="input-base pl-8 py-2 text-xs"
+                    />
+                    {productSearch && (
+                      <button
+                        onClick={() => setProductSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-navy/40 hover:text-navy cursor-pointer"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {productCategoryFilter !== 'all' && (
+                  <div className="flex items-center gap-2 pt-1 border-t border-gold/10 text-xs text-navy/60">
+                    <span>Filtrando por categoria:</span>
+                    <span className="font-bold text-navy bg-gold/15 px-2 py-0.5 rounded-md border border-gold/25">
+                      {categories.find(c => c.id === productCategoryFilter)?.name || productCategoryFilter}
+                    </span>
+                    <button
+                      onClick={() => setProductCategoryFilter('all')}
+                      className="text-gold-dark hover:underline font-bold ml-1 cursor-pointer"
+                    >
+                      Remover filtro
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-cream/80 text-navy/40 text-[10px] uppercase font-black tracking-widest border-b border-gold/10">
+                      <tr>
+                        <th className="p-4">Produto & Categoria</th>
+                        <th className="p-4">SKU / Linha</th>
+                        <th className="p-4">Preço</th>
+                        <th className="p-4">Disponibilidade</th>
+                        <th className="p-4">Estoque</th>
+                        <th className="p-4 text-right">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gold/10 text-sm">
+                      {filteredProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-navy/50">
+                            Nenhum produto encontrado nesta categoria ou pesquisa.
+                            {(productCategoryFilter !== 'all' || productSearch) && (
+                              <button
+                                onClick={() => { setProductCategoryFilter('all'); setProductSearch(''); }}
+                                className="block mx-auto mt-2 text-gold-dark hover:underline font-bold text-xs"
+                              >
+                                Limpar filtros
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredProducts.map(p => {
+                          const primaryCat = categories.find(c => c.id === p.category)?.name || p.category || 'Sem Categoria';
+                          const additionalCats = (p.categories || [])
+                            .filter(cId => cId !== p.category)
+                            .map(cId => categories.find(c => c.id === cId)?.name || cId);
+
+                          return (
+                            <tr key={p.id} className="hover:bg-cream/30 transition-colors">
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <img src={p.image || '/logo.png'} alt={p.name} className="w-12 h-12 rounded-xl object-cover border border-gold/15 bg-cream" />
+                                  <div>
+                                    <p className="font-bold text-navy leading-snug">{p.name}</p>
+                                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gold/15 text-gold-dark border border-gold/25 uppercase tracking-wider">
+                                        {primaryCat}
+                                      </span>
+                                      {additionalCats.map((catLabel, idx) => (
+                                        <span key={idx} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-navy/5 text-navy/60 border border-navy/10">
+                                          +{catLabel}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <p className="font-mono text-xs font-bold text-navy/70">{p.sku || '—'}</p>
+                                <span className="text-[10px] font-bold text-gold-dark uppercase">{p.line || 'devocionais'}</span>
+                              </td>
+                              <td className="p-4 font-bold text-navy">
+                                {p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </td>
+                              <td className="p-4">
+                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                                  p.availability === 'made_to_order' ? 'bg-amber-100 text-amber-800' :
+                                  p.availability === 'limited_edition' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-emerald-100 text-emerald-800'
+                                }`}>
+                                  {p.availability === 'made_to_order' ? 'Sob encomenda' :
+                                   p.availability === 'limited_edition' ? 'Edição limitada' : 'Pronta entrega'}
+                                </span>
+                              </td>
+                              <td className="p-4 font-bold">
+                                <span className={p.stock !== undefined && p.stock <= (p.min_stock || 1) ? 'text-red-500' : 'text-navy'}>
+                                  {p.stock ?? '—'} un.
+                                </span>
+                              </td>
+                              <td className="p-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button onClick={() => startEditProduct(p)} className="p-2 hover:bg-gold/10 rounded-xl text-gold-dark transition-colors" title="Editar produto">
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 rounded-xl text-red-500 transition-colors" title="Excluir produto">
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TAB: PRODUCTION KANBAN */}
         {activeTab === 'production' && (
@@ -985,22 +1120,40 @@ export const Admin: React.FC = () => {
 
             <div className="bg-white rounded-3xl border border-gold/15 overflow-hidden shadow-premium">
               <div className="divide-y divide-gold/10">
-                {categories.map(c => (
-                  <div key={c.id} className="p-4 flex items-center justify-between hover:bg-cream/30 transition-colors">
-                    <div>
-                      <p className="font-bold text-navy">{c.name}</p>
-                      <p className="font-mono text-xs text-navy/40">{c.id}</p>
+                {categories.map(c => {
+                  const linkedCount = products.filter(p => p.category === c.id || (p.categories || []).includes(c.id)).length;
+                  return (
+                    <div key={c.id} className="p-4 sm:p-5 flex items-center justify-between hover:bg-cream/30 transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2.5">
+                          <p className="font-bold text-navy text-base">{c.name}</p>
+                          <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-navy/5 text-navy/50">{c.id}</span>
+                        </div>
+                        <p className="text-xs text-navy/50 mt-1">
+                          {linkedCount} {linkedCount === 1 ? 'produto cadastrado' : 'produtos cadastrados'} nesta categoria
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductCategoryFilter(c.id);
+                            setActiveTab('products');
+                          }}
+                          className="hidden sm:inline-flex px-3 py-1.5 rounded-xl border border-gold/25 text-xs font-bold text-gold-dark hover:bg-gold/10 transition-colors cursor-pointer"
+                        >
+                          Ver Produtos ({linkedCount})
+                        </button>
+                        <button onClick={() => { setEditingCategory(c); setCategoryName(c.name); setIsAddingCategory(true); }} className="p-2 text-gold-dark hover:bg-gold/10 rounded-xl" title="Editar categoria">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl" title="Excluir categoria">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => { setEditingCategory(c); setCategoryName(c.name); setIsAddingCategory(true); }} className="p-2 text-gold-dark hover:bg-gold/10 rounded-xl">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => deleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1209,14 +1362,46 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="label-base">Preço de Venda (R$) *</label>
-                    <input required type="number" step="0.01" value={formProduct.price} onChange={e => setFormProduct({...formProduct, price: parseFloat(e.target.value) || 0})} className="input-base" />
-                  </div>
-                  <div>
-                    <label className="label-base">Preço Promocional</label>
-                    <input type="number" step="0.01" value={formProduct.promotional_price || ''} onChange={e => setFormProduct({...formProduct, promotional_price: parseFloat(e.target.value) || undefined})} className="input-base" />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="label-base mb-0">Categoria do Produto *</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCategory(null);
+                          setCategoryName('');
+                          setIsAddingCategory(true);
+                        }}
+                        className="text-[11px] text-gold-dark hover:underline font-bold cursor-pointer"
+                      >
+                        + Nova Categoria
+                      </button>
+                    </div>
+                    <select
+                      required
+                      value={formProduct.category || ''}
+                      onChange={e => {
+                        const newCat = e.target.value;
+                        setFormProduct(prev => {
+                          const existingCats = prev.categories || [];
+                          const updatedCats = existingCats.length > 0 
+                            ? Array.from(new Set([newCat, ...existingCats])) 
+                            : [newCat];
+                          return {
+                            ...prev,
+                            category: newCat,
+                            categories: updatedCats
+                          };
+                        });
+                      }}
+                      className="input-base font-semibold text-navy"
+                    >
+                      <option value="" disabled>Selecione a categoria...</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="label-base">Linha de Negócio</label>
@@ -1230,6 +1415,56 @@ export const Admin: React.FC = () => {
                     </select>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-base">Preço de Venda (R$) *</label>
+                    <input required type="number" step="0.01" value={formProduct.price} onChange={e => setFormProduct({...formProduct, price: parseFloat(e.target.value) || 0})} className="input-base" />
+                  </div>
+                  <div>
+                    <label className="label-base">Preço Promocional (Opcional)</label>
+                    <input type="number" step="0.01" value={formProduct.promotional_price || ''} onChange={e => setFormProduct({...formProduct, promotional_price: parseFloat(e.target.value) || undefined})} placeholder="Deixe em branco se não houver" className="input-base" />
+                  </div>
+                </div>
+
+                {/* Categorias Secundárias / Adicionais */}
+                {categories.length > 1 && (
+                  <div className="bg-cream/40 p-3.5 rounded-2xl border border-gold/15">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-navy">Categorias Adicionais (Opcional)</label>
+                      <span className="text-[10px] text-navy/50">Permite que o produto apareça em mais de uma categoria</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categories.map(c => {
+                        const isPrimary = formProduct.category === c.id;
+                        const isSelected = isPrimary || (formProduct.categories || []).includes(c.id);
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => {
+                              if (isPrimary) return;
+                              const cur = formProduct.categories || [];
+                              const updated = cur.includes(c.id)
+                                ? cur.filter(id => id !== c.id)
+                                : [...cur, c.id];
+                              setFormProduct(prev => ({ ...prev, categories: updated }));
+                            }}
+                            className={`text-xs px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                              isPrimary
+                                ? 'bg-gold-dark text-white border-gold-dark font-bold shadow-xs'
+                                : isSelected
+                                  ? 'bg-navy text-gold border-navy font-bold shadow-xs'
+                                  : 'bg-white text-navy/70 border-gold/20 hover:border-gold/40'
+                            }`}
+                          >
+                            {c.name} {isPrimary ? '★ Principal' : isSelected ? '✓' : '+'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
