@@ -7,7 +7,9 @@ import { supabase } from '../lib/supabase';
 import { 
   CATEGORIES as INITIAL_CATEGORIES,
   DEFAULT_ROSARY_MODELS,
-  DEFAULT_CUSTOMIZATION_COMPONENTS
+  DEFAULT_CUSTOMIZATION_COMPONENTS,
+  INITIAL_PRODUCTS,
+  COMPANY_DATA
 } from '../data';
 
 const compressImage = (file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.75): Promise<File> => {
@@ -179,12 +181,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [customBuilds, setCustomBuilds] = useState<CustomBuild[]>([]);
 
   const [settings, setSettings] = useState<ShopSettings>({
-    name: 'Ateliê Entre Santos',
-    whatsapp: '',
-    niche: 'Artesanato Católico',
-    instagram: '',
-    tiktok: '',
-    slogan: 'Fé feita à mão'
+    name: COMPANY_DATA.name,
+    whatsapp: COMPANY_DATA.whatsapp,
+    niche: COMPANY_DATA.niche,
+    instagram: COMPANY_DATA.instagram,
+    tiktok: COMPANY_DATA.tiktok,
+    slogan: COMPANY_DATA.slogan
   });
   const [loading, setLoading] = useState(true);
 
@@ -247,7 +249,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           availability: p.availability || 'ready',
         };
       });
-      setProducts(mappedProducts);
+
+      if (mappedProducts.length > 0) {
+        setProducts(mappedProducts);
+      } else {
+        setProducts(INITIAL_PRODUCTS as Product[]);
+      }
 
       // Fetch Settings
       const { data: settingsData, error: sError } = await supabase
@@ -256,11 +263,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (sError && sError.code !== 'PGRST116') throw sError;
-      if (settingsData) {
+      if (settingsData && settingsData.name) {
         setSettings(settingsData);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setProducts(prev => prev.length > 0 ? prev : (INITIAL_PRODUCTS as Product[]));
     } finally {
       // Fetch Categories
       const { data: catData } = await supabase.from('categories').select('*').order('name');
