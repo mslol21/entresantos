@@ -85,7 +85,9 @@ export type Product = {
   collection_subtitle?: string;
   saint_id?: string;
 
-  // Informações da peça
+  // Informações da peça & Custos
+  cost?: number;              // Custo total base (materiais + despesas) para cálculo de margem e financeiro
+  expenses?: number;          // Despesas adicionais / embalagem
   promotional_price?: number;
   materials?: string;
   weight_grams?: number;

@@ -111,6 +111,7 @@ export const Admin: React.FC = () => {
   const [quickCost, setQuickCost] = useState<number>(0);
   const [quickExpenses, setQuickExpenses] = useState<number>(0);
   const [quickMargin, setQuickMargin] = useState<number>(100);
+  const [quickFinalPrice, setQuickFinalPrice] = useState<number>(0);
   
   // Security state
   const [user, setUser] = useState<any>(null);
@@ -278,6 +279,11 @@ export const Admin: React.FC = () => {
           .trim();
       }
 
+      if ((costPrice || 0) + (expensesPrice || 0) > 0) {
+        payload.cost = Number(((costPrice || 0) + (expensesPrice || 0)).toFixed(2));
+        payload.expenses = Number((expensesPrice || 0).toFixed(2));
+      }
+
       if (editingProduct) {
         await updateProduct(payload as Product);
         showToast('Produto atualizado com sucesso!', 'success');
@@ -316,11 +322,22 @@ export const Admin: React.FC = () => {
     
     // Inicializar valores de referência na calculadora
     const currentPrice = product.price || 0;
-    const estCost = currentPrice > 0 ? Number((currentPrice * 0.4).toFixed(2)) : 0;
-    const estExp = currentPrice > 0 ? Number((currentPrice * 0.1).toFixed(2)) : 0;
-    setCostPrice(estCost);
+    const estCost = product.cost !== undefined && product.cost > 0 
+      ? product.cost 
+      : (currentPrice > 0 ? Number((currentPrice * 0.4).toFixed(2)) : 0);
+    const estExp = product.expenses !== undefined && product.expenses > 0 
+      ? product.expenses 
+      : (currentPrice > 0 ? Number((currentPrice * 0.1).toFixed(2)) : 0);
+    const matCost = Math.max(0, estCost - estExp);
+    setCostPrice(matCost > 0 ? matCost : (estCost > 0 ? estCost : 0));
     setExpensesPrice(estExp);
-    setProfitMargin(100);
+    
+    const totalCost = (matCost > 0 ? matCost : estCost) + estExp;
+    if (totalCost > 0 && currentPrice > totalCost) {
+      setProfitMargin(Math.round(((currentPrice - totalCost) / totalCost) * 100));
+    } else {
+      setProfitMargin(100);
+    }
 
     setEditingProduct(product);
     setFormProduct({
@@ -341,19 +358,38 @@ export const Admin: React.FC = () => {
   const openQuickCalc = (product: Product) => {
     setQuickCalcProduct(product);
     const pPrice = product.price || 0;
-    setQuickCost(pPrice > 0 ? Number((pPrice * 0.4).toFixed(2)) : 0);
-    setQuickExpenses(pPrice > 0 ? Number((pPrice * 0.1).toFixed(2)) : 0);
-    setQuickMargin(100);
+    const currentCost = product.cost !== undefined && product.cost > 0 
+      ? product.cost 
+      : (pPrice > 0 ? Number((pPrice * 0.4).toFixed(2)) : 0);
+    const currentExp = product.expenses !== undefined && product.expenses > 0 
+      ? product.expenses 
+      : (pPrice > 0 ? Number((pPrice * 0.1).toFixed(2)) : 0);
+    const matCost = Math.max(0, currentCost - currentExp);
+    const initialCost = Number((matCost > 0 ? matCost : currentCost).toFixed(2));
+    const initialExp = Number(currentExp.toFixed(2));
+    setQuickCost(initialCost);
+    setQuickExpenses(initialExp);
+    
+    const totalCost = initialCost + initialExp;
+    if (totalCost > 0 && pPrice > totalCost) {
+      setQuickMargin(Math.round(((pPrice - totalCost) / totalCost) * 100));
+    } else {
+      setQuickMargin(100);
+    }
+    setQuickFinalPrice(pPrice > 0 ? pPrice : Number((totalCost * 2).toFixed(2)));
   };
 
-  const handleSaveQuickPrice = async (newPrice: number) => {
+  const handleSaveQuickPrice = async (newPrice: number, costVal?: number, expVal?: number) => {
     if (!quickCalcProduct || newPrice <= 0) return;
     try {
-      await updateProduct({
+      const payload: Product = {
         ...quickCalcProduct,
-        price: newPrice
-      });
-      showToast(`Preço de "${quickCalcProduct.name}" atualizado para R$ ${newPrice.toFixed(2)}!`, 'success');
+        price: Number(newPrice.toFixed(2)),
+        cost: costVal !== undefined ? Number(costVal.toFixed(2)) : (quickCalcProduct.cost || Number((newPrice * 0.4).toFixed(2))),
+        expenses: expVal !== undefined ? Number(expVal.toFixed(2)) : quickCalcProduct.expenses
+      };
+      await updateProduct(payload);
+      showToast(`Preço de "${quickCalcProduct.name}" salvo em R$ ${newPrice.toFixed(2)} e integrado ao financeiro!`, 'success');
       setQuickCalcProduct(null);
     } catch (err: any) {
       showToast('Erro ao atualizar preço: ' + (err.message || 'Falha no banco'), 'error');
@@ -1359,7 +1395,7 @@ export const Admin: React.FC = () => {
         )}
 
         {/* TAB: FINANCEIRO */}
-        {activeTab === 'finance' && <FinancePanel />}
+        {activeTab === 'finance' && <FinancePanel onOpenQuickCalc={openQuickCalc} />}
 
         {/* TAB: SETTINGS */}
         {activeTab === 'settings' && (
@@ -1636,29 +1672,79 @@ export const Admin: React.FC = () => {
                           </div>
                           <div className="text-navy/30">=</div>
                           <div>
-                            <span className="text-[10px] text-gold-dark uppercase block font-bold">Preço Final Sugerido</span>
+                            <span className="text-[10px] text-gold-dark uppercase block font-bold">Preço Sugerido</span>
                             <span className="font-mono font-black text-base text-[#1C4F8C]">
                               {(((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </span>
                           </div>
                         </div>
 
-                        {/* Botão de Aplicar Preço */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const finalVal = Number((((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100)).toFixed(2));
-                            if (finalVal > 0) {
-                              setFormProduct(prev => ({ ...prev, price: finalVal }));
-                              showToast(`Preço de Venda atualizado para R$ ${finalVal.toFixed(2)}!`, 'success');
-                            }
-                          }}
-                          disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
-                          className="px-4 py-2 bg-[#1C4F8C] hover:bg-[#2563AB] text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Save size={13} />
-                          <span>Aplicar Preço Final</span>
-                        </button>
+                        {/* Botões de Aplicação e Arredondamento */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const base = ((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100);
+                              const rounded = Number((Math.floor(base) + 0.90).toFixed(2));
+                              if (rounded > 0) {
+                                setFormProduct(prev => ({ ...prev, price: rounded }));
+                                showToast(`Preço arredondado para R$ ${rounded.toFixed(2)}`, 'success');
+                              }
+                            }}
+                            disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
+                            className="px-2.5 py-1.5 bg-cream hover:bg-gold/20 border border-gold/30 text-navy rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            title="Arredondar para terminação .90"
+                          >
+                            .90
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const base = ((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100);
+                              const rounded = Number((Math.round(base)).toFixed(2));
+                              if (rounded > 0) {
+                                setFormProduct(prev => ({ ...prev, price: rounded }));
+                                showToast(`Preço arredondado para R$ ${rounded.toFixed(2)}`, 'success');
+                              }
+                            }}
+                            disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
+                            className="px-2.5 py-1.5 bg-cream hover:bg-gold/20 border border-gold/30 text-navy rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            title="Arredondar para valor inteiro .00"
+                          >
+                            .00
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const base = ((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100);
+                              const rounded = Number((Math.floor(base) + 0.50).toFixed(2));
+                              if (rounded > 0) {
+                                setFormProduct(prev => ({ ...prev, price: rounded }));
+                                showToast(`Preço arredondado para R$ ${rounded.toFixed(2)}`, 'success');
+                              }
+                            }}
+                            disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
+                            className="px-2.5 py-1.5 bg-cream hover:bg-gold/20 border border-gold/30 text-navy rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            title="Arredondar para terminação .50"
+                          >
+                            .50
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const finalVal = Number((((costPrice || 0) + (expensesPrice || 0)) * (1 + (profitMargin || 0) / 100)).toFixed(2));
+                              if (finalVal > 0) {
+                                setFormProduct(prev => ({ ...prev, price: finalVal }));
+                                showToast(`Preço de Venda atualizado para R$ ${finalVal.toFixed(2)}!`, 'success');
+                              }
+                            }}
+                            disabled={((costPrice || 0) + (expensesPrice || 0)) <= 0}
+                            className="px-3 py-1.5 bg-[#1C4F8C] hover:bg-[#2563AB] text-white rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Save size={13} />
+                            <span>Aplicar Sugerido</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Margem Reversa se o Preço de Venda já foi digitado */}
@@ -1961,18 +2047,22 @@ export const Admin: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* MODAL: CALCULADORA RÁPIDA DE PREÇO (DIRETO DA TABELA) */}
+      {/* MODAL: CALCULADORA RÁPIDA DE PREÇO (DIRETO DA TABELA E FINANCEIRO) */}
       <AnimatePresence>
         {quickCalcProduct && (() => {
-          const qTotalCost = (quickCost || 0) + (quickExpenses || 0);
-          const qFinalPrice = qTotalCost > 0 
+          const qTotalCost = Number(((quickCost || 0) + (quickExpenses || 0)).toFixed(2));
+          const qSuggestedPrice = qTotalCost > 0 
             ? Number((qTotalCost * (1 + (quickMargin || 0) / 100)).toFixed(2)) 
             : 0;
-          const qProfit = qFinalPrice > 0 ? Number((qFinalPrice - qTotalCost).toFixed(2)) : 0;
+          const activePrice = quickFinalPrice > 0 ? quickFinalPrice : qSuggestedPrice;
+          const qRealProfit = Number((activePrice - qTotalCost).toFixed(2));
+          const qRealMargin = qTotalCost > 0 ? ((activePrice - qTotalCost) / qTotalCost) * 100 : 0;
+          const qContributionMargin = activePrice > 0 ? (qRealProfit / activePrice) * 100 : 0;
 
           return (
             <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl border border-gold/20 p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+                {/* Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-gold/15">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-[#1C4F8C]/15 text-[#1C4F8C] flex items-center justify-center border border-[#1C4F8C]/30">
@@ -1980,7 +2070,7 @@ export const Admin: React.FC = () => {
                     </div>
                     <div>
                       <h2 className="font-serif font-bold text-xl text-navy">
-                        Cálculo do Preço Final
+                        Precificação & Rentabilidade
                       </h2>
                       <p className="text-xs text-navy/55 line-clamp-1">
                         {quickCalcProduct.name}
@@ -1996,113 +2086,227 @@ export const Admin: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="label-base mb-1">Custo dos Materiais (R$)</label>
+                  {/* Bloco 1: Custos e Despesas */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="bg-cream/40 p-3.5 rounded-2xl border border-gold/15">
+                      <label className="text-xs font-bold text-navy mb-1 block">Custo dos Materiais</label>
                       <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={quickCost || ''}
-                          onChange={e => setQuickCost(parseFloat(e.target.value) || 0)}
-                          className="input-base pl-9 text-sm font-semibold"
+                          onChange={e => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setQuickCost(val);
+                            const newTotal = val + (quickExpenses || 0);
+                            const newSug = Number((newTotal * (1 + (quickMargin || 0) / 100)).toFixed(2));
+                            setQuickFinalPrice(newSug);
+                          }}
+                          placeholder="0,00"
+                          className="input-base pl-8 py-2 text-xs font-semibold"
                         />
                       </div>
-                      <span className="text-[10px] text-navy/40 mt-1 block">Contas, crucifixo, entremeio</span>
+                      <span className="text-[10px] text-navy/40 mt-1 block">Contas, entremeio, crucifixo</span>
                     </div>
 
-                    <div>
-                      <label className="label-base mb-1">Despesas & Embalagem (R$)</label>
+                    <div className="bg-cream/40 p-3.5 rounded-2xl border border-gold/15">
+                      <label className="text-xs font-bold text-navy mb-1 block">Despesas & Embalagem</label>
                       <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">R$</span>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={quickExpenses || ''}
-                          onChange={e => setQuickExpenses(parseFloat(e.target.value) || 0)}
-                          className="input-base pl-9 text-sm font-semibold"
+                          onChange={e => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setQuickExpenses(val);
+                            const newTotal = (quickCost || 0) + val;
+                            const newSug = Number((newTotal * (1 + (quickMargin || 0) / 100)).toFixed(2));
+                            setQuickFinalPrice(newSug);
+                          }}
+                          placeholder="0,00"
+                          className="input-base pl-8 py-2 text-xs font-semibold"
                         />
                       </div>
                       <span className="text-[10px] text-navy/40 mt-1 block">Saquinho, caixa, taxas</span>
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="label-base mb-0">Porcentagem de Lucro / Margem (%)</label>
-                      <span className="font-mono font-bold text-sm text-[#1C4F8C]">{quickMargin}%</span>
+                  {/* Bloco 2: Margem de Lucro Base */}
+                  <div className="bg-cream/30 p-3.5 rounded-2xl border border-gold/15">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-navy mb-0">Margem de Lucro Base (%)</label>
+                      <span className="font-mono font-bold text-xs text-[#1C4F8C]">Sugerido: {qSuggestedPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        value={quickMargin}
-                        onChange={e => setQuickMargin(parseFloat(e.target.value) || 0)}
-                        className="input-base pr-8 font-semibold"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">%</span>
-                    </div>
-
-                    <div className="flex gap-1.5 mt-2">
-                      {[30, 50, 80, 100, 150, 200].map(pct => (
-                        <button
-                          type="button"
-                          key={pct}
-                          onClick={() => setQuickMargin(pct)}
-                          className={`flex-1 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            quickMargin === pct
-                              ? 'bg-[#1C4F8C] text-white'
-                              : 'bg-cream border border-gold/20 text-navy/70 hover:border-gold/40'
-                          }`}
-                        >
-                          +{pct}%
-                        </button>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          value={quickMargin}
+                          onChange={e => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setQuickMargin(val);
+                            const newSug = Number((qTotalCost * (1 + val / 100)).toFixed(2));
+                            setQuickFinalPrice(newSug);
+                          }}
+                          className="input-base pr-8 py-2 text-xs font-semibold"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-navy/40">%</span>
+                      </div>
+                      <div className="flex gap-1 overflow-x-auto">
+                        {[30, 50, 80, 100, 150, 200].map(pct => (
+                          <button
+                            type="button"
+                            key={pct}
+                            onClick={() => {
+                              setQuickMargin(pct);
+                              const newSug = Number((qTotalCost * (1 + pct / 100)).toFixed(2));
+                              setQuickFinalPrice(newSug);
+                            }}
+                            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                              quickMargin === pct
+                                ? 'bg-[#1C4F8C] text-white'
+                                : 'bg-white border border-gold/20 text-navy/70 hover:border-gold/40'
+                            }`}
+                          >
+                            +{pct}%
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Resumo da Precificação */}
-                  <div className="bg-cream/60 p-4 rounded-2xl border border-gold/20 space-y-2">
-                    <div className="flex justify-between text-xs text-navy/70">
-                      <span>Custo Base (Materiais + Despesas):</span>
-                      <strong className="text-navy">{qTotalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-                    </div>
-                    <div className="flex justify-between text-xs text-emerald-700">
-                      <span>Lucro Bruto Estimado:</span>
-                      <strong className="font-bold">+{qProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-                    </div>
-                    <div className="pt-2 border-t border-gold/20 flex justify-between items-center">
+                  {/* Bloco 3: Definir Preço Final de Venda Direto & Arredondar */}
+                  <div className="bg-gradient-to-br from-blue-50/60 to-cream/80 p-4 rounded-2xl border-2 border-[#1C4F8C]/30 space-y-3">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-gold-dark block leading-tight">Preço Final Sugerido</span>
-                        <span className="text-xs text-navy/50">Atual: {(quickCalcProduct.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        <span className="text-xs font-bold text-navy uppercase tracking-wider block">Preço Final de Venda</span>
+                        <span className="text-[11px] text-navy/60">Edite livremente ou escolha um arredondamento comercial</span>
                       </div>
-                      <span className="font-mono font-black text-2xl text-[#1C4F8C]">
-                        {qFinalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      <span className="text-[11px] text-navy/50">
+                        Preço Atual: <strong className="text-navy">{(quickCalcProduct.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                       </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      {/* Input Preço Final */}
+                      <div className="relative flex-1">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-navy/50">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={quickFinalPrice || ''}
+                          onChange={e => setQuickFinalPrice(parseFloat(e.target.value) || 0)}
+                          placeholder="0,00"
+                          className="w-full bg-white border-2 border-[#1C4F8C]/40 focus:border-[#1C4F8C] focus:ring-2 focus:ring-[#1C4F8C]/20 rounded-xl pl-11 pr-4 py-2.5 font-mono font-black text-xl text-[#1C4F8C] shadow-xs outline-hidden"
+                        />
+                      </div>
+
+                      {/* Botões de Arredondamento Comercial */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = quickFinalPrice > 0 ? quickFinalPrice : qSuggestedPrice;
+                            const rounded = Number((Math.floor(base) + 0.90).toFixed(2));
+                            setQuickFinalPrice(rounded);
+                          }}
+                          className="px-2.5 py-2 bg-white hover:bg-gold/10 border border-gold/30 hover:border-gold text-navy rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-1 sm:flex-none text-center"
+                          title="Arredondar para .90 (ex: R$ 59,90)"
+                        >
+                          .90
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = quickFinalPrice > 0 ? quickFinalPrice : qSuggestedPrice;
+                            const rounded = Number((Math.round(base)).toFixed(2));
+                            setQuickFinalPrice(rounded);
+                          }}
+                          className="px-2.5 py-2 bg-white hover:bg-gold/10 border border-gold/30 hover:border-gold text-navy rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-1 sm:flex-none text-center"
+                          title="Arredondar para valor inteiro .00 (ex: R$ 60,00)"
+                        >
+                          .00
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = quickFinalPrice > 0 ? quickFinalPrice : qSuggestedPrice;
+                            const rounded = Number((Math.floor(base) + 0.50).toFixed(2));
+                            setQuickFinalPrice(rounded);
+                          }}
+                          className="px-2.5 py-2 bg-white hover:bg-gold/10 border border-gold/30 hover:border-gold text-navy rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-1 sm:flex-none text-center"
+                          title="Arredondar para .50 (ex: R$ 59,50)"
+                        >
+                          .50
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuickFinalPrice(qSuggestedPrice)}
+                          className="px-2.5 py-2 bg-white hover:bg-[#1C4F8C]/10 border border-[#1C4F8C]/30 text-[#1C4F8C] rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-1 sm:flex-none text-center"
+                          title="Restaurar Preço Sugerido pela Margem"
+                        >
+                          ↺ Sugerido
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bloco 4: Card de Análise de Rentabilidade em Tempo Real */}
+                  <div className="bg-white p-4 rounded-2xl border border-gold/25 shadow-xs space-y-2.5">
+                    <div className="flex items-center justify-between text-xs pb-2 border-b border-gold/10">
+                      <span className="text-navy/60">Custo Total Base (Materiais + Despesas):</span>
+                      <strong className="font-mono font-bold text-navy">{qTotalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                      <div className="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                        <span className="text-[10px] text-emerald-800 font-bold uppercase block">Lucro Real / Unidade</span>
+                        <span className="font-mono font-black text-sm text-emerald-700">
+                          {qRealProfit >= 0 ? `+${qRealProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : qRealProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
+                      </div>
+
+                      <div className="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200">
+                        <span className="text-[10px] text-blue-800 font-bold uppercase block">Margem s/ Custo</span>
+                        <span className="font-mono font-black text-sm text-[#1C4F8C]">
+                          {qRealMargin > 0 ? `+${qRealMargin.toFixed(1)}%` : `${qRealMargin.toFixed(1)}%`}
+                        </span>
+                      </div>
+
+                      <div className="bg-purple-50/70 p-2.5 rounded-xl border border-purple-200 col-span-2 sm:col-span-1">
+                        <span className="text-[10px] text-purple-800 font-bold uppercase block">Margem Contribuição</span>
+                        <span className="font-mono font-black text-sm text-purple-700">
+                          {qContributionMargin.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Footer Actions */}
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setQuickCalcProduct(null)}
-                    className="px-6 py-3.5 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/3 hover:bg-gold/5 cursor-pointer"
+                    className="px-5 py-3 border border-gold/25 rounded-full text-xs font-bold uppercase tracking-wider text-navy/60 w-1/3 hover:bg-gold/5 cursor-pointer"
                   >
-                    Fechar
+                    Cancelar
                   </button>
                   <button
                     type="button"
-                    disabled={qFinalPrice <= 0}
-                    onClick={() => handleSaveQuickPrice(qFinalPrice)}
-                    className="btn-primary w-2/3 justify-center text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    disabled={activePrice <= 0}
+                    onClick={() => handleSaveQuickPrice(activePrice, qTotalCost, quickExpenses)}
+                    className="btn-primary w-2/3 justify-center text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-md"
                   >
                     <Save size={15} />
-                    <span>Salvar Preço Final</span>
+                    <span>Salvar & Integrar ao Financeiro</span>
                   </button>
                 </div>
               </motion.div>
