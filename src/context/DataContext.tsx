@@ -246,7 +246,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variations: p.variations || [],
           customizationLists: isCustomizable ? (p.customization_lists || []) : [],
           cost: p.cost !== null && p.cost !== undefined ? Number(p.cost) : undefined,
-          expenses: p.expenses !== null && p.expenses !== undefined ? Number(p.expenses) : undefined,
           line: p.line || 'devocionais',
           availability: p.availability || 'ready',
         };
@@ -433,7 +432,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       saint_id: product.saint_id || null,
       promotional_price: product.promotional_price || null,
       cost: product.cost !== undefined ? product.cost : null,
-      expenses: product.expenses !== undefined ? product.expenses : null,
       materials: product.materials || null,
       care_instructions: product.care_instructions || null,
       display_order: product.display_order || 0,
@@ -488,7 +486,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       saint_id: product.saint_id || null,
       promotional_price: product.promotional_price || null,
       cost: product.cost !== undefined ? product.cost : null,
-      expenses: product.expenses !== undefined ? product.expenses : null,
       materials: product.materials || null,
       care_instructions: product.care_instructions || null,
       display_order: product.display_order || 0,

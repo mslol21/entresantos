@@ -281,7 +281,6 @@ export const Admin: React.FC = () => {
 
       if ((costPrice || 0) + (expensesPrice || 0) > 0) {
         payload.cost = Number(((costPrice || 0) + (expensesPrice || 0)).toFixed(2));
-        payload.expenses = Number((expensesPrice || 0).toFixed(2));
       }
 
       if (editingProduct) {
@@ -325,14 +324,12 @@ export const Admin: React.FC = () => {
     const estCost = product.cost !== undefined && product.cost > 0 
       ? product.cost 
       : (currentPrice > 0 ? Number((currentPrice * 0.4).toFixed(2)) : 0);
-    const estExp = product.expenses !== undefined && product.expenses > 0 
-      ? product.expenses 
-      : (currentPrice > 0 ? Number((currentPrice * 0.1).toFixed(2)) : 0);
-    const matCost = Math.max(0, estCost - estExp);
-    setCostPrice(matCost > 0 ? matCost : (estCost > 0 ? estCost : 0));
-    setExpensesPrice(estExp);
+    const matCost = Number((estCost * 0.8).toFixed(2));
+    const expCost = Number((estCost * 0.2).toFixed(2));
+    setCostPrice(matCost);
+    setExpensesPrice(expCost);
     
-    const totalCost = (matCost > 0 ? matCost : estCost) + estExp;
+    const totalCost = estCost;
     if (totalCost > 0 && currentPrice > totalCost) {
       setProfitMargin(Math.round(((currentPrice - totalCost) / totalCost) * 100));
     } else {
@@ -361,16 +358,12 @@ export const Admin: React.FC = () => {
     const currentCost = product.cost !== undefined && product.cost > 0 
       ? product.cost 
       : (pPrice > 0 ? Number((pPrice * 0.4).toFixed(2)) : 0);
-    const currentExp = product.expenses !== undefined && product.expenses > 0 
-      ? product.expenses 
-      : (pPrice > 0 ? Number((pPrice * 0.1).toFixed(2)) : 0);
-    const matCost = Math.max(0, currentCost - currentExp);
-    const initialCost = Number((matCost > 0 ? matCost : currentCost).toFixed(2));
-    const initialExp = Number(currentExp.toFixed(2));
-    setQuickCost(initialCost);
-    setQuickExpenses(initialExp);
+    const matCost = Number((currentCost * 0.8).toFixed(2));
+    const expCost = Number((currentCost * 0.2).toFixed(2));
+    setQuickCost(matCost);
+    setQuickExpenses(expCost);
     
-    const totalCost = initialCost + initialExp;
+    const totalCost = currentCost;
     if (totalCost > 0 && pPrice > totalCost) {
       setQuickMargin(Math.round(((pPrice - totalCost) / totalCost) * 100));
     } else {
@@ -379,14 +372,13 @@ export const Admin: React.FC = () => {
     setQuickFinalPrice(pPrice > 0 ? pPrice : Number((totalCost * 2).toFixed(2)));
   };
 
-  const handleSaveQuickPrice = async (newPrice: number, costVal?: number, expVal?: number) => {
+  const handleSaveQuickPrice = async (newPrice: number, costVal?: number) => {
     if (!quickCalcProduct || newPrice <= 0) return;
     try {
       const payload: Product = {
         ...quickCalcProduct,
         price: Number(newPrice.toFixed(2)),
-        cost: costVal !== undefined ? Number(costVal.toFixed(2)) : (quickCalcProduct.cost || Number((newPrice * 0.4).toFixed(2))),
-        expenses: expVal !== undefined ? Number(expVal.toFixed(2)) : quickCalcProduct.expenses
+        cost: costVal !== undefined ? Number(costVal.toFixed(2)) : (quickCalcProduct.cost || Number((newPrice * 0.4).toFixed(2)))
       };
       await updateProduct(payload);
       showToast(`Preço de "${quickCalcProduct.name}" salvo em R$ ${newPrice.toFixed(2)} e integrado ao financeiro!`, 'success');
@@ -2302,7 +2294,7 @@ export const Admin: React.FC = () => {
                   <button
                     type="button"
                     disabled={activePrice <= 0}
-                    onClick={() => handleSaveQuickPrice(activePrice, qTotalCost, quickExpenses)}
+                    onClick={() => handleSaveQuickPrice(activePrice, qTotalCost)}
                     className="btn-primary w-2/3 justify-center text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-md"
                   >
                     <Save size={15} />
