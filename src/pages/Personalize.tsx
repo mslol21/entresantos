@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronRight, ChevronLeft, MessageCircle, Sparkles, ArrowRight } from 'lucide-react';
-import { RosaryVectorIcon, BraceletVectorIcon, DezenaVectorIcon, PhoneCharmVectorIcon } from '../components/icons/ProductIcons';
+import { Check, ChevronRight, ChevronLeft, MessageCircle, ArrowRight } from 'lucide-react';
+import { BraceletVectorIcon, DezenaVectorIcon, PhoneCharmVectorIcon } from '../components/icons/ProductIcons';
 import { useData } from '../context/DataContext';
 
 const DEVOTIONS = [
@@ -271,52 +271,10 @@ const Personalize: React.FC = () => {
       {/* Main Hub Showcase */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         
-        {/* Featured Card 1: Monte seu Terço (Visual 2D Builder) */}
-        <div className="mb-12">
-          <div className="bg-gradient-to-br from-white via-amber-50/40 to-cream border-2 border-gold/30 hover:border-gold/60 rounded-3xl p-8 sm:p-12 shadow-premium hover:shadow-gold transition-all duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gold/5 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
-              <div className="lg:max-w-xl text-center lg:text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/20 border border-gold/35 text-gold-dark text-[10px] font-black uppercase tracking-wider mb-4">
-                  <Sparkles size={12} />
-                  <span>Construtor Visual 2D Exclusivo</span>
-                </div>
-                
-                <h2 className="font-serif font-bold text-3xl sm:text-4xl text-navy mb-4">
-                  Monte seu Terço
-                </h2>
-                <p className="text-navy/70 text-sm leading-relaxed mb-6">
-                  Experimente nosso configurador visual interativo. Escolha o modelo, cada conta das Ave-Marias e Pai-Nossos, a medalha central e o crucifixo, visualizando o resultado em tempo real.
-                </p>
-
-                <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                  <Link
-                    to="/monte-seu-terco"
-                    className="btn-primary py-4 px-8 text-sm shadow-xl shadow-navy/15 flex items-center gap-2 hover:gap-3 transition-all"
-                  >
-                    <span>Crie seu Terço Agora</span>
-                    <ArrowRight size={16} />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Visual Showcase Thumbnail */}
-              <div className="w-full max-w-[280px] aspect-square rounded-2xl bg-white border border-gold/20 p-6 flex flex-col items-center justify-center shadow-md relative group-hover:scale-105 transition-transform duration-500">
-                <div className="w-16 h-16 rounded-2xl bg-gold/15 flex items-center justify-center text-gold-dark mb-3 border border-gold/25 shadow-inner">
-                  <RosaryVectorIcon size={38} className="text-gold-dark" />
-                </div>
-                <span className="font-serif font-bold text-navy text-base text-center">Terço Sob Medida</span>
-                <span className="text-[10px] text-gold-dark font-black uppercase tracking-widest mt-1">Preview em tempo real</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Other Customization Cards (Pulseiras, Dezenas, Phone Charms) */}
+        {/* Customization Cards (Pulseiras, Dezenas, Phone Charms) */}
         <div className="mb-12">
           <div className="text-center mb-8">
-            <h3 className="font-serif font-bold text-2xl text-navy mb-2">Outras Peças Personalizadas</h3>
+            <h3 className="font-serif font-bold text-2xl text-navy mb-2">Peças Personalizadas</h3>
             <p className="text-xs text-navy/60">Selecione uma peça abaixo para iniciar o pedido personalizado pelo WhatsApp.</p>
           </div>
 
@@ -353,7 +311,7 @@ const Personalize: React.FC = () => {
         </div>
 
         {/* Wizard Form Area if a product is chosen */}
-        {selectedProduct && selectedProduct !== 'Terço' && (
+        {selectedProduct && (
           <motion.div
             id="wizard-form"
             initial={{ opacity: 0, y: 20 }}

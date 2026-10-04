@@ -193,6 +193,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchData();
 
+    const { data: authSub } = supabase.auth.onAuthStateChange(() => {
+      fetchData();
+    });
+
     const channel = supabase
       .channel('db-realtime-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchData())
@@ -206,6 +210,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .subscribe();
 
     return () => {
+      authSub.subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
@@ -287,23 +292,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
       setGlobalOptions(mappedOptions);
 
-      // Fetch Transactions
-      try {
-        const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-        if (!txError && txData) setTransactions(txData);
-      } catch (e) {
-        console.warn("Transactions table might not exist yet.", e);
-      }
+      // Fetch Administrative / Sensitive Data only if authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      const isAuthenticated = !!sessionData?.session?.user;
 
-      // Fetch Orders
-      try {
-        const { data: ordersData, error: oError } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (!oError && ordersData) setOrders(ordersData);
-      } catch (error) {
-        console.warn('Orders table might not exist yet.', error);
+      if (isAuthenticated) {
+        // Fetch Transactions
+        try {
+          const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+          if (!txError && txData) setTransactions(txData);
+        } catch (e) {
+          console.warn("Transactions table might not exist yet.", e);
+        }
+
+        // Fetch Orders
+        try {
+          const { data: ordersData, error: oError } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!oError && ordersData) setOrders(ordersData);
+        } catch (error) {
+          console.warn('Orders table might not exist yet.', error);
+        }
+
+        // Fetch Quotes
+        try {
+          const { data: quotesData } = await supabase
+            .from('quotes')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (quotesData && quotesData.length > 0) setQuotes(quotesData);
+        } catch (e) {
+          console.warn('Quotes table might not exist yet.', e);
+        }
+      } else {
+        setTransactions([]);
+        setOrders([]);
+        setQuotes([]);
       }
 
       // Fetch Collections
@@ -326,17 +352,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (saintsData && saintsData.length > 0) setSaints(saintsData);
       } catch (e) {
         console.warn('Saints table might not exist yet.', e);
-      }
-
-      // Fetch Quotes
-      try {
-        const { data: quotesData } = await supabase
-          .from('quotes')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (quotesData && quotesData.length > 0) setQuotes(quotesData);
-      } catch (e) {
-        console.warn('Quotes table might not exist yet.', e);
       }
 
       // Fetch Rosary Models
@@ -437,7 +452,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       display_order: product.display_order || 0,
     };
 
-    let { error } = await supabase.from('products').insert([fullPayload]).select();
+    const { error } = await supabase.from('products').insert([fullPayload]).select();
 
     if (error) throw error;
     fetchData();

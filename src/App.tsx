@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -13,12 +13,12 @@ const Store = React.lazy(() => import('./pages/Store'));
 const Collections = React.lazy(() => import('./pages/Collections'));
 const CollectionDetail = React.lazy(() => import('./pages/CollectionDetail'));
 const Personalize = React.lazy(() => import('./pages/Personalize'));
-const RosaryBuilderPage = React.lazy(() => import('./pages/RosaryBuilderPage'));
 const MomentsFaith = React.lazy(() => import('./pages/MomentsFaith'));
 const OurStory = React.lazy(() => import('./pages/OurStory'));
 const SaintPage = React.lazy(() => import('./pages/SaintPage'));
 const ProductDetails = React.lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
 const Admin = React.lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Preparando tudo com carinho...' }) => (
   <div className="min-h-screen bg-cream flex items-center justify-center p-4">
@@ -70,11 +70,12 @@ function App() {
         <Route path="/colecoes" element={pageSuspense(<Collections />)} />
         <Route path="/colecoes/:slug" element={pageSuspense(<CollectionDetail />)} />
         <Route path="/personalize" element={pageSuspense(<Personalize />)} />
-        <Route path="/monte-seu-terco" element={pageSuspense(<RosaryBuilderPage />)} />
+        <Route path="/monte-seu-terco" element={<Navigate to="/personalize" replace />} />
         <Route path="/momentos-de-fe" element={pageSuspense(<MomentsFaith />)} />
         <Route path="/nossa-historia" element={pageSuspense(<OurStory />)} />
         <Route path="/santos/:slug" element={pageSuspense(<SaintPage />)} />
         <Route path="/produto/:id" element={pageSuspense(<ProductDetails />)} />
+        <Route path="*" element={pageSuspense(<NotFound />)} />
       </Route>
       <Route path="/admin" element={
         <Suspense fallback={<LoadingScreen message="Carregando painel..." />}>

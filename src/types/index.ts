@@ -69,7 +69,7 @@ export type Product = {
   namePrice?: number;
   variations?: Variation[];
   customizationLists?: CustomizationList[];
-  selectedVariation?: any;
+  selectedVariation?: Variation | Record<string, unknown>;
 
   // Disponibilidade e estoque
   availability?: ProductAvailability;
@@ -109,13 +109,13 @@ export type CustomizationDetails = {
     customName?: string;
     customMessage?: string;
     notes?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
 export type CartItem = Product & {
   quantity: number;
-  selectedVariation?: any;
+  selectedVariation?: Variation | Record<string, unknown>;
   customization?: CustomizationDetails;
 }
 
@@ -270,7 +270,7 @@ export type RosaryModel = {
   description?: string;
   image?: string;
   base_price: number;
-  layout?: Record<string, any>;
+  layout?: Record<string, unknown>;
   is_active: boolean;
   display_order?: number;
   created_at?: string;
@@ -306,9 +306,9 @@ export type CustomizationComponent = {
   compatibility?: {
     models?: string[];
     colors?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;

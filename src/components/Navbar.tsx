@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, ChevronDown, Sparkles } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,15 +92,6 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
               </AnimatePresence>
             </div>
 
-            {/* Monte seu Terço — Featured Nav Button */}
-            <Link
-              to="/monte-seu-terco"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all bg-gradient-to-r from-gold via-gold-light to-gold text-navy shadow-sm border border-gold-light/40 hover:brightness-110 active:scale-95"
-            >
-              <Sparkles size={13} className="text-navy" />
-              <span>Monte seu Terço</span>
-            </Link>
-
             <Link to="/personalize" className={`nav-link ${location.pathname === '/personalize' ? 'nav-link-active' : ''}`}>
               Personalize
             </Link>
@@ -179,21 +170,6 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
                 <button onClick={handleNavClose} className="p-2 text-gold/70 hover:text-white rounded-full hover:bg-white/10 cursor-pointer">
                   <X size={20} />
                 </button>
-              </div>
-
-              {/* Mobile Featured CTA */}
-              <div className="p-4 pb-2">
-                <Link
-                  to="/monte-seu-terco"
-                  onClick={handleNavClose}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-gold via-gold-light to-gold text-navy rounded-2xl font-black text-xs uppercase tracking-widest border border-gold-light/40 shadow-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={16} className="text-navy" />
-                    <span>Monte seu Terço</span>
-                  </div>
-                  <span className="text-[10px] bg-navy text-gold px-2 py-0.5 rounded-full font-bold">2D</span>
-                </Link>
               </div>
 
               {/* Mobile Links */}

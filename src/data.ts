@@ -15,7 +15,6 @@ export const CATEGORIES = [
   { id: 'strap-phone', name: 'Strap phone', subcategories: ['Todos'] },
   { id: 'chaveiros', name: 'Chaveiros', subcategories: ['Todos'] },
   { id: 'infantil', name: 'Infantil', subcategories: ['Todos'] },
-  { id: 'monte-seu-terco', name: 'Monte seu terço', subcategories: ['Personalize Agora'] },
 ];
 
 export const DEFAULT_ROSARY_MODELS: RosaryModel[] = [

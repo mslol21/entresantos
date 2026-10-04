@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowRight, Star, 
-  Package, Heart, ShieldCheck, Truck, ChevronRight
+  Package, Heart, ShieldCheck, Truck
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { ProductCard } from '../components/ProductCard';
@@ -32,7 +32,7 @@ const StorefrontExplorer: React.FC = () => {
 
   // Busca rápida e filtragem em tempo real
   const displayedProducts = useMemo(() => {
-    let list = products.filter(p => p.isActive !== false);
+    const list = products.filter(p => p.isActive !== false);
 
     // Filtro por texto de busca
     if (searchQuery.trim()) {
@@ -101,7 +101,7 @@ const StorefrontExplorer: React.FC = () => {
               Encontre sua peça de fé
             </h1>
             <p className="text-xs sm:text-sm text-navy/60 mt-1">
-              Explore terços, pulseiras, dezenas ou monte uma peça exclusiva feita especialmente para você.
+              Explore terços, pulseiras, dezenas e peças exclusivas feitas especialmente para você.
             </p>
           </div>
 
@@ -129,21 +129,6 @@ const StorefrontExplorer: React.FC = () => {
 
         {/* Barra Rápida de Categorias com Ícones */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none">
-          {/* Construtor 2D em Destaque */}
-          <Link
-            to="/monte-seu-terco"
-            className="group flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#1C4F8C] via-[#20579A] to-[#2563AB] text-white border border-gold/30 shadow-sm hover:scale-105 transition-all flex-shrink-0"
-          >
-            <div className="w-6 h-6 rounded-lg bg-gold/25 flex items-center justify-center text-gold">
-              <Sparkles size={14} />
-            </div>
-            <div className="text-left">
-              <span className="block text-xs font-bold leading-none">Monte seu Terço</span>
-              <span className="text-[9px] text-gold-light font-semibold uppercase tracking-wider">Simulador 2D</span>
-            </div>
-            <ChevronRight size={14} className="text-white/60 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-
           {/* Terços */}
           <button
             type="button"
@@ -217,27 +202,27 @@ const StorefrontExplorer: React.FC = () => {
 
         {/* 3 Banners de Ação Rápida e Destaques */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Construtor 2D */}
+          {/* Card 1: Personalização Sob Medida */}
           <Link
-            to="/monte-seu-terco"
+            to="/personalize"
             className="group p-5 rounded-3xl bg-gradient-to-br from-[#1C4F8C] via-[#20579A] to-[#2563AB] text-white border border-gold/30 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="px-2.5 py-1 rounded-full bg-gold/25 text-gold-light text-[10px] font-black uppercase tracking-widest border border-gold/30">
-                  Simulador 2D
+                  Sob Medida
                 </span>
                 <Sparkles size={16} className="text-gold group-hover:rotate-12 transition-transform" />
               </div>
               <h3 className="font-serif font-bold text-xl text-gold mb-1.5 leading-snug">
-                Monte seu Terço Exclusivo
+                Personalize sua Peça
               </h3>
               <p className="text-white/70 text-xs leading-relaxed">
-                Escolha contas, entremeios sagrados e crucifixos com visualização da peça montada em tempo real.
+                Pulseiras, dezenas e peças exclusivas com seu santo de devoção, cores e acabamentos especiais.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-gold">
-              <span>Criar Agora</span>
+              <span>Personalizar Agora</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
@@ -390,29 +375,19 @@ const PersonalizeTeaser: React.FC = () => (
             <span>Ateliê Sob Medida</span>
           </div>
           <h2 className="font-serif font-bold text-3xl sm:text-4xl text-navy mb-4">
-            Monte seu Terço ou<br />Personalize sua Peça
+            Personalize sua Peça de Fé
           </h2>
           <p className="text-navy/60 text-sm leading-relaxed mb-6 max-w-md">
-            Experimente nosso construtor visual 2D para montar seu terço com contas, medalhas e crucifixos exclusivos, ou personalize pulseiras e lembranças de fé.
+            Escolha o santo de devoção, as cores de contas e os detalhes especiais para criar pulseiras, dezenas e peças exclusivas feitas com carinho.
           </p>
           <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-            <Link to="/monte-seu-terco" className="btn-primary inline-flex">
-              Monte seu Terço (2D)
+            <Link to="/personalize" className="btn-primary inline-flex">
+              Personalizar Agora
               <ArrowRight size={15} />
-            </Link>
-            <Link to="/personalize" className="px-6 py-3.5 border-2 border-navy/20 text-navy font-bold text-xs uppercase tracking-wider rounded-full hover:border-[#1C4F8C] hover:text-[#1C4F8C] hover:bg-[#1C4F8C]/5 transition-all">
-              Outras Peças
             </Link>
           </div>
         </div>
         <div className="md:flex-1 flex flex-wrap gap-3 justify-center">
-          <Link
-            to="/monte-seu-terco"
-            className="px-6 py-4 bg-gradient-to-r from-[#1C4F8C] to-[#2563AB] text-white border border-gold/30 rounded-2xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2"
-          >
-            <Sparkles size={16} className="text-gold" />
-            <span>Monte seu Terço</span>
-          </Link>
           {['Pulseira', 'Phone Charm', 'Dezena'].map(p => (
             <Link
               key={p}

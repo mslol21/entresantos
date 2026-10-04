@@ -97,6 +97,38 @@ export const ProductDetails: React.FC = () => {
     localStorage.setItem('es_favorites', JSON.stringify(updated));
   };
 
+  // Estratégia de limpeza e remoção de espaços/linhas vazias excessivas na descrição (invocado no topo para obedecer às regras de hooks)
+  const productDescription = product?.description;
+  const descriptionParagraphs = useMemo(() => {
+    if (!productDescription) return [];
+    
+    // 1. Unificar quebras de linha e limpar espaços em branco repetidos
+    const rawLines = productDescription
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(line => line.trim());
+
+    // 2. Colapsar múltiplas linhas vazias consecutivas (máximo 1 linha vazia de separador)
+    const collapsedLines: string[] = [];
+    for (const line of rawLines) {
+      if (line === '') {
+        if (collapsedLines.length > 0 && collapsedLines[collapsedLines.length - 1] !== '') {
+          collapsedLines.push('');
+        }
+      } else {
+        collapsedLines.push(line);
+      }
+    }
+
+    // 3. Agrupar em blocos de parágrafos consistentes
+    const rawBlocks = collapsedLines.join('\n').split(/\n\s*\n/);
+
+    return rawBlocks
+      .map(block => block.trim())
+      .filter(Boolean);
+  }, [productDescription]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
@@ -154,37 +186,6 @@ export const ProductDetails: React.FC = () => {
 
   const displayPrice = getBasePrice() + getAddonsPrice();
   const displayImage = selectedVariation ? selectedVariation.image : (productImages[selectedImageIndex] || product?.image || '');
-
-  // Estratégia de limpeza e remoção de espaços/linhas vazias excessivas na descrição
-  const descriptionParagraphs = useMemo(() => {
-    if (!product.description) return [];
-    
-    // 1. Unificar quebras de linha e limpar espaços em branco repetidos
-    const rawLines = product.description
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .split('\n')
-      .map(line => line.trim());
-
-    // 2. Colapsar múltiplas linhas vazias consecutivas (máximo 1 linha vazia de separador)
-    const collapsedLines: string[] = [];
-    for (const line of rawLines) {
-      if (line === '') {
-        if (collapsedLines.length > 0 && collapsedLines[collapsedLines.length - 1] !== '') {
-          collapsedLines.push('');
-        }
-      } else {
-        collapsedLines.push(line);
-      }
-    }
-
-    // 3. Agrupar em blocos de parágrafos consistentes
-    const rawBlocks = collapsedLines.join('\n').split(/\n\s*\n/);
-
-    return rawBlocks
-      .map(block => block.trim())
-      .filter(Boolean);
-  }, [product.description]);
 
   const handleAddToCart = () => {
     let customName = product.name;
