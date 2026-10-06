@@ -6,7 +6,8 @@ export const COMPANY_DATA = {
   niche: "Artesanato Católico & Presentes de Fé",
   instagram: "atelie.entresantos",
   tiktok: "@atelie.entresantos",
-  slogan: "Fé feita à mão"
+  slogan: "Fé feita à mão",
+  shopee: "atelie.entresantos"
 };
 
 export const CATEGORIES = [

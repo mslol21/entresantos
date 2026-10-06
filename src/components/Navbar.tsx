@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronDown, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useData } from '../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -216,7 +216,7 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleNavClose}
-                    className="flex items-center gap-3 p-4 text-navy/50 hover:text-navy rounded-2xl hover:bg-navy/5 transition-all font-medium text-sm"
+                    className="flex items-center gap-3 p-4 text-white/70 hover:text-white rounded-2xl hover:bg-white/10 transition-all font-medium text-sm"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -224,6 +224,18 @@ export const Navbar: React.FC<{ onCartClick: () => void }> = ({ onCartClick }) =
                       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
                     </svg>
                     <span>Siga no Instagram</span>
+                  </a>
+                )}
+                {settings.shopee && (
+                  <a
+                    href={`https://shopee.com.br/${settings.shopee}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleNavClose}
+                    className="flex items-center gap-3 p-4 text-white/70 hover:text-[#EE4D2D] rounded-2xl hover:bg-white/10 transition-all font-medium text-sm"
+                  >
+                    <ShoppingBag size={18} />
+                    <span>Nossa Loja na Shopee</span>
                   </a>
                 )}
               </div>

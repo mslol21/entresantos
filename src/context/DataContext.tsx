@@ -186,7 +186,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     niche: COMPANY_DATA.niche,
     instagram: COMPANY_DATA.instagram,
     tiktok: COMPANY_DATA.tiktok,
-    slogan: COMPANY_DATA.slogan
+    slogan: COMPANY_DATA.slogan,
+    shopee: COMPANY_DATA.shopee
   });
   const [loading, setLoading] = useState(true);
 

@@ -140,6 +140,7 @@ export type ShopSettings = {
   instagram: string;
   tiktok: string;
   slogan: string;
+  shopee?: string;
   facebook?: string;
   address?: string;
   about_text?: string;

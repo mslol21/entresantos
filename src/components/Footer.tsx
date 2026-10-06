@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { Lock } from 'lucide-react';
+import { Lock, ShoppingBag } from 'lucide-react';
 
 const WHATSAPP_ICON = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -44,7 +44,7 @@ export const Footer: React.FC = () => {
                   href={`https://instagram.com/${settings.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-gold hover:text-navy transition-all border border-gold/10 text-gold/70"
+                  className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#E1306C] hover:text-white transition-all border border-gold/10 text-gold/70"
                   aria-label="Instagram"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -52,6 +52,17 @@ export const Footer: React.FC = () => {
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
                   </svg>
+                </a>
+              )}
+              {settings.shopee && (
+                <a
+                  href={`https://shopee.com.br/${settings.shopee}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#EE4D2D] hover:text-white transition-all border border-gold/10 text-gold/70"
+                  aria-label="Shopee"
+                >
+                  <ShoppingBag size={14} />
                 </a>
               )}
               {settings.whatsapp && (
