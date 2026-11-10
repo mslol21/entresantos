@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, MessageCircle, ArrowRight } from 'lucide-react';
 import { BraceletVectorIcon, DezenaVectorIcon, PhoneCharmVectorIcon } from '../components/icons/ProductIcons';
 import { useData } from '../context/DataContext';
+import { useSeo } from '../hooks/useSeo';
 
 const DEVOTIONS = [
   'Nossa Senhora Aparecida',
@@ -38,6 +39,12 @@ const Personalize: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>(productParam || '');
   const [step, setStep] = useState(0);
   const [selectedDevotion, setSelectedDevotion] = useState('');
+
+  useSeo({
+    title: 'Terços Personalizados com Nome | Ateliê Entre Santos',
+    description: 'Crie seu terço católico personalizado com nome, contas selecionadas e medalhas de proteção. Acabamento nobre e exclusivo. Peça o seu pelo site ou WhatsApp!',
+    canonical: 'https://entresantos.konnexy.com.br/personalize'
+  });
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [customization, setCustomization] = useState({
     name: '',

@@ -2,7 +2,7 @@ import type { RosaryModel, CustomizationComponent } from './types';
 
 export const COMPANY_DATA = {
   name: "Ateliê Entre Santos",
-  whatsapp: "5511999999999", 
+  whatsapp: "5511982930221", 
   niche: "Artesanato Católico & Presentes de Fé",
   instagram: "atelie.entresantos",
   tiktok: "@atelie.entresantos",

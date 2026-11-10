@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { ProductCard } from '../components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSeo } from '../hooks/useSeo';
 
 const LINE_LABELS: Record<string, string> = {
   'devocionais': 'Devocionais',
@@ -29,6 +30,37 @@ const Store: React.FC = () => {
   const activeCategory = searchParams.get('categoria') || '';
   const activeLine = searchParams.get('linha') || '';
   const activeAvailability = searchParams.get('disponibilidade') || '';
+
+  const seoData = useMemo(() => {
+    if (activeCategory === 'tercos' && activeLine === 'personalizados') {
+      return {
+        title: 'Terços Personalizados com Nome | Ateliê Entre Santos',
+        description: 'Crie seu terço católico personalizado com nome, contas selecionadas e medalhas de proteção. Acabamento nobre e exclusivo. Peça o seu pelo site ou WhatsApp!',
+        canonical: 'https://entresantos.konnexy.com.br/loja?categoria=tercos&linha=personalizados'
+      };
+    }
+    if (activeLine === 'momentos') {
+      return {
+        title: 'Lembrancinhas de Batizado e Eucaristia | Entre Santos',
+        description: 'Dezenas, terços e lembranças católicas personalizadas para Batismo, Primeira Eucaristia e Crisma. Embalagens delicadas e preços especiais para quantidade.',
+        canonical: 'https://entresantos.konnexy.com.br/loja?linha=momentos'
+      };
+    }
+    if (activeCategory === 'tercos') {
+      return {
+        title: 'Terços Artesanais e de Noiva | Ateliê Entre Santos',
+        description: 'Terços católicos artesanais feitos à mão com contas nobres, pérolas e cristais. Modelos tradicionais, de noiva e personalizados.',
+        canonical: 'https://entresantos.konnexy.com.br/loja?categoria=tercos'
+      };
+    }
+    return {
+      title: 'Loja de Terços & Artigos Católicos | Ateliê Entre Santos',
+      description: 'Confira nossa coleção completa de terços artesanais, pulseiras e lembranças religiosas. Fé feita à mão com devoção e beleza.',
+      canonical: 'https://entresantos.konnexy.com.br/loja'
+    };
+  }, [activeCategory, activeLine]);
+
+  useSeo(seoData);
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);

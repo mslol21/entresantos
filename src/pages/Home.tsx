@@ -8,6 +8,7 @@ import { useData } from '../context/DataContext';
 import { ProductCard } from '../components/ProductCard';
 import { CategoryCards } from '../components/CategoryCards';
 import { TrustSection } from '../components/TrustSection';
+import { useSeo } from '../hooks/useSeo';
 import { 
   RosaryVectorIcon, 
   BraceletVectorIcon, 
@@ -455,6 +456,12 @@ const MomentosTeaser: React.FC = () => {
 // PÁGINA PRINCIPAL (HOME)
 // -------------------------------------------------------------------
 const Home: React.FC = () => {
+  useSeo({
+    title: 'Ateliê Entre Santos | Terços Artesanais e de Devoção',
+    description: 'Terços artesanais católicos, peças personalizadas e terços de noiva feitos à mão com oração e carinho. Encomende online. Entregamos para todo o Brasil!',
+    canonical: 'https://entresantos.konnexy.com.br/'
+  });
+
   return (
     <div className="pt-[4.75rem] md:pt-[5.25rem] min-h-screen space-y-0">
       {/* 1. Descoberta Rápida & Vitrine Dinâmica (substitui o Hero antigo) */}

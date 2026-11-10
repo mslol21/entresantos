@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MessageCircle, ArrowRight, Users } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { useSeo } from '../hooks/useSeo';
 import { 
   BaptismVectorIcon, 
   CommunionVectorIcon, 
@@ -57,6 +58,16 @@ const MomentsFaith: React.FC = () => {
     searchParams.get('evento')?.toLowerCase().includes(m.label.toLowerCase())
   );
   const [selectedMoment, setSelectedMoment] = useState(initialMoment || null);
+
+  useSeo({
+    title: selectedMoment?.id === 'casamento'
+      ? 'Terço de Noiva Luxo e Matrimônio | Ateliê Entre Santos'
+      : 'Lembrancinhas de Batizado e Eucaristia | Entre Santos',
+    description: selectedMoment?.id === 'casamento'
+      ? 'Terços de noiva com cristais nobres, pérolas e relicários para o seu grande dia. Uma joia de bênção para o altar e gerações. Compre em até 12x sem juros!'
+      : 'Dezenas, terços e lembranças católicas personalizadas para Batismo, Primeira Eucaristia e Crisma. Embalagens delicadas e preços especiais para quantidade.',
+    canonical: 'https://entresantos.konnexy.com.br/momentos-de-fe'
+  });
   const [formSent, setFormSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
